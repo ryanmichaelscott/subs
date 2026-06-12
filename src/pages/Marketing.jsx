@@ -120,8 +120,13 @@ function Nav({ setSection }) {
               {label}
             </button>
           ))}
+          <Link to="/contractor/login">
+            <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', marginLeft: 4 }}>
+              Partner Login
+            </button>
+          </Link>
           <Link to="/login">
-            <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', marginLeft: 8 }}>
+            <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', marginLeft: 4 }}>
               Member Login
             </button>
           </Link>
@@ -141,7 +146,12 @@ function Nav({ setSection }) {
               {label}
             </button>
           ))}
-          <Link to="/login" style={{ display: 'block', marginTop: 12 }}>
+          <Link to="/contractor/login" style={{ display: 'block', marginTop: 12 }}>
+            <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 14, fontWeight: 600, padding: '13px 0', borderRadius: 8, cursor: 'pointer', width: '100%', minHeight: 44 }}>
+              Partner Login
+            </button>
+          </Link>
+          <Link to="/login" style={{ display: 'block', marginTop: 8 }}>
             <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '13px 0', borderRadius: 8, cursor: 'pointer', width: '100%', minHeight: 44 }}>
               Member Login
             </button>
@@ -377,6 +387,11 @@ function ForVendors() {
                 <button onClick={() => setSubmitted(true)} style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 10, cursor: 'pointer' }}>
                   Apply Now
                 </button>
+                <div style={{ textAlign: 'center', marginTop: 14 }}>
+                  <Link to="/contractor/login" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>
+                    Already a partner? <span style={{ color: S.green, fontWeight: 600 }}>Log in →</span>
+                  </Link>
+                </div>
               </>
             )}
           </div>
