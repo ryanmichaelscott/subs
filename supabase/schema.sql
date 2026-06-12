@@ -83,6 +83,10 @@ alter table leads enable row level security;
 create policy "members_own_row" on members
   for all using (clerk_user_id = requesting_user_id());
 
+-- Anyone can submit a contractor application (inserted as pending)
+create policy "anyone_can_apply" on contractors
+  for insert with check (status = 'pending');
+
 -- Anyone authenticated can read approved contractors and their rates
 create policy "read_approved_contractors" on contractors
   for select using (status = 'approved');

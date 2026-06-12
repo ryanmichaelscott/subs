@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { S, C } from '../theme'
+import { supabase } from '../lib/supabase'
 
 const TRADES = [
   { icon: '❄️', name: 'HVAC', discount: '15–20% off' },
@@ -332,8 +333,25 @@ function Testimonials() {
 
 function ForVendors() {
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
   const [form, setForm] = useState({ name: '', company: '', email: '', phone: '', category: '', years: '' })
   const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none' }
+
+  async function handleApply() {
+    setError(null)
+    setSubmitting(true)
+    const { error: err } = await supabase.from('contractors').insert({
+      name: form.company,
+      contact_name: form.name,
+      contact_email: form.email,
+      trade: form.category,
+      years_experience: form.years ? parseInt(form.years) : null,
+    })
+    setSubmitting(false)
+    if (err) { setError(err.message); return }
+    setSubmitted(true)
+  }
 
   return (
     <section style={{ background: S.surface, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
@@ -384,8 +402,9 @@ function ForVendors() {
                     {TRADES.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
                   </select>
                 </div>
-                <button onClick={() => setSubmitted(true)} style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 10, cursor: 'pointer' }}>
-                  Apply Now
+                {error && <div style={{ fontSize: 13, color: '#FF5A5A', marginBottom: 12 }}>{error}</div>}
+                <button onClick={handleApply} disabled={submitting} style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 10, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
+                  {submitting ? 'Submitting…' : 'Apply Now'}
                 </button>
                 <div style={{ textAlign: 'center', marginTop: 14 }}>
                   <Link to="/contractor/login" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>
