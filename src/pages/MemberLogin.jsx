@@ -51,7 +51,7 @@ const appearance = {
 
 export default function MemberLogin() {
   return (
-    <div style={{ flex: 1, background: S.black, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0C0F0A', padding: '24px' }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite }}>
@@ -59,7 +59,7 @@ export default function MemberLogin() {
           </div>
         </div>
 
-        <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
+        <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', justifyContent: 'center' }}>
           <SignIn
             routing="hash"
             afterSignInUrl="/dashboard"
