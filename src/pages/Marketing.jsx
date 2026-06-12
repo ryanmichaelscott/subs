@@ -160,10 +160,10 @@ function Hero({ setSection }) {
         <span style={{ color: S.green, fontSize: 12, fontWeight: 600, letterSpacing: '0.04em' }}>Founding member pricing — limited availability</span>
       </div>
       <h1 style={{ fontFamily: C.display, fontSize: 'clamp(44px, 7vw, 80px)', fontWeight: 400, lineHeight: 1.05, color: S.offwhite, margin: '0 0 8px' }}>
-        Contractor pricing.
+        Stop paying retail
       </h1>
       <h1 style={{ fontFamily: C.display, fontSize: 'clamp(44px, 7vw, 80px)', fontWeight: 400, lineHeight: 1.05, color: S.green, margin: '0 0 32px' }}>
-        For everyone.
+        for home services.
       </h1>
       <p style={{ fontSize: 18, color: S.muted, maxWidth: 560, margin: '0 auto 40px', lineHeight: 1.6 }}>
         SUBS is a membership that unlocks contractor pricing on every trade that touches your home. Whatever the job costs — you pay the contractor rate, not the retail rate. Over 30 trades. One annual fee.
