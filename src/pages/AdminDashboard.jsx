@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 
 const MEMBERS = [
@@ -42,6 +43,9 @@ function Card({ children, style }) {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate()
+  const { user } = useUser()
+  const { signOut } = useClerk()
   const [tab, setTab] = useState('stats')
   const [contractors, setContractors] = useState(CONTRACTOR_QUEUE)
   const [memberSearch, setMemberSearch] = useState('')
@@ -71,8 +75,8 @@ export default function AdminDashboard() {
           <span style={{ fontSize: 11, fontWeight: 700, color: S.danger, background: S.danger + '22', padding: '3px 10px', borderRadius: 100 }}>Admin</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 13, color: S.muted }}>admin@subs.co</span>
-          <Link to="/admin/login"><button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button></Link>
+          <span style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || 'admin@subs.co'}</span>
+          <button onClick={() => signOut().then(() => navigate('/admin/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
       </nav>
 

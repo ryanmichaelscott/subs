@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { loadZipData, getCountiesForState, matchesServiceArea } from '../utils/serviceArea.js'
 
@@ -589,6 +590,9 @@ function RateCardBuilder() {
 
 export default function ContractorDashboard() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user } = useUser()
+  const { signOut } = useClerk()
   const [showOnboarding, setShowOnboarding] = useState(location.state?.firstTime ?? false)
   const [tab, setTab] = useState('leads')
   const [leads, setLeads] = useState(INITIAL_LEADS)
@@ -626,9 +630,10 @@ export default function ContractorDashboard() {
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
         <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 13, color: S.offwhite, fontWeight: 600 }}>{profile.name}</span>
+          <span style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || profile.email}</span>
+          <span style={{ fontSize: 13, color: S.offwhite, fontWeight: 600 }}>{user?.fullName || profile.name}</span>
           <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '3px 10px', borderRadius: 100 }}>Active Partner</span>
-          <Link to="/contractor/login"><button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button></Link>
+          <button onClick={() => signOut().then(() => navigate('/contractor/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
       </nav>
 

@@ -25,3 +25,8 @@ a { text-decoration: none; color: inherit; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0C0F0A; }
 ::-webkit-scrollbar-thumb { background: #252A23; border-radius: 3px; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

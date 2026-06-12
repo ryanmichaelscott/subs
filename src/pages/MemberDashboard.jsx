@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 
 const TRADES = ['HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors', 'Concrete Work', 'Interior Painting', 'Exterior Painting', 'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Handyman', 'Pool Service', 'Flooring', 'Fencing', 'Decks & Patios', 'House Cleaning']
@@ -27,7 +28,7 @@ function Card({ children, style }) {
   return <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, ...style }}>{children}</div>
 }
 
-function MemberCard() {
+function MemberCard({ name }) {
   return (
     <Card style={{ padding: '20px 24px', background: `linear-gradient(135deg, ${S.forest} 0%, #0f1f12 100%)`, border: `1px solid ${S.greenDim}` }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -38,7 +39,7 @@ function MemberCard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <div style={{ fontSize: 10, color: S.muted, marginBottom: 2 }}>MEMBER</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>Ryan Scott</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>{name}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 10, color: S.muted, marginBottom: 2 }}>TIER</div>
@@ -58,7 +59,12 @@ function MemberCard() {
 
 export default function MemberDashboard() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user } = useUser()
+  const { signOut } = useClerk()
   const memberZip = location.state?.zip || '84101'
+  const displayName = user?.fullName || user?.firstName || 'Member'
+  const displayEmail = user?.primaryEmailAddress?.emailAddress || 'ryan@neumi.com'
 
   const [tab, setTab] = useState('directory')
   const [tradeFilter, setTradeFilter] = useState('')
@@ -82,9 +88,9 @@ export default function MemberDashboard() {
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
         <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 12, color: S.muted }}>ryan@neumi.com</span>
+          <span style={{ fontSize: 12, color: S.muted }}>{displayEmail}</span>
           <span style={{ fontSize: 11, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '3px 10px', borderRadius: 100 }}>Member+</span>
-          <Link to="/login"><button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button></Link>
+          <button onClick={() => signOut().then(() => navigate('/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
       </nav>
 
@@ -92,7 +98,7 @@ export default function MemberDashboard() {
         <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <MemberCard />
+            <MemberCard name={displayName} />
             <Card style={{ padding: 20 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Stats</div>
               {[['5', 'Jobs completed'], ['$484', 'Total saved est.'], ['3', 'Trades used']].map(([val, label]) => (

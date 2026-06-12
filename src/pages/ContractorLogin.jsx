@@ -1,20 +1,53 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { SignIn } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 
+const appearance = {
+  variables: {
+    colorBackground: '#101410',
+    colorInputBackground: '#141814',
+    colorPrimary: '#5DFF8A',
+    colorPrimaryForeground: '#0C0F0A',
+    colorText: '#F0EEE8',
+    colorTextSecondary: '#8A9088',
+    colorNeutral: '#252A23',
+    colorDanger: '#FF5A5A',
+    colorSuccess: '#5DFF8A',
+    borderRadius: '10px',
+    fontFamily: "'Inter', system-ui, sans-serif",
+    fontSize: '15px',
+  },
+  elements: {
+    card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0 },
+    header: { display: 'none' },
+    footer: { display: 'none' },
+    socialButtonsBlockButton: {
+      background: '#141814',
+      border: '1px solid #252A23',
+      color: '#F0EEE8',
+      borderRadius: '10px',
+    },
+    socialButtonsBlockButtonText: { color: '#F0EEE8', fontWeight: 600 },
+    formFieldInput: {
+      background: '#141814',
+      border: '1px solid #252A23',
+      color: '#F0EEE8',
+      borderRadius: '10px',
+    },
+    formFieldLabel: { color: '#8A9088', fontWeight: 500 },
+    formButtonPrimary: {
+      background: '#5DFF8A',
+      color: '#0C0F0A',
+      fontWeight: 700,
+      borderRadius: '10px',
+    },
+    dividerLine: { background: '#252A23' },
+    dividerText: { color: '#8A9088' },
+    alertText: { color: '#F0EEE8' },
+  },
+}
+
 export default function ContractorLogin() {
-  const navigate = useNavigate()
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setTimeout(() => { setLoading(false); navigate('/contractor/dashboard', { state: { firstTime: true } }) }, 900)
-  }
-
-  const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, padding: '13px 14px', color: S.offwhite, fontSize: 15, outline: 'none', boxSizing: 'border-box' }
-
   return (
     <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between' }}>
@@ -34,25 +67,16 @@ export default function ContractorLogin() {
           </div>
 
           <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Email</label>
-                <input style={inp} type="email" placeholder="contractor@company.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
-              </div>
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Password</label>
-                <input style={inp} type="password" placeholder="••••••••" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required />
-              </div>
-              <button type="submit" disabled={loading} style={{ width: '100%', background: loading ? S.greenDim : S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 10, cursor: loading ? 'not-allowed' : 'pointer' }}>
-                {loading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
-            <div style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: S.muted }}>Demo: any credentials work</div>
+            <SignIn
+              routing="hash"
+              afterSignInUrl="/contractor/dashboard"
+              appearance={appearance}
+            />
           </div>
 
           <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 12, padding: 20, marginTop: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite, marginBottom: 8 }}>Not a SUBS partner yet?</div>
-            <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.5, marginBottom: 14, margin: '0 0 14px' }}>Join our vetted contractor network. Pre-qualified homeowners sent directly to you. Zero lead cost.</p>
+            <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.5, margin: '0 0 14px' }}>Join our vetted contractor network. Pre-qualified homeowners sent directly to you. Zero lead cost.</p>
             <Link to="/">
               <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 8, cursor: 'pointer' }}>
                 Apply to join →
