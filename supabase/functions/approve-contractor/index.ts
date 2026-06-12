@@ -62,7 +62,10 @@ serve(async (req) => {
 
   const clerkData = await clerkRes.json()
 
-  if (!clerkRes.ok) {
+  const isDuplicate = !clerkRes.ok &&
+    clerkData?.errors?.some((e: any) => e.code === 'duplicate_record')
+
+  if (!clerkRes.ok && !isDuplicate) {
     return new Response(
       JSON.stringify({ error: 'Failed to create Clerk invitation', details: clerkData }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
