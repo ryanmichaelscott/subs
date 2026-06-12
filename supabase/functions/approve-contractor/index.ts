@@ -56,8 +56,7 @@ serve(async (req) => {
     body: JSON.stringify({
       email_address: contractor.contact_email,
       public_metadata: { role: 'contractor' },
-      redirect_url: `${Deno.env.get('SITE_URL') || 'https://getsubs.co'}/contractor/login`,
-      notify: true, // send the invitation email
+      notify: true,
     }),
   })
 
