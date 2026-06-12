@@ -68,8 +68,12 @@ export default function AdminDashboard() {
       const fnName = action === 'approved' ? 'approve-contractor' : 'reject-contractor'
       const { data, error } = await supabase.functions.invoke(fnName, { body: { contractor_id: id } })
       if (error) {
-        const ctx = error.context
-        const detail = ctx?.error || ctx?.message || (typeof ctx === 'string' ? ctx : JSON.stringify(ctx)) || error.message
+        let detail = error.message
+        try {
+          // error.context is the raw Response object in supabase-js v2
+          const body = error.context?.json ? await error.context.json() : error.context
+          detail = body?.error || body?.message || JSON.stringify(body) || error.message
+        } catch {}
         setActionError(`${fnName} failed: ${detail}`)
         return
       }
