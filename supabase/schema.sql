@@ -26,6 +26,7 @@ create table if not exists contractors (
   years_experience int,
   licensed boolean default false,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  clerk_invitation_id text,
   submitted_at timestamptz not null default now()
 );
 

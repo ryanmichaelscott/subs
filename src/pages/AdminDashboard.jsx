@@ -60,8 +60,11 @@ export default function AdminDashboard() {
   }, [])
 
   const handleContractor = async (id, action) => {
-    await supabase.from('contractors').update({ status: action }).eq('id', id)
-    setContractors(cs => cs.map(c => c.id === id ? { ...c, status: action } : c))
+    const fnName = action === 'approved' ? 'approve-contractor' : 'reject-contractor'
+    const { error } = await supabase.functions.invoke(fnName, { body: { contractor_id: id } })
+    if (!error) {
+      setContractors(cs => cs.map(c => c.id === id ? { ...c, status: action } : c))
+    }
   }
 
   const filteredMembers = MEMBERS.filter(m =>
