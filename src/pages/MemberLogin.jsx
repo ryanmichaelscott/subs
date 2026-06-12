@@ -51,7 +51,7 @@ const appearance = {
 
 export default function MemberLogin() {
   return (
-    <div style={{ background: S.black, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+    <div style={{ flex: 1, background: S.black, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite }}>
