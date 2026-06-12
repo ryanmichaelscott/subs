@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
+import { supabase } from '../lib/supabase'
 
 const MEMBERS = [
   { id: 'M-001', name: 'Ryan Scott', email: 'ryan@neumi.com', tier: 'Member+', since: 'Jan 2026', jobs: 5, status: 'Active' },
@@ -47,10 +48,19 @@ export default function AdminDashboard() {
   const { user } = useUser()
   const { signOut } = useClerk()
   const [tab, setTab] = useState('stats')
-  const [contractors, setContractors] = useState(CONTRACTOR_QUEUE)
+  const [contractors, setContractors] = useState([])
   const [memberSearch, setMemberSearch] = useState('')
 
-  const handleContractor = (id, action) => {
+  useEffect(() => {
+    supabase
+      .from('contractors')
+      .select('*')
+      .order('submitted_at', { ascending: false })
+      .then(({ data }) => setContractors(data || []))
+  }, [])
+
+  const handleContractor = async (id, action) => {
+    await supabase.from('contractors').update({ status: action }).eq('id', id)
     setContractors(cs => cs.map(c => c.id === id ? { ...c, status: action } : c))
   }
 
@@ -220,14 +230,14 @@ export default function AdminDashboard() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
                         <div>
                           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                            <span style={{ fontSize: 11, fontFamily: 'monospace', color: S.muted }}>{c.id}</span>
+                            <span style={{ fontSize: 11, fontFamily: 'monospace', color: S.muted }}>{c.id.slice(0, 8)}</span>
                             <span style={{ fontSize: 12, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '2px 8px', borderRadius: 100 }}>{c.trade}</span>
                             {!c.licensed && <span style={{ fontSize: 11, fontWeight: 700, color: S.danger, background: S.danger + '22', padding: '2px 8px', borderRadius: 100 }}>⚠ Unlicensed</span>}
                           </div>
-                          <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite }}>{c.company}</div>
-                          <div style={{ fontSize: 13, color: S.muted }}>{c.contact} · {c.email}</div>
-                          <div style={{ fontSize: 13, color: S.muted, marginTop: 2 }}>{c.years} years in business · Licensed: {c.licensed ? '✓ Yes' : '✗ No'}</div>
-                          <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>Applied {c.submitted}</div>
+                          <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite }}>{c.name}</div>
+                          <div style={{ fontSize: 13, color: S.muted }}>{c.contact_name} · {c.contact_email}</div>
+                          <div style={{ fontSize: 13, color: S.muted, marginTop: 2 }}>{c.years_experience ? `${c.years_experience} years in business · ` : ''}Licensed: {c.licensed ? '✓ Yes' : '✗ No'}</div>
+                          <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>Applied {c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</div>
                         </div>
                         <div style={{ display: 'flex', gap: 10 }}>
                           <button onClick={() => handleContractor(c.id, 'approved')} style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: 'pointer' }}>
@@ -249,9 +259,9 @@ export default function AdminDashboard() {
               {contractors.filter(c => c.status !== 'pending').map(c => (
                 <Card key={c.id} style={{ padding: '14px 20px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                   <div>
-                    <span style={{ fontSize: 11, fontFamily: 'monospace', color: S.muted, marginRight: 12 }}>{c.id}</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{c.company}</span>
-                    <span style={{ fontSize: 13, color: S.muted, marginLeft: 12 }}>{c.trade} · {c.contact}</span>
+                    <span style={{ fontSize: 11, fontFamily: 'monospace', color: S.muted, marginRight: 12 }}>{c.id.slice(0, 8)}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{c.name}</span>
+                    <span style={{ fontSize: 13, color: S.muted, marginLeft: 12 }}>{c.trade} · {c.contact_name}</span>
                   </div>
                   <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100, background: c.status === 'approved' ? S.green + '22' : S.danger + '22', color: c.status === 'approved' ? S.green : S.danger }}>
                     {c.status === 'approved' ? '✓ Approved' : '✗ Rejected'}

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { loadZipData, getCountiesForState, matchesServiceArea } from '../utils/serviceArea.js'
+import { supabase } from '../lib/supabase'
 
 const TRADES_LIST = [
   'HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors',
@@ -610,7 +611,16 @@ export default function ContractorDashboard() {
   useEffect(() => { loadZipData().then(() => setZipReady(true)) }, [])
   const [profileSaved, setProfileSaved] = useState(false)
 
-  const handleOnboardingComplete = (data) => {
+  const handleOnboardingComplete = async (data) => {
+    await supabase.from('contractors').insert({
+      name: data.title,
+      trade: data.trade,
+      bio: data.description,
+      service_area: JSON.stringify(data.serviceArea),
+      contact_name: user?.fullName || user?.firstName || '',
+      contact_email: user?.primaryEmailAddress?.emailAddress || '',
+      status: 'pending',
+    })
     setProfile(p => ({ ...p, name: data.title, trade: data.trade, bio: data.description, serviceArea: data.serviceArea }))
     setShowOnboarding(false)
   }

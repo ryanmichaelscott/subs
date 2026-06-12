@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
+import { supabase } from '../lib/supabase'
 
 const TRADES = ['HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors', 'Concrete Work', 'Interior Painting', 'Exterior Painting', 'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Handyman', 'Pool Service', 'Flooring', 'Fencing', 'Decks & Patios', 'House Cleaning']
 
@@ -28,7 +29,15 @@ function Card({ children, style }) {
   return <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, ...style }}>{children}</div>
 }
 
-function MemberCard({ name }) {
+const TIER_COLORS = { Member: S.green, 'Member+': S.blue, Elite: S.purple }
+const TIER_PRICES = { Member: '$99/yr', 'Member+': '$199/yr', Elite: '$399/yr' }
+
+function MemberCard({ name, member }) {
+  const tier = member?.tier || 'Member'
+  const joinedYear = member?.joined_at ? new Date(member.joined_at).getFullYear() : '—'
+  const renewal = member?.renewal_date
+    ? new Date(member.renewal_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : '—'
   return (
     <Card style={{ padding: '20px 24px', background: `linear-gradient(135deg, ${S.forest} 0%, #0f1f12 100%)`, border: `1px solid ${S.greenDim}` }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -43,15 +52,15 @@ function MemberCard({ name }) {
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 10, color: S.muted, marginBottom: 2 }}>TIER</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: S.blue }}>Member+</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: TIER_COLORS[tier] || S.blue }}>{tier}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 10, color: S.muted, marginBottom: 2 }}>SINCE</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>2026</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>{joinedYear}</div>
         </div>
       </div>
       <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${S.greenDim}`, fontSize: 11, color: S.muted }}>
-        Renews Jan 1, 2027 · $199/yr
+        {renewal !== '—' ? `Renews ${renewal} · ${TIER_PRICES[tier]}` : TIER_PRICES[tier]}
       </div>
     </Card>
   )
@@ -66,6 +75,7 @@ export default function MemberDashboard() {
   const displayName = user?.fullName || user?.firstName || 'Member'
   const displayEmail = user?.primaryEmailAddress?.emailAddress || 'ryan@neumi.com'
 
+  const [member, setMember] = useState(null)
   const [tab, setTab] = useState('directory')
   const [tradeFilter, setTradeFilter] = useState('')
   const [zipFilter, setZipFilter] = useState('')
@@ -73,6 +83,25 @@ export default function MemberDashboard() {
   const [jobForm, setJobForm] = useState({ trade: '', description: '', zip: memberZip, date: '' })
   const [jobSubmitted, setJobSubmitted] = useState(false)
   const [searching, setSearching] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    const upsertMember = async () => {
+      const { data } = await supabase
+        .from('members')
+        .upsert({
+          clerk_user_id: user.id,
+          email: user.primaryEmailAddress?.emailAddress || '',
+          name: user.fullName || user.firstName || '',
+          tier: 'Member',
+          status: 'Active',
+        }, { onConflict: 'clerk_user_id', ignoreDuplicates: false })
+        .select()
+        .single()
+      if (data) setMember(data)
+    }
+    upsertMember()
+  }, [user])
 
   const filtered = CONTRACTORS.filter(c =>
     (!tradeFilter || c.trade === tradeFilter) &&
@@ -98,7 +127,7 @@ export default function MemberDashboard() {
         <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <MemberCard name={displayName} />
+            <MemberCard name={displayName} member={member} />
             <Card style={{ padding: 20 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Stats</div>
               {[['5', 'Jobs completed'], ['$484', 'Total saved est.'], ['3', 'Trades used']].map(([val, label]) => (
@@ -240,7 +269,18 @@ export default function MemberDashboard() {
                       <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Describe the job</label>
                       <textarea value={jobForm.description} onChange={e => setJobForm(f => ({ ...f, description: e.target.value }))} placeholder="My AC isn't cooling properly. Unit is 8 years old, Lennox 3-ton system..." rows={4} style={{ ...inp, resize: 'vertical' }} />
                     </div>
-                    <button onClick={() => { setSearching(true); setTimeout(() => { setSearching(false); setJobSubmitted(true) }, 1800) }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 24px', borderRadius: 10, cursor: 'pointer' }}>
+                    <button onClick={async () => {
+                      setSearching(true)
+                      await supabase.from('job_requests').insert({
+                        clerk_user_id: user.id,
+                        trade: jobForm.trade,
+                        description: jobForm.description,
+                        zip: jobForm.zip,
+                        preferred_date: jobForm.date || null,
+                        status: 'pending',
+                      })
+                      setTimeout(() => { setSearching(false); setJobSubmitted(true) }, 1800)
+                    }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 24px', borderRadius: 10, cursor: 'pointer' }}>
                       Submit Request →
                     </button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${S.border}`, fontSize: 12, color: S.muted }}>
