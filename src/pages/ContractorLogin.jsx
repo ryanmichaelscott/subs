@@ -49,8 +49,8 @@ const appearance = {
 
 export default function ContractorLogin() {
   return (
-    <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between' }}>
+    <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', width: '100%' }}>
         <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
         <Link to="/login" style={{ fontSize: 13, color: S.muted }}>Homeowner? Member login</Link>
       </nav>
@@ -66,7 +66,7 @@ export default function ContractorLogin() {
             <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Access your lead inbox and rate card.</p>
           </div>
 
-          <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
+          <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', justifyContent: 'center' }}>
             <SignIn
               routing="hash"
               afterSignInUrl="/contractor/dashboard"
