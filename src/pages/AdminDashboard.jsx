@@ -67,7 +67,10 @@ export default function AdminDashboard() {
     try {
       const fnName = action === 'approved' ? 'approve-contractor' : 'reject-contractor'
       const { data, error } = await supabase.functions.invoke(fnName, { body: { contractor_id: id } })
-      if (error) { setActionError(`Function error: ${error.message}`); return }
+      if (error) {
+        setActionError(`${fnName} failed: ${data?.error || data?.message || JSON.stringify(data) || error.message}${data?.details ? ' — ' + JSON.stringify(data.details) : ''}`)
+        return
+      }
       if (data?.error) { setActionError(`${fnName}: ${data.error}${data.details ? ' — ' + JSON.stringify(data.details) : ''}`); return }
       setContractors(cs => cs.map(c => c.id === id ? { ...c, status: action } : c))
     } catch (e) {
