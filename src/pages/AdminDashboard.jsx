@@ -50,6 +50,8 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState('stats')
   const [contractors, setContractors] = useState([])
   const [memberSearch, setMemberSearch] = useState('')
+  const [actionError, setActionError] = useState(null)
+  const [actionLoading, setActionLoading] = useState(null)
 
   useEffect(() => {
     supabase
@@ -60,10 +62,31 @@ export default function AdminDashboard() {
   }, [])
 
   const handleContractor = async (id, action) => {
-    const fnName = action === 'approved' ? 'approve-contractor' : 'reject-contractor'
-    const { error } = await supabase.functions.invoke(fnName, { body: { contractor_id: id } })
-    if (!error) {
+    setActionError(null)
+    setActionLoading(id)
+    try {
+      const fnName = action === 'approved' ? 'approve-contractor' : 'reject-contractor'
+      const { data, error } = await supabase.functions.invoke(fnName, { body: { contractor_id: id } })
+      if (error) { setActionError(`Function error: ${error.message}`); return }
+      if (data?.error) { setActionError(`${fnName}: ${data.error}${data.details ? ' — ' + JSON.stringify(data.details) : ''}`); return }
       setContractors(cs => cs.map(c => c.id === id ? { ...c, status: action } : c))
+    } catch (e) {
+      setActionError(`Unexpected error: ${e.message}`)
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleStatusUpdate = async (id, newStatus) => {
+    setActionLoading(id)
+    try {
+      const { error } = await supabase.from('contractors').update({ status: newStatus }).eq('id', id)
+      if (error) { setActionError(`Update failed: ${error.message}`); return }
+      setContractors(cs => cs.map(c => c.id === id ? { ...c, status: newStatus } : c))
+    } catch (e) {
+      setActionError(`Unexpected error: ${e.message}`)
+    } finally {
+      setActionLoading(null)
     }
   }
 
@@ -78,7 +101,7 @@ export default function AdminDashboard() {
   const churnCount = MEMBERS.filter(m => m.status === 'Churned').length
   const churnRate = ((churnCount / MEMBERS.length) * 100).toFixed(1)
 
-  const tabs = [['stats', '📊 Revenue Stats'], ['members', '👥 Members'], ['approvals', '🛠 Contractor Approvals'], ['activity', '⚡ Lead Activity']]
+  const tabs = [['stats', '📊 Revenue Stats'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity']]
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
@@ -224,6 +247,12 @@ export default function AdminDashboard() {
         {/* Contractor Approvals */}
         {tab === 'approvals' && (
           <div>
+            {actionError && (
+              <div style={{ background: S.danger + '22', border: `1px solid ${S.danger}44`, borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: S.danger, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{actionError}</span>
+                <button onClick={() => setActionError(null)} style={{ background: 'none', border: 'none', color: S.danger, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+              </div>
+            )}
             {contractors.filter(c => c.status === 'pending').length > 0 && (
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: S.amber, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>⏳ Awaiting Review</div>
@@ -243,10 +272,10 @@ export default function AdminDashboard() {
                           <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>Applied {c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</div>
                         </div>
                         <div style={{ display: 'flex', gap: 10 }}>
-                          <button onClick={() => handleContractor(c.id, 'approved')} style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: 'pointer' }}>
-                            ✓ Approve
+                          <button onClick={() => handleContractor(c.id, 'approved')} disabled={actionLoading === c.id} style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.6 : 1 }}>
+                            {actionLoading === c.id ? '…' : '✓ Approve'}
                           </button>
-                          <button onClick={() => handleContractor(c.id, 'rejected')} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.danger, fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 8, cursor: 'pointer' }}>
+                          <button onClick={() => handleContractor(c.id, 'rejected')} disabled={actionLoading === c.id} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.danger, fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 8, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.6 : 1 }}>
                             Reject
                           </button>
                         </div>
@@ -272,6 +301,69 @@ export default function AdminDashboard() {
                 </Card>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Contractors */}
+        {tab === 'contractors' && (
+          <div>
+            {actionError && (
+              <div style={{ background: S.danger + '22', border: `1px solid ${S.danger}44`, borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: S.danger, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{actionError}</span>
+                <button onClick={() => setActionError(null)} style={{ background: 'none', border: 'none', color: S.danger, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+              </div>
+            )}
+            {['approved', 'rejected'].map(statusGroup => {
+              const group = contractors.filter(c => c.status === statusGroup)
+              if (!group.length) return null
+              return (
+                <div key={statusGroup} style={{ marginBottom: 28 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: statusGroup === 'approved' ? S.green : S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+                    {statusGroup === 'approved' ? '✓ Active Partners' : '✗ Removed'}
+                  </div>
+                  <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, overflow: 'hidden' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 1fr 120px 120px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
+                      {['Company', 'Trade', 'Contact', 'Since', ''].map(h => (
+                        <div key={h} style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
+                      ))}
+                    </div>
+                    {group.map((c, i) => (
+                      <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 1fr 120px 120px', padding: '14px 20px', borderBottom: i < group.length - 1 ? `1px solid ${S.border}` : 'none', alignItems: 'center' }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{c.name || '—'}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '2px 8px', borderRadius: 100, display: 'inline-block' }}>{c.trade}</span>
+                        <div>
+                          <div style={{ fontSize: 13, color: S.offwhite }}>{c.contact_name || '—'}</div>
+                          <div style={{ fontSize: 12, color: S.muted }}>{c.contact_email || '—'}</div>
+                        </div>
+                        <span style={{ fontSize: 12, color: S.muted }}>{c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—'}</span>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {statusGroup === 'approved' ? (
+                            <button
+                              onClick={() => handleStatusUpdate(c.id, 'rejected')}
+                              disabled={actionLoading === c.id}
+                              style={{ background: 'transparent', border: `1px solid ${S.danger}66`, color: S.danger, fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                            >
+                              {actionLoading === c.id ? '…' : 'Remove'}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleStatusUpdate(c.id, 'approved')}
+                              disabled={actionLoading === c.id}
+                              style={{ background: 'transparent', border: `1px solid ${S.green}66`, color: S.green, fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                            >
+                              {actionLoading === c.id ? '…' : 'Reinstate'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+            {contractors.filter(c => c.status !== 'pending').length === 0 && (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: S.muted, fontSize: 14 }}>No approved contractors yet.</div>
+            )}
           </div>
         )}
 

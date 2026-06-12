@@ -91,6 +91,10 @@ create policy "anyone_can_apply" on contractors
 create policy "read_all_contractors" on contractors
   for select using (true);
 
+-- Admin can update contractor status (remove, reinstate, etc.)
+create policy "admin_update_contractors" on contractors
+  for update using (true) with check (true);
+
 create policy "read_contractor_rates" on contractor_rates
   for select using (
     exists (select 1 from contractors where id = contractor_id and status = 'approved')
