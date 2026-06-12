@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { S, C } from '../theme'
 
 const TRADES = ['HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors', 'Concrete Work', 'Interior Painting', 'Exterior Painting', 'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Handyman', 'Pool Service', 'Flooring', 'Fencing', 'Decks & Patios', 'House Cleaning']
@@ -57,12 +57,16 @@ function MemberCard() {
 }
 
 export default function MemberDashboard() {
+  const location = useLocation()
+  const memberZip = location.state?.zip || '84101'
+
   const [tab, setTab] = useState('directory')
   const [tradeFilter, setTradeFilter] = useState('')
   const [zipFilter, setZipFilter] = useState('')
   const [selectedContractor, setSelectedContractor] = useState(null)
-  const [jobForm, setJobForm] = useState({ trade: '', description: '', zip: '', date: '' })
+  const [jobForm, setJobForm] = useState({ trade: '', description: '', zip: memberZip, date: '' })
   const [jobSubmitted, setJobSubmitted] = useState(false)
+  const [searching, setSearching] = useState(false)
 
   const filtered = CONTRACTORS.filter(c =>
     (!tradeFilter || c.trade === tradeFilter) &&
@@ -183,12 +187,25 @@ export default function MemberDashboard() {
             {/* Request tab */}
             {tab === 'request' && (
               <Card style={{ padding: 28 }}>
-                {jobSubmitted ? (
+                {searching ? (
+                  <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                    <div style={{ fontSize: 36, marginBottom: 16 }}>🔍</div>
+                    <div style={{ fontFamily: C.display, fontSize: 22, color: S.offwhite, marginBottom: 8 }}>Searching contractors near {jobForm.zip}…</div>
+                    <p style={{ fontSize: 14, color: S.muted }}>Matching you with vetted partners at your member rate.</p>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 20 }}>
+                      {[0, 1, 2].map(i => (
+                        <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: S.green, opacity: 0.4 + i * 0.3 }} />
+                      ))}
+                    </div>
+                  </div>
+                ) : jobSubmitted ? (
                   <div style={{ textAlign: 'center', padding: '40px 0' }}>
                     <div style={{ fontSize: 40, marginBottom: 16 }}>🎉</div>
                     <div style={{ fontFamily: C.display, fontSize: 24, color: S.offwhite, marginBottom: 8 }}>Request submitted</div>
-                    <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6 }}>We'll match you with a vetted contractor and confirm within 24 hours. You'll get a text with their contact info and your member rate.</p>
-                    <button onClick={() => { setJobSubmitted(false); setJobForm({ trade: '', description: '', zip: '', date: '' }) }} style={{ marginTop: 24, background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 14, padding: '10px 20px', borderRadius: 8, cursor: 'pointer' }}>
+                    <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6 }}>
+                      We found contractors near <span style={{ color: S.green, fontWeight: 600 }}>{jobForm.zip}</span>. We'll confirm within 24 hours with their contact info and your member rate.
+                    </p>
+                    <button onClick={() => { setJobSubmitted(false); setJobForm({ trade: '', description: '', zip: memberZip, date: '' }) }} style={{ marginTop: 24, background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 14, padding: '10px 20px', borderRadius: 8, cursor: 'pointer' }}>
                       Request another job
                     </button>
                   </div>
@@ -217,7 +234,7 @@ export default function MemberDashboard() {
                       <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Describe the job</label>
                       <textarea value={jobForm.description} onChange={e => setJobForm(f => ({ ...f, description: e.target.value }))} placeholder="My AC isn't cooling properly. Unit is 8 years old, Lennox 3-ton system..." rows={4} style={{ ...inp, resize: 'vertical' }} />
                     </div>
-                    <button onClick={() => setJobSubmitted(true)} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 24px', borderRadius: 10, cursor: 'pointer' }}>
+                    <button onClick={() => { setSearching(true); setTimeout(() => { setSearching(false); setJobSubmitted(true) }, 1800) }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 24px', borderRadius: 10, cursor: 'pointer' }}>
                       Submit Request →
                     </button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${S.border}`, fontSize: 12, color: S.muted }}>

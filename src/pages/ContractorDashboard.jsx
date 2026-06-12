@@ -222,92 +222,135 @@ function Onboarding({ onComplete }) {
           {/* Step 2 — Service Area */}
           {step === 2 && (
             <>
-              <div style={{ marginBottom: 32 }}>
+              <div style={{ marginBottom: 28 }}>
                 <div style={{ fontFamily: C.display, fontSize: 34, color: S.offwhite, marginBottom: 8 }}>Where do you work?</div>
                 <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Only leads within your service area will be routed to you.</p>
               </div>
-              <Card style={{ padding: 28 }}>
-                {/* Type toggle */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-                  {[['county', '📍 By County'], ['radius', '📡 By Radius'], ['statewide', '🗺 Statewide']].map(([type, label]) => (
-                    <button key={type} onClick={() => { setSaType(type); setError('') }} style={{ flex: 1, background: saType === type ? S.green : S.surface, border: `1px solid ${saType === type ? S.green : S.border}`, color: saType === type ? S.black : S.muted, fontSize: 12, fontWeight: 700, padding: '10px 6px', borderRadius: 8, cursor: 'pointer' }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
 
-                {/* County picker */}
-                {saType === 'county' && (
-                  <div>
-                    <div style={{ marginBottom: 14 }}>
-                      <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 7, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>State</label>
-                      <select value={saState} onChange={e => setSaState(e.target.value)} style={inp}>
-                        {US_STATES.map(s => <option key={s.abbr} value={s.abbr}>{s.name}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 7, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                        Counties <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}>({selectedCounties.length} selected)</span>
-                      </label>
-                      {!zipReady ? (
-                        <div style={{ padding: '20px', textAlign: 'center', color: S.muted, fontSize: 14 }}>Loading county data…</div>
-                      ) : (
-                        <div style={{ maxHeight: 220, overflowY: 'auto', border: `1px solid ${S.border}`, borderRadius: 8, background: S.surface }}>
-                          {counties.map(county => (
-                            <label key={county} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderBottom: `1px solid ${S.border}44`, cursor: 'pointer' }}>
-                              <input type="checkbox" checked={selectedCounties.includes(county)} onChange={() => toggleCounty(county)} style={{ accentColor: S.green, width: 15, height: 15 }} />
-                              <span style={{ fontSize: 14, color: S.offwhite }}>{county}</span>
-                            </label>
-                          ))}
+              {/* Selectable option cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+
+                {/* ── Option 1: By County ── */}
+                {[
+                  { type: 'county', icon: '📍', title: 'By County', desc: 'Select specific counties you serve.' },
+                  { type: 'radius', icon: '📡', title: 'By Radius', desc: 'Serve members within a set distance from your location.' },
+                  { type: 'statewide', icon: '🗺', title: 'Statewide', desc: 'Serve all members anywhere in your state.' },
+                ].map(({ type, icon, title, desc }) => {
+                  const active = saType === type
+                  return (
+                    <div key={type} style={{ border: `1px solid ${active ? S.green : S.border}`, borderRadius: 12, background: active ? S.green + '0A' : S.card, opacity: active ? 1 : 0.6, cursor: 'pointer', overflow: 'hidden' }}
+                      onClick={() => { setSaType(type); setError('') }}>
+
+                      {/* Card header */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px' }}>
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${active ? S.green : S.border}`, background: active ? S.green : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {active && <div style={{ width: 7, height: 7, borderRadius: '50%', background: S.black }} />}
+                        </div>
+                        <span style={{ fontSize: 20 }}>{icon}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: active ? S.offwhite : S.muted }}>{title}</div>
+                          <div style={{ fontSize: 12, color: S.muted, marginTop: 1 }}>{desc}</div>
+                        </div>
+                        {type === 'county' && active && selectedCounties.length > 0 && (
+                          <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '3px 10px', borderRadius: 100, flexShrink: 0 }}>
+                            {selectedCounties.length} {selectedCounties.length === 1 ? 'county' : 'counties'} selected
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Card body — only for selected option */}
+                      {active && (
+                        <div style={{ padding: '16px 18px 18px', borderTop: `1px solid ${S.green}33` }}
+                          onClick={e => e.stopPropagation()}>
+
+                          {type === 'county' && (
+                            <>
+                              <div style={{ marginBottom: 12 }}>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>State</label>
+                                <select value={saState} onChange={e => setSaState(e.target.value)} style={inp}>
+                                  {US_STATES.map(s => <option key={s.abbr} value={s.abbr}>{s.name}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                                  Counties
+                                  {selectedCounties.length > 0 && (
+                                    <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '2px 8px', borderRadius: 100, textTransform: 'none', letterSpacing: 0 }}>
+                                      {selectedCounties.length} selected
+                                    </span>
+                                  )}
+                                </label>
+                                {!zipReady ? (
+                                  <div style={{ padding: '16px', textAlign: 'center', color: S.muted, fontSize: 13, background: S.surface, borderRadius: 8, border: `1px solid ${S.border}` }}>
+                                    Loading county data…
+                                  </div>
+                                ) : (
+                                  <div style={{ maxHeight: 200, overflowY: 'auto', border: `1px solid ${S.border}`, borderRadius: 8, background: S.surface }}>
+                                    {counties.map((county, i) => (
+                                      <label key={county} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderBottom: i < counties.length - 1 ? `1px solid ${S.border}44` : 'none', cursor: 'pointer' }}>
+                                        <input type="checkbox" checked={selectedCounties.includes(county)} onChange={() => toggleCounty(county)} style={{ accentColor: S.green, width: 15, height: 15, flexShrink: 0 }} />
+                                        <span style={{ fontSize: 14, color: selectedCounties.includes(county) ? S.offwhite : S.muted }}>{county}</span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+
+                          {type === 'radius' && (
+                            <>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                <div>
+                                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Your Zip Code</label>
+                                  <input type="text" maxLength={5} placeholder="84101" value={saZip}
+                                    onChange={e => { setSaZip(e.target.value.replace(/\D/g, '')); setError('') }}
+                                    style={inp} />
+                                </div>
+                                <div>
+                                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Radius</label>
+                                  <select value={saRadius} onChange={e => setSaRadius(Number(e.target.value))} style={inp}>
+                                    {[10, 25, 50, 100, 150].map(r => <option key={r} value={r}>{r} miles</option>)}
+                                  </select>
+                                </div>
+                              </div>
+                              <div style={{ marginTop: 10, fontSize: 12, color: S.muted }}>
+                                We'll match you with members within {saRadius} miles of zip {saZip || '—'}.
+                              </div>
+                            </>
+                          )}
+
+                          {type === 'statewide' && (
+                            <>
+                              <div style={{ marginBottom: 12 }}>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>State</label>
+                                <select value={saState} onChange={e => setSaState(e.target.value)} style={inp}>
+                                  {US_STATES.map(s => <option key={s.abbr} value={s.abbr}>{s.name}</option>)}
+                                </select>
+                              </div>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: S.green + '15', border: `1px solid ${S.green}33`, borderRadius: 10, cursor: 'pointer' }}>
+                                <input type="checkbox" checked readOnly style={{ accentColor: S.green, width: 18, height: 18 }} />
+                                <span style={{ fontSize: 14, color: S.offwhite, fontWeight: 600 }}>I serve all of {stateName}</span>
+                              </label>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
+                  )
+                })}
+              </div>
 
-                {/* Radius picker */}
-                {saType === 'radius' && (
-                  <div>
-                    <div style={{ marginBottom: 14 }}>
-                      <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 7, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Business Zip Code</label>
-                      <input type="text" maxLength={5} placeholder="84101" value={saZip} onChange={e => { setSaZip(e.target.value.replace(/\D/g, '')); setError('') }} style={inp} />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 7, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Service Radius</label>
-                      <select value={saRadius} onChange={e => setSaRadius(Number(e.target.value))} style={inp}>
-                        {[10, 25, 50, 100, 150].map(r => <option key={r} value={r}>{r} miles</option>)}
-                      </select>
-                    </div>
-                  </div>
-                )}
+              {error && <div style={{ background: S.danger + '15', border: `1px solid ${S.danger}44`, borderRadius: 8, padding: '10px 14px', fontSize: 13, color: S.danger, marginBottom: 16 }}>{error}</div>}
 
-                {/* Statewide */}
-                {saType === 'statewide' && (
-                  <div>
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 7, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>State</label>
-                      <select value={saState} onChange={e => setSaState(e.target.value)} style={inp}>
-                        {US_STATES.map(s => <option key={s.abbr} value={s.abbr}>{s.name}</option>)}
-                      </select>
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: S.green + '15', border: `1px solid ${S.green}33`, borderRadius: 10, cursor: 'pointer' }}>
-                      <input type="checkbox" checked readOnly style={{ accentColor: S.green, width: 18, height: 18 }} />
-                      <span style={{ fontSize: 14, color: S.offwhite, fontWeight: 600 }}>I serve all of {stateName}</span>
-                    </label>
-                  </div>
-                )}
-
-                {error && <div style={{ background: S.danger + '15', border: `1px solid ${S.danger}44`, borderRadius: 8, padding: '10px 14px', fontSize: 13, color: S.danger, marginTop: 16 }}>{error}</div>}
-
-                <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-                  <button onClick={() => { setStep(1); setError('') }} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, fontWeight: 600, padding: '13px 20px', borderRadius: 10, cursor: 'pointer' }}>
-                    ← Back
-                  </button>
-                  <button onClick={handleComplete} style={{ flex: 1, background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 10, cursor: 'pointer' }}>
-                    Complete Setup →
-                  </button>
-                </div>
-              </Card>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => { setStep(1); setError('') }} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, fontWeight: 600, padding: '13px 20px', borderRadius: 10, cursor: 'pointer' }}>
+                  ← Back
+                </button>
+                <button onClick={handleComplete} style={{ flex: 1, background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 10, cursor: 'pointer' }}>
+                  Complete Setup →
+                </button>
+              </div>
             </>
           )}
         </div>

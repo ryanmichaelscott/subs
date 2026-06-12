@@ -5,13 +5,16 @@ import { S, C } from '../theme'
 export default function MemberLogin() {
   const navigate = useNavigate()
   const [mode, setMode] = useState('login')
-  const [form, setForm] = useState({ name: '', email: '', password: '', tier: 'plus' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', zip: '', tier: 'plus' })
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = (e) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => { setLoading(false); navigate('/dashboard') }, 900)
+    setTimeout(() => {
+      setLoading(false)
+      navigate('/dashboard', { state: { zip: form.zip || '84101' } })
+    }, 900)
   }
 
   const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, padding: '13px 14px', color: S.offwhite, fontSize: 15, outline: 'none', boxSizing: 'border-box' }
@@ -74,6 +77,16 @@ export default function MemberLogin() {
                 <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Password</label>
                 <input style={inp} type="password" placeholder="••••••••" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required />
               </div>
+              {mode === 'signup' && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>
+                    Your zip code
+                    <span style={{ fontWeight: 400, color: S.muted, marginLeft: 6 }}>— so we can match you with local contractors</span>
+                  </label>
+                  <input style={{ ...inp, maxWidth: 160 }} type="text" maxLength={5} placeholder="84101"
+                    value={form.zip} onChange={e => setForm(f => ({ ...f, zip: e.target.value.replace(/\D/g, '') }))} />
+                </div>
+              )}
               {mode === 'signup' && (
                 <div style={{ marginBottom: 20 }}>
                   <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 8, fontWeight: 500 }}>Membership tier</label>
