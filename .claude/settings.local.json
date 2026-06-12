@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -oP 'service:`[^`]+`,member:`[^`]+`,market:`[^`]+`,savings:`[^`]+`' /Users/ryanscott/Desktop/budr-app/budr-reference/assets/index-BfwKt-Jm.js)",
+      "Bash(grep -oP 'bio:`[^`]+`' /Users/ryanscott/Desktop/budr-app/budr-reference/assets/index-BfwKt-Jm.js)",
+      "Bash(python3 *)",
+      "Bash(npx eslint *)",
+      "Bash(curl -s http://localhost:5173/login)",
+      "Bash(curl -s http://localhost:5173/dashboard)",
+      "Bash(curl -s http://localhost:5173/contractor/dashboard)",
+      "Bash(curl -s http://localhost:5173/admin/dashboard)"
+    ]
+  }
+}
