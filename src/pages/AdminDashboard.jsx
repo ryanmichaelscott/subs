@@ -72,7 +72,9 @@ export default function AdminDashboard() {
         try {
           // error.context is the raw Response object in supabase-js v2
           const body = error.context?.json ? await error.context.json() : error.context
-          detail = body?.error || body?.message || JSON.stringify(body) || error.message
+          const base = body?.error || body?.message || error.message
+          const extra = body?.details ? ': ' + JSON.stringify(body.details) : ''
+          detail = base + extra
         } catch {}
         setActionError(`${fnName} failed: ${detail}`)
         return
