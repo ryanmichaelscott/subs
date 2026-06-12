@@ -87,9 +87,9 @@ create policy "members_own_row" on members
 create policy "anyone_can_apply" on contractors
   for insert with check (status = 'pending');
 
--- Anyone authenticated can read approved contractors and their rates
-create policy "read_approved_contractors" on contractors
-  for select using (status = 'approved');
+-- Anyone can read all contractors (approved for member browsing, pending for admin review)
+create policy "read_all_contractors" on contractors
+  for select using (true);
 
 create policy "read_contractor_rates" on contractor_rates
   for select using (
