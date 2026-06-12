@@ -267,6 +267,7 @@ function RateCardBuilder() {
         </div>
       )}
 
+      <div className="rate-table-wrap">
       <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden', marginBottom: 14 }}>
         {/* Header */}
         <div style={{ ...colStyle, padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
@@ -401,6 +402,7 @@ function RateCardBuilder() {
           )
         })}
       </div>
+      </div>{/* end rate-table-wrap */}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 12, color: S.muted, lineHeight: 1.5, maxWidth: 520 }}>
@@ -466,7 +468,7 @@ export default function ContractorDashboard() {
           <div style={{ fontSize: 14, color: S.muted, marginTop: 4 }}>{profile.trade} Partner · Salt Lake County</div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, margin: '24px 0' }}>
+        <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, margin: '24px 0' }}>
           {[['3', 'Pending leads', S.amber], ['47', 'Jobs this year', S.green], ['$1,840', 'Jun payout', S.blue], ['100%', 'Verification rate', S.green]].map(([val, label, color]) => (
             <Card key={label} style={{ padding: '16px 20px' }}>
               <div style={{ fontFamily: C.display, fontSize: 28, color, marginBottom: 4 }}>{val}</div>
@@ -475,7 +477,7 @@ export default function ContractorDashboard() {
           ))}
         </div>
 
-        <div style={{ display: 'flex', gap: 2, background: S.surface, borderRadius: 10, padding: 4, border: `1px solid ${S.border}`, marginBottom: 24 }}>
+        <div className="tabs-bar" style={{ display: 'flex', gap: 2, background: S.surface, borderRadius: 10, padding: 4, border: `1px solid ${S.border}`, marginBottom: 24 }}>
           {tabs.map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{ flex: 1, background: tab === id ? S.card : 'transparent', border: tab === id ? `1px solid ${S.border}` : '1px solid transparent', borderRadius: 8, padding: '10px 0', fontSize: 13, fontWeight: 600, color: tab === id ? S.offwhite : S.muted, cursor: 'pointer', position: 'relative' }}>
               {label}
@@ -574,7 +576,7 @@ export default function ContractorDashboard() {
               </div>
             )}
             <div style={{ fontFamily: C.display, fontSize: 22, color: S.offwhite, marginBottom: 24 }}>Partner Profile</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
               {[['Company name', 'name'], ['Primary contact', 'contact'], ['Email', 'email'], ['Phone', 'phone']].map(([label, key]) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>{label}</label>
@@ -607,7 +609,7 @@ export default function ContractorDashboard() {
 
         {/* Billing */}
         {tab === 'billing' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+          <div className="billing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
             <div>
               <Card style={{ padding: 24, marginBottom: 16 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16 }}>Listing Status</div>

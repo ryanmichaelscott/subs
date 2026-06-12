@@ -83,7 +83,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 2, background: S.surface, borderRadius: 10, padding: 4, border: `1px solid ${S.border}`, marginBottom: 28 }}>
+        <div className="tabs-bar" style={{ display: 'flex', gap: 2, background: S.surface, borderRadius: 10, padding: 4, border: `1px solid ${S.border}`, marginBottom: 28 }}>
           {tabs.map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{ flex: 1, background: tab === id ? S.card : 'transparent', border: tab === id ? `1px solid ${S.border}` : '1px solid transparent', borderRadius: 8, padding: '10px 0', fontSize: 13, fontWeight: 600, color: tab === id ? S.offwhite : S.muted, cursor: 'pointer', position: 'relative' }}>
               {label}
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
         {/* Stats */}
         {tab === 'stats' && (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+            <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
               {[
                 ['MRR', `$${Math.round(mrr).toLocaleString()}`, S.green, 'Monthly recurring revenue'],
                 ['ARR', `$${Math.round(arr).toLocaleString()}`, S.blue, 'Annual recurring revenue'],
@@ -114,7 +114,7 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+            <div className="billing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
               <Card style={{ padding: 24 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 16 }}>Members by Tier</div>
                 {[
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
 
             <Card style={{ padding: 24 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 16 }}>Network Overview</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+              <div className="stat-grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
                 {[
                   ['8', 'Total members'],
                   ['5', 'Active contractors'],
@@ -179,6 +179,7 @@ export default function AdminDashboard() {
             <div style={{ marginBottom: 16 }}>
               <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="Search members by name or email..." style={{ width: '100%', maxWidth: 400, background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 14px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             </div>
+            <div className="rate-table-wrap">
             <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, overflow: 'hidden' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 80px 60px 80px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
                 {['ID', 'Name', 'Email', 'Tier', 'Since', 'Jobs', 'Status'].map(h => (
@@ -199,6 +200,7 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+            </div>{/* end rate-table-wrap */}
           </div>
         )}
 

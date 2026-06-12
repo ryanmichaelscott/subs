@@ -106,13 +106,15 @@ const FAQS = [
 
 function Nav({ setSection }) {
   const links = [['how', 'How It Works'], ['membership', 'Membership'], ['network', 'The Network'], ['vendors', 'For Vendors'], ['faq', 'FAQ']]
+  const [open, setOpen] = useState(false)
   return (
     <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: S.black + 'E8', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${S.border}` }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <button onClick={() => setSection('home')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
           <span style={{ fontFamily: C.body, fontSize: 20, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</span>
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'nowrap' }}>
+        {/* Desktop nav links — hidden on mobile via .nav-links CSS class */}
+        <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'nowrap' }}>
           {links.map(([id, label]) => (
             <button key={id} onClick={() => setSection(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: S.muted, fontSize: 13, fontWeight: 500, padding: '6px 10px', borderRadius: 6 }}>
               {label}
@@ -124,7 +126,28 @@ function Nav({ setSection }) {
             </button>
           </Link>
         </div>
+        {/* Hamburger — visible on mobile only via .nav-hamburger CSS class */}
+        <button className="nav-hamburger" onClick={() => setOpen(o => !o)} aria-label="Menu" style={{ background: 'none', border: `1px solid ${S.border}`, cursor: 'pointer', gap: 4, padding: '8px 10px', borderRadius: 8, flexShrink: 0 }}>
+          <span style={{ display: 'block', width: 18, height: 2, background: S.offwhite, borderRadius: 1 }} />
+          <span style={{ display: 'block', width: 18, height: 2, background: S.offwhite, borderRadius: 1 }} />
+          <span style={{ display: 'block', width: 18, height: 2, background: S.offwhite, borderRadius: 1 }} />
+        </button>
       </div>
+      {/* Mobile dropdown menu */}
+      {open && (
+        <div style={{ background: S.surface, borderTop: `1px solid ${S.border}`, padding: '8px 20px 16px', display: 'flex', flexDirection: 'column' }}>
+          {links.map(([id, label]) => (
+            <button key={id} onClick={() => { setSection(id); setOpen(false) }} style={{ background: 'none', border: 'none', borderBottom: `1px solid ${S.border}`, cursor: 'pointer', color: S.offwhite, fontSize: 15, fontWeight: 500, padding: '13px 4px', textAlign: 'left', minHeight: 44, width: '100%' }}>
+              {label}
+            </button>
+          ))}
+          <Link to="/login" style={{ display: 'block', marginTop: 12 }}>
+            <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '13px 0', borderRadius: 8, cursor: 'pointer', width: '100%', minHeight: 44 }}>
+              Member Login
+            </button>
+          </Link>
+        </div>
+      )}
     </nav>
   )
 }
@@ -145,7 +168,7 @@ function Hero({ setSection }) {
       <p style={{ fontSize: 18, color: S.muted, maxWidth: 560, margin: '0 auto 40px', lineHeight: 1.6 }}>
         SUBS is a membership that unlocks contractor pricing on every trade that touches your home. Whatever the job costs — you pay the contractor rate, not the retail rate. Over 30 trades. One annual fee.
       </p>
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 72 }}>
+      <div className="hero-ctas" style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 72 }}>
         <Link to="/login">
           <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
             Sign Up Today →
@@ -155,7 +178,7 @@ function Hero({ setSection }) {
           Join as a vendor
         </button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: `1px solid ${S.border}`, borderLeft: `1px solid ${S.border}` }}>
+      <div className="stat-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: `1px solid ${S.border}`, borderLeft: `1px solid ${S.border}` }}>
         {[['$1,300', 'avg annual savings at member rates'], ['$3,750', 'saved on a single $25K roof at 15% off'], ['30+', 'trade categories at contractor rates']].map(([stat, label], i) => (
           <div key={i} style={{ padding: '28px 24px', borderRight: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}`, textAlign: 'center' }}>
             <div style={{ fontFamily: C.display, fontSize: 40, color: S.green, marginBottom: 8 }}>{stat}</div>
@@ -204,7 +227,7 @@ function Membership() {
         </h2>
         <p style={{ fontSize: 14, color: S.muted }}>Annual billing only. Cancel in the first 14 days for a full refund.</p>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, alignItems: 'start' }}>
+      <div className="tier-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, alignItems: 'start' }}>
         {TIERS.map((tier) => (
           <div key={tier.id} style={{ background: S.card, border: `2px solid ${tier.popular ? tier.color : S.border}`, borderRadius: 16, padding: 28, position: 'relative' }}>
             {tier.popular && (
@@ -251,7 +274,7 @@ function Network() {
             Every contractor in the SUBS network is licensed, insured, and has agreed to honor published member pricing. Rates are verified after every job.
           </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 2 }}>
+        <div className="trades-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 2 }}>
           {visible.map((trade, i) => (
             <div key={i} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 10, padding: '16px 14px' }}>
               <div style={{ fontSize: 22, marginBottom: 8 }}>{trade.icon}</div>
@@ -279,7 +302,7 @@ function Testimonials() {
       <div style={{ textAlign: 'center', marginBottom: 48 }}>
         <h2 style={{ fontFamily: C.display, fontSize: 'clamp(28px, 4vw, 44px)', color: S.offwhite, fontWeight: 400, margin: 0 }}>What members say</h2>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+      <div className="testimonials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
         {TESTIMONIALS.map((t, i) => (
           <div key={i} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 14, padding: 28 }}>
             <p style={{ fontSize: 15, color: S.offwhite, lineHeight: 1.65, marginBottom: 20, fontStyle: 'italic' }}>"{t.quote}"</p>
@@ -305,7 +328,7 @@ function ForVendors() {
   return (
     <section style={{ background: S.surface, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+        <div className="vendors-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 16 }}>For Contractors</div>
             <h2 style={{ fontFamily: C.display, fontSize: 'clamp(28px, 4vw, 48px)', color: S.offwhite, fontWeight: 400, marginBottom: 20, lineHeight: 1.1 }}>
@@ -411,7 +434,7 @@ function Footer() {
   return (
     <footer style={{ background: S.black, borderTop: `1px solid ${S.border}` }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 20px 32px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 48 }}>
+        <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 48 }}>
           <div>
             <div style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em', marginBottom: 12 }}>SUBS</div>
             <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.6, maxWidth: 260, margin: 0 }}>The membership that unlocks contractor pricing on every trade that touches your home.</p>

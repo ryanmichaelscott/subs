@@ -85,7 +85,7 @@ export default function MemberDashboard() {
       </nav>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
+        <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <MemberCard />
@@ -115,7 +115,7 @@ export default function MemberDashboard() {
           {/* Main */}
           <div>
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: 2, background: S.surface, borderRadius: 10, padding: 4, border: `1px solid ${S.border}`, marginBottom: 24 }}>
+            <div className="tabs-bar" style={{ display: 'flex', gap: 2, background: S.surface, borderRadius: 10, padding: 4, border: `1px solid ${S.border}`, marginBottom: 24 }}>
               {tabs.map(([id, label]) => (
                 <button key={id} onClick={() => setTab(id)} style={{ flex: 1, background: tab === id ? S.card : 'transparent', border: tab === id ? `1px solid ${S.border}` : '1px solid transparent', borderRadius: 8, padding: '10px 0', fontSize: 13, fontWeight: 600, color: tab === id ? S.offwhite : S.muted, cursor: 'pointer' }}>
                   {label}
@@ -196,7 +196,7 @@ export default function MemberDashboard() {
                   <>
                     <div style={{ fontFamily: C.display, fontSize: 22, color: S.offwhite, marginBottom: 6 }}>Request a job</div>
                     <p style={{ fontSize: 14, color: S.muted, marginBottom: 24 }}>We'll match you with a SUBS vetted contractor at your member rate.</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                    <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
                       <div>
                         <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Trade / Service</label>
                         <select value={jobForm.trade} onChange={e => setJobForm(f => ({ ...f, trade: e.target.value }))} style={inp}>
