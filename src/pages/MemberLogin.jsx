@@ -1,4 +1,5 @@
-import { SignIn } from '@clerk/clerk-react'
+import { useSearchParams } from 'react-router-dom'
+import { SignIn, SignUp } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 
 const appearance = {
@@ -50,6 +51,9 @@ const appearance = {
 }
 
 export default function MemberLogin() {
+  const [searchParams] = useSearchParams()
+  const isSignUp = searchParams.get('mode') === 'signup'
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0C0F0A', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
@@ -60,12 +64,21 @@ export default function MemberLogin() {
         </div>
 
         <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', justifyContent: 'center' }}>
-          <SignIn
-            routing="hash"
-            afterSignInUrl="/dashboard"
-            signUpUrl="/login"
-            appearance={appearance}
-          />
+          {isSignUp ? (
+            <SignUp
+              routing="hash"
+              afterSignUpUrl="/dashboard"
+              signInUrl="/login"
+              appearance={appearance}
+            />
+          ) : (
+            <SignIn
+              routing="hash"
+              afterSignInUrl="/dashboard"
+              signUpUrl="/login?mode=signup"
+              appearance={appearance}
+            />
+          )}
         </div>
       </div>
     </div>
