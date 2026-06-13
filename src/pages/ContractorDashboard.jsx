@@ -607,9 +607,29 @@ export default function ContractorDashboard() {
     serviceArea: { type: 'county', state: 'UT', counties: ['Salt Lake'] },
   })
   const [zipReady, setZipReady] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
+  const [contractorId, setContractorId] = useState(null)
+  const [docs, setDocs] = useState({ insurance_doc_url: null, license_doc_url: null })
+  const [docUploading, setDocUploading] = useState(null)
+  const [docError, setDocError] = useState(null)
 
   useEffect(() => { loadZipData().then(() => setZipReady(true)) }, [])
-  const [profileSaved, setProfileSaved] = useState(false)
+
+  useEffect(() => {
+    const email = user?.primaryEmailAddress?.emailAddress
+    if (!email) return
+    supabase
+      .from('contractors')
+      .select('id, insurance_doc_url, license_doc_url')
+      .eq('contact_email', email)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setContractorId(data.id)
+          setDocs({ insurance_doc_url: data.insurance_doc_url, license_doc_url: data.license_doc_url })
+        }
+      })
+  }, [user])
 
   const handleOnboardingComplete = async (data) => {
     await supabase.from('contractors').insert({
@@ -627,6 +647,26 @@ export default function ContractorDashboard() {
 
   const handleLead = (id, action) => {
     setLeads(ls => ls.map(l => l.id === id ? { ...l, status: action } : l))
+  }
+
+  const handleDocUpload = async (docType, col, file) => {
+    if (!file || !contractorId) return
+    setDocUploading(docType)
+    setDocError(null)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${contractorId}/${docType}.${ext}`
+      const { error: upErr } = await supabase.storage.from('contractor-docs').upload(path, file, { upsert: true })
+      if (upErr) throw upErr
+      const { data: { publicUrl } } = supabase.storage.from('contractor-docs').getPublicUrl(path)
+      const { error: dbErr } = await supabase.from('contractors').update({ [col]: publicUrl }).eq('id', contractorId)
+      if (dbErr) throw dbErr
+      setDocs(d => ({ ...d, [col]: publicUrl }))
+    } catch (e) {
+      setDocError(`Upload failed: ${e.message}`)
+    } finally {
+      setDocUploading(null)
+    }
   }
 
   const tabs = [['leads', '📥 Lead Inbox'], ['rates', '💲 Rate Card'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
@@ -778,6 +818,42 @@ export default function ContractorDashboard() {
             <div style={{ marginBottom: 24 }}>
               <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Bio (shown to members)</label>
               <textarea value={profile.bio} onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))} rows={4} style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 12 }}>Documents</div>
+              {[
+                { docType: 'insurance', col: 'insurance_doc_url', label: 'Proof of Insurance' },
+                { docType: 'license', col: 'license_doc_url', label: 'Business License' },
+              ].map(({ docType, col, label }) => {
+                const url = docs[col]
+                const loading = docUploading === docType
+                return (
+                  <div key={docType} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, marginBottom: 8 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>{label}</div>
+                      <div style={{ fontSize: 12, color: url ? S.green : S.muted, marginTop: 2 }}>{url ? '✓ Uploaded' : 'Not uploaded'}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {url && (
+                        <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: S.blue, padding: '6px 12px', border: `1px solid ${S.border}`, borderRadius: 7, textDecoration: 'none' }}>
+                          View
+                        </a>
+                      )}
+                      <input
+                        type="file"
+                        id={`doc-${docType}`}
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        style={{ display: 'none' }}
+                        onChange={e => { if (e.target.files[0]) handleDocUpload(docType, col, e.target.files[0]) }}
+                      />
+                      <label htmlFor={`doc-${docType}`} style={{ fontSize: 12, fontWeight: 600, color: loading ? S.muted : S.offwhite, padding: '6px 12px', border: `1px solid ${S.border}`, borderRadius: 7, cursor: loading ? 'not-allowed' : 'pointer', background: S.card, pointerEvents: loading ? 'none' : 'auto' }}>
+                        {loading ? 'Uploading…' : url ? 'Replace' : 'Upload'}
+                      </label>
+                    </div>
+                  </div>
+                )
+              })}
+              {docError && <div style={{ fontSize: 12, color: S.danger, marginTop: 4 }}>{docError}</div>}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '12px 16px', background: S.surface, borderRadius: 8, border: `1px solid ${S.border}` }}>
               <span style={{ color: S.green, fontSize: 16 }}>✓</span>

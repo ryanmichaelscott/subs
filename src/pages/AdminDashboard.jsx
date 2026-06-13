@@ -52,6 +52,9 @@ export default function AdminDashboard() {
   const [memberSearch, setMemberSearch] = useState('')
   const [actionError, setActionError] = useState(null)
   const [actionLoading, setActionLoading] = useState(null)
+  const [expandedContractor, setExpandedContractor] = useState(null)
+  const [adminDocUploading, setAdminDocUploading] = useState(null)
+  const [adminDocError, setAdminDocError] = useState(null)
 
   useEffect(() => {
     supabase
@@ -98,6 +101,26 @@ export default function AdminDashboard() {
       setActionError(`Unexpected error: ${e.message}`)
     } finally {
       setActionLoading(null)
+    }
+  }
+
+  const handleAdminDocUpload = async (contractorId, docType, col, file) => {
+    if (!file) return
+    setAdminDocUploading(`${contractorId}-${docType}`)
+    setAdminDocError(null)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${contractorId}/${docType}.${ext}`
+      const { error: upErr } = await supabase.storage.from('contractor-docs').upload(path, file, { upsert: true })
+      if (upErr) throw upErr
+      const { data: { publicUrl } } = supabase.storage.from('contractor-docs').getPublicUrl(path)
+      const { error: dbErr } = await supabase.from('contractors').update({ [col]: publicUrl }).eq('id', contractorId)
+      if (dbErr) throw dbErr
+      setContractors(cs => cs.map(c => c.id === contractorId ? { ...c, [col]: publicUrl } : c))
+    } catch (e) {
+      setAdminDocError(`Upload failed: ${e.message}`)
+    } finally {
+      setAdminDocUploading(null)
     }
   }
 
@@ -333,41 +356,93 @@ export default function AdminDashboard() {
                     {statusGroup === 'approved' ? '✓ Active Partners' : '✗ Removed'}
                   </div>
                   <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, overflow: 'hidden' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 1fr 120px 120px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
-                      {['Company', 'Trade', 'Contact', 'Since', ''].map(h => (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 1fr 120px 80px 120px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
+                      {['Company', 'Trade', 'Contact', 'Since', 'Docs', ''].map(h => (
                         <div key={h} style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
                       ))}
                     </div>
-                    {group.map((c, i) => (
-                      <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 1fr 120px 120px', padding: '14px 20px', borderBottom: i < group.length - 1 ? `1px solid ${S.border}` : 'none', alignItems: 'center' }}>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{c.name || '—'}</span>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '2px 8px', borderRadius: 100, display: 'inline-block' }}>{c.trade}</span>
-                        <div>
-                          <div style={{ fontSize: 13, color: S.offwhite }}>{c.contact_name || '—'}</div>
-                          <div style={{ fontSize: 12, color: S.muted }}>{c.contact_email || '—'}</div>
-                        </div>
-                        <span style={{ fontSize: 12, color: S.muted }}>{c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—'}</span>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          {statusGroup === 'approved' ? (
+                    {group.map((c, i) => {
+                      const isExpanded = expandedContractor === c.id
+                      return (
+                        <div key={c.id}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 1fr 120px 80px 120px', padding: '14px 20px', borderBottom: `1px solid ${S.border}`, alignItems: 'center' }}>
+                            <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{c.name || '—'}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '2px 8px', borderRadius: 100, display: 'inline-block' }}>{c.trade}</span>
+                            <div>
+                              <div style={{ fontSize: 13, color: S.offwhite }}>{c.contact_name || '—'}</div>
+                              <div style={{ fontSize: 12, color: S.muted }}>{c.contact_email || '—'}</div>
+                            </div>
+                            <span style={{ fontSize: 12, color: S.muted }}>{c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—'}</span>
                             <button
-                              onClick={() => handleStatusUpdate(c.id, 'rejected')}
-                              disabled={actionLoading === c.id}
-                              style={{ background: 'transparent', border: `1px solid ${S.danger}66`, color: S.danger, fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                              onClick={() => setExpandedContractor(isExpanded ? null : c.id)}
+                              style={{ background: 'transparent', border: `1px solid ${S.border}`, color: isExpanded ? S.green : S.muted, fontSize: 12, fontWeight: 600, padding: '6px 10px', borderRadius: 7, cursor: 'pointer' }}
                             >
-                              {actionLoading === c.id ? '…' : 'Remove'}
+                              {isExpanded ? 'Close ▲' : 'Docs ▼'}
                             </button>
-                          ) : (
-                            <button
-                              onClick={() => handleStatusUpdate(c.id, 'approved')}
-                              disabled={actionLoading === c.id}
-                              style={{ background: 'transparent', border: `1px solid ${S.green}66`, color: S.green, fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
-                            >
-                              {actionLoading === c.id ? '…' : 'Reinstate'}
-                            </button>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              {statusGroup === 'approved' ? (
+                                <button
+                                  onClick={() => handleStatusUpdate(c.id, 'rejected')}
+                                  disabled={actionLoading === c.id}
+                                  style={{ background: 'transparent', border: `1px solid ${S.danger}66`, color: S.danger, fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                                >
+                                  {actionLoading === c.id ? '…' : 'Remove'}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleStatusUpdate(c.id, 'approved')}
+                                  disabled={actionLoading === c.id}
+                                  style={{ background: 'transparent', border: `1px solid ${S.green}66`, color: S.green, fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                                >
+                                  {actionLoading === c.id ? '…' : 'Reinstate'}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          {isExpanded && (
+                            <div style={{ padding: '16px 20px', background: S.black + '80', borderBottom: `1px solid ${S.border}` }}>
+                              {adminDocError && <div style={{ fontSize: 12, color: S.danger, marginBottom: 10 }}>{adminDocError}</div>}
+                              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Documents</div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                {[
+                                  { docType: 'insurance', col: 'insurance_doc_url', label: 'Proof of Insurance' },
+                                  { docType: 'license', col: 'license_doc_url', label: 'Business License' },
+                                ].map(({ docType, col, label }) => {
+                                  const url = c[col]
+                                  const loadKey = `${c.id}-${docType}`
+                                  const loading = adminDocUploading === loadKey
+                                  return (
+                                    <div key={docType} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8 }}>
+                                      <div>
+                                        <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>{label}</div>
+                                        <div style={{ fontSize: 12, color: url ? S.green : S.muted, marginTop: 2 }}>{url ? '✓ Uploaded' : 'Not uploaded'}</div>
+                                      </div>
+                                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                        {url && (
+                                          <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 600, color: S.blue, padding: '6px 12px', border: `1px solid ${S.border}`, borderRadius: 7, textDecoration: 'none' }}>
+                                            View
+                                          </a>
+                                        )}
+                                        <input
+                                          type="file"
+                                          id={`admin-doc-${c.id}-${docType}`}
+                                          accept=".pdf,.jpg,.jpeg,.png"
+                                          style={{ display: 'none' }}
+                                          onChange={e => { if (e.target.files[0]) handleAdminDocUpload(c.id, docType, col, e.target.files[0]) }}
+                                        />
+                                        <label htmlFor={`admin-doc-${c.id}-${docType}`} style={{ fontSize: 12, fontWeight: 600, color: loading ? S.muted : S.offwhite, padding: '6px 12px', border: `1px solid ${S.border}`, borderRadius: 7, cursor: loading ? 'not-allowed' : 'pointer', background: S.card, pointerEvents: loading ? 'none' : 'auto' }}>
+                                          {loading ? 'Uploading…' : url ? 'Replace' : 'Upload'}
+                                        </label>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
                           )}
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )

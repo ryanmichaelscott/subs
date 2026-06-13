@@ -113,3 +113,13 @@ create policy "contractors_own_leads" on leads
       and contact_email = current_user
     )
   );
+
+-- Document upload columns for contractors
+alter table contractors add column if not exists insurance_doc_url text;
+alter table contractors add column if not exists license_doc_url text;
+
+-- Storage bucket for contractor documents (run in Supabase dashboard)
+-- insert into storage.buckets (id, name, public) values ('contractor-docs', 'contractor-docs', true) on conflict (id) do nothing;
+-- create policy "contractor_docs_insert" on storage.objects for insert with check (bucket_id = 'contractor-docs');
+-- create policy "contractor_docs_select" on storage.objects for select using (bucket_id = 'contractor-docs');
+-- create policy "contractor_docs_update" on storage.objects for update using (bucket_id = 'contractor-docs');
