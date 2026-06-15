@@ -98,7 +98,20 @@ export default function MemberDashboard() {
         }, { onConflict: 'clerk_user_id', ignoreDuplicates: false })
         .select()
         .single()
-      if (data) setMember(data)
+      if (data) {
+        setMember(data)
+        // Send welcome email if this is a new signup (created within last 5 minutes)
+        const createdAt = user.createdAt ? new Date(user.createdAt).getTime() : 0
+        const isNewUser = Date.now() - createdAt < 5 * 60 * 1000
+        if (isNewUser) {
+          supabase.functions.invoke('send-welcome-email', {
+            body: {
+              email: user.primaryEmailAddress?.emailAddress || '',
+              name: user.firstName || user.fullName || 'there',
+            },
+          })
+        }
+      }
     }
     upsertMember()
   }, [user])

@@ -45,8 +45,7 @@ serve(async (req) => {
     })
   }
 
-  // Create Clerk invitation — sends a magic-link email to set password
-  // and sets role metadata on the user when they accept
+  // Create Clerk invitation with notify: false — we'll send our own branded email via Resend
   const clerkRes = await fetch('https://api.clerk.com/v1/invitations', {
     method: 'POST',
     headers: {
@@ -56,7 +55,7 @@ serve(async (req) => {
     body: JSON.stringify({
       email_address: contractor.contact_email,
       public_metadata: { role: 'contractor' },
-      notify: true,
+      notify: false,
     }),
   })
 
@@ -82,8 +81,53 @@ serve(async (req) => {
     .eq('id', contractor_id)
 
   if (updateError) {
-    // Invitation was created — log the error but don't fail the request
     console.error('Failed to update contractor status:', updateError)
+  }
+
+  // Send branded approval email via Resend
+  const resendKey = Deno.env.get('RESEND_API_KEY')
+  const magicLink = clerkData.url || 'https://getsubs.co/contractor/login'
+  if (resendKey && !isDuplicate) {
+    const approvalHtml = `
+<!DOCTYPE html>
+<html>
+<body style="font-family: Inter, system-ui, sans-serif; background: #f5f5f5; padding: 40px 20px; margin: 0;">
+  <div style="max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 40px;">
+    <div style="font-size: 22px; font-weight: 800; color: #1a1a1a; letter-spacing: 0.06em; margin-bottom: 28px;">SUBS</div>
+    <div style="display: inline-block; background: #DCFCE7; color: #166534; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 100px; margin-bottom: 20px; letter-spacing: 0.06em;">
+      APPLICATION APPROVED
+    </div>
+    <p style="font-size: 16px; color: #1a1a1a; margin-bottom: 16px;">Hi ${contractor.contact_name || contractor.name},</p>
+    <p style="font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 16px;">
+      You've been approved as a SUBS contractor partner. Welcome to the network.
+    </p>
+    <p style="font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 28px;">
+      Click below to set up your account — this link expires in 7 days.
+    </p>
+    <a href="${magicLink}" style="display: inline-block; background: #5DFF8A; color: #0C0F0A; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 10px; text-decoration: none;">
+      Set up my account →
+    </a>
+    <p style="font-size: 13px; color: #999; margin-top: 32px; line-height: 1.5;">
+      Once you're in, complete your profile and rate card so members can find you. Leads will start coming in shortly after.
+    </p>
+    <p style="font-size: 15px; color: #1a1a1a; margin-top: 8px;">— The SUBS Team</p>
+  </div>
+</body>
+</html>`
+
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'SUBS <hello@subs.app>',
+        to: contractor.contact_email,
+        subject: "You're approved — set up your SUBS partner account",
+        html: approvalHtml,
+      }),
+    })
   }
 
   return new Response(

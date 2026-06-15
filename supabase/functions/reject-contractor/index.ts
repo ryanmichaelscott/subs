@@ -78,7 +78,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'SUBS <noreply@getsubs.co>',
+        from: 'SUBS <hello@subs.app>',
         to: contractor.contact_email,
         subject: 'Your SUBS contractor application',
         html: rejectionEmail(contractor.contact_name || 'there'),
