@@ -352,17 +352,32 @@ function Onboarding({ onComplete }) {
 
 // ─── Rate Card Builder ──────────────────────────────────────────────────────────
 
-function RateCardBuilder() {
-  const [rates, setRates] = useState(INITIAL_RATES)
+function RateCardBuilder({ contractorId }) {
+  const [rates, setRates] = useState([])
   const [editingId, setEditingId] = useState(null)
-  const [draft, setDraft] = useState(null)   // draft row while editing
+  const [draft, setDraft] = useState(null)
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [pendingApproval, setPendingApproval] = useState(false)
+  const [saveError, setSaveError] = useState(null)
 
-  const startEdit = (rate) => {
-    setEditingId(rate.id)
-    setDraft({ ...rate })
-  }
+  useEffect(() => {
+    if (!contractorId) return
+    supabase.from('contractor_rates').select('*').eq('contractor_id', contractorId)
+      .then(({ data }) => {
+        if (data?.length) {
+          setRates(data.map((r, i) => ({
+            id: i + 1,
+            service: r.service_name,
+            pricingType: 'per job',
+            marketRate: r.market_price || '',
+            memberRate: r.member_price || '',
+          })))
+          nextId = data.length + 1
+        }
+      })
+  }, [contractorId])
+
+  const startEdit = (rate) => { setEditingId(rate.id); setDraft({ ...rate }) }
 
   const startAdd = () => {
     const newRow = { id: nextId++, service: '', pricingType: 'per job', marketRate: '', memberRate: '' }
@@ -379,7 +394,6 @@ function RateCardBuilder() {
   }
 
   const cancelEdit = (id) => {
-    // if this was a new (empty) row, remove it on cancel
     const row = rates.find(r => r.id === id)
     if (row && !row.service) setRates(rs => rs.filter(r => r.id !== id))
     setEditingId(null)
@@ -391,9 +405,23 @@ function RateCardBuilder() {
     if (editingId === id) { setEditingId(null); setDraft(null) }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (editingId) commitEdit()
-    setPendingApproval(true)
+    if (!contractorId) return
+    setSaving(true)
+    setSaveError(null)
+    setSaved(false)
+    const currentRates = editingId
+      ? rates.map(r => r.id === editingId ? { ...draft } : r)
+      : rates
+    const { data, error } = await supabase.functions.invoke('save-contractor-rates', {
+      body: { contractor_id: contractorId, rates: currentRates },
+    })
+    setSaving(false)
+    if (error || data?.error) {
+      setSaveError(data?.error || error?.message || 'Failed to save. Please try again.')
+      return
+    }
     setSaved(true)
     setTimeout(() => setSaved(false), 4000)
   }
@@ -407,7 +435,7 @@ function RateCardBuilder() {
         <div>
           <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite }}>Rate Card Builder</div>
           <div style={{ fontSize: 13, color: S.muted, marginTop: 2 }}>
-            These rates are published to SUBS members. {pendingApproval ? <span style={{ color: S.amber }}>⏳ Changes pending admin approval.</span> : 'Rate lock expires Dec 31, 2026.'}
+            Published to SUBS members. SUBS rate must be at or below market rate.
           </div>
         </div>
         <button
@@ -419,8 +447,13 @@ function RateCardBuilder() {
       </div>
 
       {saved && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: S.amber + '15', border: `1px solid ${S.amber}44`, borderRadius: 9, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: S.amber }}>
-          ⏳ Rate card submitted for admin review. Changes go live once approved — usually within 1 business day.
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: S.green + '15', border: `1px solid ${S.green}44`, borderRadius: 9, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: S.green }}>
+          ✓ Rate card saved and live for members.
+        </div>
+      )}
+      {saveError && (
+        <div style={{ background: '#2D1010', border: `1px solid ${S.danger}`, borderRadius: 9, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: S.danger }}>
+          {saveError}
         </div>
       )}
 
@@ -563,13 +596,14 @@ function RateCardBuilder() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: 12, color: S.muted, lineHeight: 1.5, maxWidth: 520 }}>
-          ⚠️ Changes are reviewed by SUBS before going live. Member-facing prices are locked per your partner agreement.
+          Changes save immediately and are visible to members right away.
         </div>
         <button
           onClick={handleSave}
-          style={{ background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '11px 24px', borderRadius: 10, cursor: 'pointer', flexShrink: 0 }}
+          disabled={saving}
+          style={{ background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '11px 24px', borderRadius: 10, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1, flexShrink: 0 }}
         >
-          Save Rate Card
+          {saving ? 'Saving…' : 'Save Rate Card'}
         </button>
       </div>
     </div>
@@ -974,7 +1008,7 @@ export default function ContractorDashboard() {
         })()}
 
         {/* Rate Card */}
-        {tab === 'rates' && <RateCardBuilder />}
+        {tab === 'rates' && <RateCardBuilder contractorId={contractorId} />}
 
         {/* Profile */}
         {tab === 'profile' && (
