@@ -67,15 +67,15 @@ export default function MemberLogin() {
         <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', justifyContent: 'center' }}>
           {isSignUp ? (
             <SignUp
-              routing="hash"
-              afterSignUpUrl={afterUrl}
+              routing="virtual"
+              fallbackRedirectUrl={afterUrl}
               signInUrl="/login"
               appearance={appearance}
             />
           ) : (
             <SignIn
-              routing="hash"
-              afterSignInUrl={afterUrl}
+              routing="virtual"
+              fallbackRedirectUrl={afterUrl}
               signUpUrl={signUpUrl}
               appearance={appearance}
             />

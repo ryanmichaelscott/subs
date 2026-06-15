@@ -21,13 +21,9 @@ const appearance = {
     card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0 },
     header: { display: 'none' },
     footer: { display: 'none' },
-    socialButtonsBlockButton: {
-      background: '#141814',
-      border: '1px solid #252A23',
-      color: '#F0EEE8',
-      borderRadius: '10px',
-    },
-    socialButtonsBlockButtonText: { color: '#F0EEE8', fontWeight: 600 },
+    socialButtonsRoot: { display: 'none' },
+    socialButtonsBlockButton: { display: 'none' },
+    socialButtonsBlockButtonText: { display: 'none' },
     formFieldInput: {
       background: '#141814',
       border: '1px solid #252A23',
@@ -68,8 +64,8 @@ export default function ContractorLogin() {
 
           <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', justifyContent: 'center' }}>
             <SignIn
-              routing="hash"
-              afterSignInUrl="/contractor/dashboard"
+              routing="virtual"
+              fallbackRedirectUrl="/contractor/dashboard"
               appearance={appearance}
             />
           </div>
