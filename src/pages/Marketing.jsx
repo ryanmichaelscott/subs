@@ -173,39 +173,105 @@ function Nav({ setSection }) {
   )
 }
 
-function Hero({ setSection }) {
+const HERO_TRADES = [
+  { name: 'HVAC', discount: '15–25% off' },
+  { name: 'Plumbing', discount: '30–40% off' },
+  { name: 'Roofing', discount: '10–20% off' },
+  { name: 'Electrical', discount: '20–35% off' },
+  { name: 'Lawn Care', discount: 'contractor rate' },
+  { name: 'Windows & Doors', discount: '38–45% off' },
+  { name: 'Painting', discount: '25–35% off' },
+  { name: 'Landscaping', discount: '20–30% off' },
+]
+
+function Hero() {
   return (
-    <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px 60px', textAlign: 'center' }}>
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.surface, border: `1px solid ${S.border}`, borderRadius: 100, padding: '6px 16px', marginBottom: 32 }}>
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: S.green, display: 'inline-block' }} />
-        <span style={{ color: S.green, fontSize: 12, fontWeight: 600, letterSpacing: '0.04em' }}>Now accepting founding members</span>
+    <section style={{
+      background: S.black,
+      minHeight: 'calc(100vh - 58px)',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: 'clamp(32px, 5vw, 64px) clamp(24px, 6vw, 80px)',
+      boxSizing: 'border-box',
+    }}>
+      <style>{`
+        .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; flex: 1; align-items: center; }
+        .hero-invoice { display: flex; border-radius: 12px; overflow: hidden; border: 1px solid ${S.border}; }
+        @media (max-width: 820px) {
+          .hero-grid { grid-template-columns: 1fr; }
+          .hero-trades-card { display: none; }
+        }
+        @media (max-width: 480px) {
+          .hero-invoice { flex-direction: column; }
+        }
+      `}</style>
+
+      {/* Logo + label */}
+      <div style={{ marginBottom: 'clamp(28px, 4vw, 52px)' }}>
+        <div style={{ fontFamily: C.body, fontSize: 22, fontWeight: 800, color: S.green, letterSpacing: '0.06em', lineHeight: 1 }}>SUBS.</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: S.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginTop: 5 }}>Home Services Membership</div>
       </div>
-      <h1 style={{ fontFamily: C.display, fontSize: 'clamp(44px, 7vw, 80px)', fontWeight: 400, lineHeight: 1.05, color: S.offwhite, margin: '0 0 8px' }}>
-        Stop paying retail
-      </h1>
-      <h1 style={{ fontFamily: C.display, fontSize: 'clamp(44px, 7vw, 80px)', fontWeight: 400, lineHeight: 1.05, color: S.green, margin: '0 0 32px' }}>
-        for home services.
-      </h1>
-      <p style={{ fontSize: 18, color: S.muted, maxWidth: 560, margin: '0 auto 40px', lineHeight: 1.6 }}>
-        SUBS is a membership that unlocks contractor pricing on every trade that touches your home. Whatever the job costs — you pay the contractor rate, not the retail rate. Over 30 trades. One annual fee.
-      </p>
-      <div className="hero-ctas" style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 72 }}>
-        <Link to="/login">
-          <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
-            Sign Up Today →
-          </button>
-        </Link>
-        <button onClick={() => setSection('vendors')} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 15, fontWeight: 500, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
-          Join as a vendor
-        </button>
-      </div>
-      <div className="stat-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: `1px solid ${S.border}`, borderLeft: `1px solid ${S.border}` }}>
-        {[['$1,300', 'avg annual savings at member rates'], ['$3,750', 'saved on a single $25K roof at 15% off'], ['30+', 'trade categories at contractor rates']].map(([stat, label], i) => (
-          <div key={i} style={{ padding: '28px 24px', borderRight: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}`, textAlign: 'center' }}>
-            <div style={{ fontFamily: C.display, fontSize: 40, color: S.green, marginBottom: 8 }}>{stat}</div>
-            <div style={{ fontSize: 13, color: S.muted, lineHeight: 1.4 }}>{label}</div>
+
+      <div className="hero-grid">
+        {/* Left column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          <div>
+            <h1 style={{ fontFamily: C.display, fontSize: 'clamp(38px, 5.5vw, 72px)', fontWeight: 400, color: S.offwhite, lineHeight: 1.05, margin: '0 0 16px' }}>
+              Wholesale pricing<br />on every home service.
+            </h1>
+            <p style={{ fontSize: 16, color: S.muted, margin: 0, lineHeight: 1.65 }}>
+              One membership. Pays for itself the first time you use it.
+            </p>
           </div>
-        ))}
+
+          {/* Invoice comparison */}
+          <div className="hero-invoice">
+            <div style={{ flex: 1, background: S.surface, padding: '22px 26px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: S.muted, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 14 }}>Without SUBS</div>
+              <div style={{ fontFamily: C.display, fontSize: 46, color: S.muted, lineHeight: 1, textDecoration: 'line-through', marginBottom: 10 }}>$380</div>
+              <div style={{ fontSize: 12, color: S.muted }}>HVAC tune-up · standard rate</div>
+            </div>
+            <div style={{ flex: 1, background: '#0A1C0E', padding: '22px 26px', borderLeft: `1px solid ${S.border}` }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: S.green, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 14 }}>Member Price</div>
+              <div style={{ fontFamily: C.display, fontSize: 46, color: S.offwhite, lineHeight: 1, marginBottom: 10 }}>$165</div>
+              <div style={{ fontSize: 12, color: S.green }}>You saved $215 on one call</div>
+            </div>
+          </div>
+
+          {/* CTAs */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Link to="/signup">
+              <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
+                Sign Up Today
+              </button>
+            </Link>
+            <Link to="/contractor/apply">
+              <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
+                Join as a Partner
+              </button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Right column — covered trades */}
+        <div className="hero-trades-card" style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ padding: '18px 28px', borderBottom: `1px solid ${S.border}`, textAlign: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: S.green, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Covered Trades</span>
+          </div>
+          {HERO_TRADES.map((trade, i) => (
+            <div key={i} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '13px 28px',
+              borderBottom: i < HERO_TRADES.length - 1 ? `1px solid ${S.border}` : 'none',
+            }}>
+              <span style={{ fontSize: 14, color: S.offwhite }}>{trade.name}</span>
+              <span style={{ fontSize: 13, color: S.green }}>{trade.discount}</span>
+            </div>
+          ))}
+          <div style={{ padding: '14px 28px', borderTop: `1px solid ${S.border}`, textAlign: 'center' }}>
+            <span style={{ fontSize: 12, color: S.muted }}>+ 22 more trades at member rates</span>
+          </div>
+        </div>
       </div>
     </section>
   )
@@ -555,7 +621,7 @@ export default function Marketing() {
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
       <Nav setSection={scrollTo} />
-      <div id="section-home"><Hero setSection={scrollTo} /></div>
+      <div id="section-home"><Hero /></div>
       <div id="section-how"><HowItWorks /></div>
       <div id="section-membership"><Membership /></div>
       <div id="section-network"><Network /></div>
