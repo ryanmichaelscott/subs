@@ -608,6 +608,9 @@ export default function ContractorDashboard() {
   const [docError, setDocError] = useState(null)
   const [dataLoading, setDataLoading] = useState(true)
 
+  const isActive = contractorStatus === 'active'
+  const tabs = [['leads', '📥 Lead Inbox'], ['rates', '💲 Rate Card'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
+
   useEffect(() => { loadZipData().then(() => setZipReady(true)) }, [])
 
   useEffect(() => {
@@ -734,9 +737,6 @@ export default function ContractorDashboard() {
       setDocUploading(null)
     }
   }
-
-  const isActive = contractorStatus === 'active'
-  const tabs = [['leads', '📥 Lead Inbox'], ['rates', '💲 Rate Card'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
 
   if (showOnboarding) {
     return <Onboarding onComplete={handleOnboardingComplete} />
