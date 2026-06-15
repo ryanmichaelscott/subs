@@ -20,13 +20,9 @@ const appearance = {
   elements: {
     card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0 },
     header: { display: 'none' },
-    socialButtonsBlockButton: {
-      background: '#141814',
-      border: '1px solid #252A23',
-      color: '#F0EEE8',
-      borderRadius: '10px',
-    },
-    socialButtonsBlockButtonText: { color: '#F0EEE8', fontWeight: 600 },
+    socialButtonsRoot: { display: 'none' },
+    socialButtonsBlockButton: { display: 'none' },
+    socialButtonsBlockButtonText: { display: 'none' },
     formFieldInput: {
       background: '#141814',
       border: '1px solid #252A23',
@@ -40,6 +36,7 @@ const appearance = {
       fontWeight: 700,
       borderRadius: '10px',
     },
+    dividerRow: { display: 'none' },
     dividerLine: { background: '#252A23' },
     dividerText: { color: '#8A9088' },
     identityPreviewText: { color: '#F0EEE8' },
