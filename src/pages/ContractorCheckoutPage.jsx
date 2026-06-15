@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
@@ -7,15 +7,11 @@ import { supabase } from '../lib/supabase'
 export default function ContractorCheckoutPage() {
   const { user, isLoaded, isSignedIn } = useUser()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const sessionId = searchParams.get('session_id')
-
   const [checking, setChecking] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [promoCode, setPromoCode] = useState('')
   const [contractor, setContractor] = useState(null)
-  const [confirmed, setConfirmed] = useState(false)
   const [price, setPrice] = useState(null)
 
   useEffect(() => {
@@ -25,20 +21,6 @@ export default function ContractorCheckoutPage() {
     if (!email) return
 
     const init = async () => {
-      // Handle Stripe success redirect
-      if (sessionId) {
-        const { data } = await supabase.functions.invoke('confirm-contractor-subscription', {
-          body: { session_id: sessionId, email },
-        })
-        if (data?.success) {
-          setConfirmed(true)
-          setChecking(false)
-          setTimeout(() => navigate('/contractor/dashboard'), 3000)
-          return
-        }
-      }
-
-      // Load contractor record — must be approved
       const { data } = await supabase
         .from('contractors')
         .select('id, name, status')
@@ -52,14 +34,13 @@ export default function ContractorCheckoutPage() {
 
       setContractor(data)
 
-      // Fetch live price from Stripe
       const { data: priceData } = await supabase.functions.invoke('get-contractor-price', {})
       if (priceData?.unit_amount) setPrice(priceData)
 
       setChecking(false)
     }
     init()
-  }, [isLoaded, isSignedIn, user, sessionId])
+  }, [isLoaded, isSignedIn, user])
 
   const handleCheckout = async () => {
     setError(null)
@@ -69,7 +50,7 @@ export default function ContractorCheckoutPage() {
       body: {
         email,
         promo_code: promoCode.trim() || undefined,
-        success_url: `${window.location.origin}/contractor/checkout?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${window.location.origin}/contractor/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/contractor/checkout`,
       },
     })
@@ -96,18 +77,6 @@ export default function ContractorCheckoutPage() {
       <div style={{ background: S.black, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         <div style={{ width: 32, height: 32, border: `3px solid ${S.border}`, borderTopColor: S.green, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      </div>
-    )
-  }
-
-  if (confirmed) {
-    return (
-      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 }}>
-        <div style={{ fontSize: 52 }}>🎉</div>
-        <div style={{ fontFamily: C.display, fontSize: 32, color: S.offwhite }}>You're live!</div>
-        <p style={{ fontSize: 15, color: S.muted, textAlign: 'center', maxWidth: 400, lineHeight: 1.7 }}>
-          Your subscription is active. Pre-qualified leads in your service area will start routing to you. Redirecting to your dashboard…
-        </p>
       </div>
     )
   }
