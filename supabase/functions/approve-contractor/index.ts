@@ -86,31 +86,30 @@ serve(async (req) => {
 
   // Send branded approval email via Resend
   const resendKey = Deno.env.get('RESEND_API_KEY')
-  const magicLink = clerkData.url || 'https://getsubs.co/contractor/login'
-  if (resendKey && !isDuplicate) {
+  const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
+  const checkoutLink = `${appUrl}/contractor/checkout`
+  if (resendKey) {
     const approvalHtml = `
 <!DOCTYPE html>
 <html>
-<body style="font-family: Inter, system-ui, sans-serif; background: #f5f5f5; padding: 40px 20px; margin: 0;">
-  <div style="max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 40px;">
-    <div style="font-size: 22px; font-weight: 800; color: #1a1a1a; letter-spacing: 0.06em; margin-bottom: 28px;">SUBS</div>
-    <div style="display: inline-block; background: #DCFCE7; color: #166534; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 100px; margin-bottom: 20px; letter-spacing: 0.06em;">
-      APPLICATION APPROVED
-    </div>
-    <p style="font-size: 16px; color: #1a1a1a; margin-bottom: 16px;">Hi ${contractor.contact_name || contractor.name},</p>
-    <p style="font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 16px;">
-      You've been approved as a SUBS contractor partner. Welcome to the network.
+<body style="font-family:Inter,system-ui,sans-serif;background:#0C0F0A;color:#F0EEE8;margin:0;padding:0;">
+  <div style="max-width:520px;margin:0 auto;padding:48px 28px;">
+    <div style="font-size:22px;font-weight:800;color:#5DFF8A;letter-spacing:0.06em;margin-bottom:32px;">SUBS.</div>
+    <h1 style="font-size:30px;font-weight:700;color:#F0EEE8;margin:0 0 16px;line-height:1.2;">
+      You're approved, ${contractor.contact_name || contractor.name}!
+    </h1>
+    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 12px;">
+      Your application for <strong style="color:#F0EEE8;">${contractor.name}</strong> has been reviewed and approved by the SUBS team.
     </p>
-    <p style="font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 28px;">
-      Click below to set up your account — this link expires in 7 days.
+    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 32px;">
+      Select your plan below to activate your account and start receiving pre-qualified homeowners in your service area — no bidding, no slow seasons.
     </p>
-    <a href="${magicLink}" style="display: inline-block; background: #5DFF8A; color: #0C0F0A; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 10px; text-decoration: none;">
-      Set up my account →
+    <a href="${checkoutLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;">
+      Select Your Plan →
     </a>
-    <p style="font-size: 13px; color: #999; margin-top: 32px; line-height: 1.5;">
-      Once you're in, complete your profile and rate card so members can find you. Leads will start coming in shortly after.
+    <p style="font-size:13px;color:#8A9088;margin-top:40px;line-height:1.6;">
+      Questions? <a href="mailto:partners@subs.app" style="color:#5DFF8A;text-decoration:none;">partners@subs.app</a>
     </p>
-    <p style="font-size: 15px; color: #1a1a1a; margin-top: 8px;">— The SUBS Team</p>
   </div>
 </body>
 </html>`
@@ -124,7 +123,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'SUBS <hello@subs.app>',
         to: contractor.contact_email,
-        subject: "You're approved — set up your SUBS partner account",
+        subject: "You're approved — select your SUBS partner plan",
         html: approvalHtml,
       }),
     })

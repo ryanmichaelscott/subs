@@ -11,10 +11,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { company_name, trades, email, promo_code, success_url, cancel_url } = await req.json()
+    const { email, promo_code, success_url, cancel_url } = await req.json()
 
-    if (!company_name || !email || !trades?.length) {
-      return new Response(JSON.stringify({ error: 'company_name, trades, and email are required.' }), {
+    if (!email) {
+      return new Response(JSON.stringify({ error: 'email is required.' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -24,6 +24,25 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
+
+    // Verify contractor exists and is approved
+    const { data: contractor } = await supabase
+      .from('contractors')
+      .select('id, name, status')
+      .eq('contact_email', email.toLowerCase().trim())
+      .single()
+
+    if (!contractor) {
+      return new Response(JSON.stringify({ error: 'No contractor application found for this email.' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (contractor.status !== 'approved') {
+      return new Response(JSON.stringify({ error: 'Your application must be approved before subscribing.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Resolve promo code if provided
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined
@@ -37,17 +56,6 @@ serve(async (req) => {
       discounts = [{ promotion_code: promos.data[0].id }]
     }
 
-    const primaryTrade = trades[0]
-
-    // Create contractor record with status pending before checkout
-    await supabase.from('contractors').upsert({
-      name: company_name,
-      trade: primaryTrade,
-      trades,
-      contact_email: email,
-      status: 'pending',
-    }, { onConflict: 'contact_email' })
-
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -55,7 +63,7 @@ serve(async (req) => {
       customer_email: email,
       success_url,
       cancel_url,
-      metadata: { email, company_name, trade: primaryTrade },
+      metadata: { email, company_name: contractor.name },
     }
 
     if (discounts) {

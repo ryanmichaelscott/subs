@@ -1,57 +1,70 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
 
-const TRADES_LIST = [
-  'HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors',
-  'Concrete Work', 'Driveway Paving', 'Interior Painting', 'Exterior Painting',
-  'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Mold Detection',
-  'Water Filtration', 'Handyman', 'Pool Service', 'Fireplace & Chimney',
-  'Bathroom Remodel', 'Kitchen Remodel', 'Siding & Stucco', 'Smart Home / AV',
-  'Additions & ADUs', 'Flooring', 'Insulation', 'Waterproofing', 'Fencing',
-  'Decks & Patios', 'Framing', 'House Cleaning', 'Gutters', 'Carpet Cleaning',
-]
-
 export default function ContractorCheckoutPage() {
   const { user, isLoaded, isSignedIn } = useUser()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get('session_id')
+
   const [checking, setChecking] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [companyName, setCompanyName] = useState('')
-  const [trades, setTrades] = useState([])
   const [promoCode, setPromoCode] = useState('')
+  const [contractor, setContractor] = useState(null)
+  const [confirmed, setConfirmed] = useState(false)
 
   useEffect(() => {
     if (!isLoaded) return
     if (!isSignedIn) { navigate('/contractor/login'); return }
     const email = user?.primaryEmailAddress?.emailAddress
     if (!email) return
-    supabase.from('contractors').select('id').eq('contact_email', email).single()
-      .then(({ data }) => {
-        if (data) navigate('/contractor/dashboard')
-        else setChecking(false)
-      })
-  }, [isLoaded, isSignedIn, user])
 
-  const addTrade = (t) => { if (t && !trades.includes(t)) setTrades(ts => [...ts, t]) }
-  const removeTrade = (t) => setTrades(ts => ts.filter(x => x !== t))
+    const init = async () => {
+      // Handle Stripe success redirect
+      if (sessionId) {
+        const { data } = await supabase.functions.invoke('confirm-contractor-subscription', {
+          body: { session_id: sessionId, email },
+        })
+        if (data?.success) {
+          setConfirmed(true)
+          setChecking(false)
+          setTimeout(() => navigate('/contractor/dashboard'), 3000)
+          return
+        }
+      }
 
-  const handleSubmit = async () => {
-    if (!companyName.trim()) { setError('Please enter your company name.'); return }
-    if (!trades.length) { setError('Please select at least one trade.'); return }
+      // Load contractor record — must be approved
+      const { data } = await supabase
+        .from('contractors')
+        .select('id, name, status')
+        .eq('contact_email', email)
+        .single()
+
+      if (!data || data.status !== 'approved') {
+        navigate('/contractor/dashboard')
+        return
+      }
+
+      setContractor(data)
+      setChecking(false)
+    }
+    init()
+  }, [isLoaded, isSignedIn, user, sessionId])
+
+  const handleCheckout = async () => {
     setError(null)
     setLoading(true)
+    const email = user?.primaryEmailAddress?.emailAddress
     const { data, error: fnError } = await supabase.functions.invoke('create-contractor-checkout-session', {
       body: {
-        company_name: companyName.trim(),
-        trades,
-        email: user?.primaryEmailAddress?.emailAddress,
+        email,
         promo_code: promoCode.trim() || undefined,
-        success_url: `${window.location.origin}/contractor/dashboard`,
-        cancel_url: `${window.location.origin}/contractor/login`,
+        success_url: `${window.location.origin}/contractor/checkout?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${window.location.origin}/contractor/checkout`,
       },
     })
     if (data?.url) {
@@ -60,10 +73,7 @@ export default function ContractorCheckoutPage() {
       let msg = 'Could not start checkout. Please try again.'
       if (fnError?.context) {
         try { const b = await fnError.context.json(); msg = b.error || msg } catch {}
-      } else if (fnError?.message) {
-        msg = fnError.message
-      }
-      console.error('Contractor checkout error:', fnError, data)
+      } else if (fnError?.message) msg = fnError.message
       setError(msg)
       setLoading(false)
     }
@@ -84,6 +94,18 @@ export default function ContractorCheckoutPage() {
     )
   }
 
+  if (confirmed) {
+    return (
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 }}>
+        <div style={{ fontSize: 52 }}>🎉</div>
+        <div style={{ fontFamily: C.display, fontSize: 32, color: S.offwhite }}>You're live!</div>
+        <p style={{ fontSize: 15, color: S.muted, textAlign: 'center', maxWidth: 400, lineHeight: 1.7 }}>
+          Your subscription is active. Pre-qualified leads in your service area will start routing to you. Redirecting to your dashboard…
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
@@ -94,20 +116,19 @@ export default function ContractorCheckoutPage() {
       </nav>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
-        <div style={{ width: '100%', maxWidth: 480 }}>
+        <div style={{ width: '100%', maxWidth: 460 }}>
 
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.surface, border: `1px solid ${S.border}`, borderRadius: 100, padding: '6px 16px', marginBottom: 16 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: S.green, display: 'inline-block' }} />
-              <span style={{ color: S.green, fontSize: 12, fontWeight: 600 }}>Contractor Application</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.green + '22', border: `1px solid ${S.green}44`, borderRadius: 100, padding: '6px 16px', marginBottom: 16 }}>
+              <span style={{ color: S.green, fontSize: 13 }}>✓</span>
+              <span style={{ color: S.green, fontSize: 12, fontWeight: 600 }}>Application Approved</span>
             </div>
-            <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite, marginBottom: 8 }}>Join the network.</div>
-            <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Pre-qualified homeowners sent directly to you. Zero lead cost.</p>
+            <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite, marginBottom: 8 }}>One last step.</div>
+            <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Subscribe to start receiving leads from pre-qualified homeowners.</p>
           </div>
 
           <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, marginBottom: 20 }}>
 
-            {/* Price */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${S.border}` }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: S.green, letterSpacing: '0.06em', marginBottom: 4 }}>PARTNER MEMBERSHIP</div>
@@ -119,42 +140,6 @@ export default function ContractorCheckoutPage() {
               </div>
             </div>
 
-            {/* Company name */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Company Name</label>
-              <input
-                type="text"
-                value={companyName}
-                onChange={e => { setCompanyName(e.target.value); setError(null) }}
-                placeholder="Peak HVAC LLC"
-                style={inp}
-              />
-            </div>
-
-            {/* Trades */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Trade(s)</label>
-              {trades.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                  {trades.map(t => (
-                    <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: S.green + '22', border: `1px solid ${S.green}44`, color: S.green, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 100 }}>
-                      {t}
-                      <button onClick={() => removeTrade(t)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: S.green, fontSize: 14, lineHeight: 1, padding: 0, marginLeft: 2 }}>×</button>
-                    </span>
-                  ))}
-                </div>
-              )}
-              <select
-                value=""
-                onChange={e => { addTrade(e.target.value); setError(null) }}
-                style={{ ...inp, color: trades.length ? S.muted : S.muted }}
-              >
-                <option value="">{trades.length === 0 ? 'Select a trade...' : '+ Add another trade'}</option>
-                {TRADES_LIST.filter(t => !trades.includes(t)).map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-
-            {/* Promo code */}
             <div style={{ marginBottom: 24 }}>
               <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                 Promo Code <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
@@ -175,23 +160,13 @@ export default function ContractorCheckoutPage() {
             )}
 
             <button
-              onClick={handleSubmit}
+              onClick={handleCheckout}
               disabled={loading}
               style={{
-                width: '100%',
-                background: S.green,
-                border: 'none',
-                color: S.black,
-                fontFamily: C.body,
-                fontSize: 15,
-                fontWeight: 700,
-                padding: '14px 0',
-                borderRadius: 10,
-                cursor: loading ? 'wait' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
+                width: '100%', background: S.green, border: 'none', color: S.black,
+                fontFamily: C.body, fontSize: 15, fontWeight: 700, padding: '14px 0',
+                borderRadius: 10, cursor: loading ? 'wait' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 opacity: loading ? 0.8 : 1,
               }}
             >
@@ -200,7 +175,7 @@ export default function ContractorCheckoutPage() {
                   <div style={{ width: 14, height: 14, border: `2px solid ${S.black}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
                   Redirecting to checkout...
                 </>
-              ) : 'Apply & Pay →'}
+              ) : 'Subscribe & Go Live →'}
             </button>
           </div>
 

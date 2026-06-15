@@ -134,3 +134,14 @@ alter table members add column if not exists stripe_subscription_id text;
 
 -- Multi-trade support for contractors
 alter table contractors add column if not exists trades text[] default '{}';
+
+-- Contractor payment and contact info
+alter table contractors add column if not exists phone text;
+alter table contractors add column if not exists stripe_customer_id text;
+alter table contractors add column if not exists stripe_subscription_id text;
+alter table contractors add column if not exists insurance_doc_url text;
+alter table contractors add column if not exists license_doc_url text;
+
+-- Add 'active' status for paid/live contractors
+alter table contractors drop constraint if exists contractors_status_check;
+alter table contractors add constraint contractors_status_check check (status in ('pending', 'approved', 'active', 'rejected'));

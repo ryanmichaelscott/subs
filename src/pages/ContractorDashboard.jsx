@@ -707,40 +707,11 @@ export default function ContractorDashboard() {
     }
   }
 
+  const isActive = contractorStatus === 'active'
   const tabs = [['leads', '📥 Lead Inbox'], ['rates', '💲 Rate Card'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
 
   if (showOnboarding) {
     return <Onboarding onComplete={handleOnboardingComplete} />
-  }
-
-  if (contractorStatus === 'pending') {
-    return (
-      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between' }}>
-          <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
-          <button onClick={() => signOut().then(() => navigate('/contractor/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
-        </nav>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ textAlign: 'center', maxWidth: 480 }}>
-            <div style={{ fontSize: 48, marginBottom: 20 }}>⏳</div>
-            <div style={{ fontFamily: C.display, fontSize: 32, color: S.offwhite, marginBottom: 12 }}>Application received.</div>
-            <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.7, marginBottom: 32 }}>
-              Your application for <strong style={{ color: S.offwhite }}>{profile.name}</strong> is under review. We verify every partner before going live. You'll hear back within 1–2 business days.
-            </p>
-            <div style={{ background: S.card, border: `1px solid ${S.amber}44`, borderRadius: 12, padding: '20px 24px', textAlign: 'left' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: S.amber, marginBottom: 8 }}>What happens next</div>
-              {['We verify your license and insurance', 'Our team reviews your application', 'You\'ll receive an email when approved', 'Start receiving pre-qualified leads immediately'].map((step, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: S.amber, background: S.amber + '22', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
-                  <span style={{ fontSize: 13, color: S.muted }}>{step}</span>
-                </div>
-              ))}
-            </div>
-            <p style={{ fontSize: 13, color: S.muted, marginTop: 20 }}>Questions? <a href="mailto:partners@subs.app" style={{ color: S.green, textDecoration: 'none' }}>partners@subs.app</a></p>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   if (contractorStatus === 'rejected') {
@@ -771,7 +742,12 @@ export default function ContractorDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || profile.email}</span>
           <span style={{ fontSize: 13, color: S.offwhite, fontWeight: 600 }}>{user?.fullName || profile.name}</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '3px 10px', borderRadius: 100 }}>Active Partner</span>
+          {contractorStatus === 'pending'
+            ? <span style={{ fontSize: 11, fontWeight: 700, color: S.amber, background: S.amber + '22', padding: '3px 10px', borderRadius: 100 }}>Pending Review</span>
+            : contractorStatus === 'approved'
+            ? <span style={{ fontSize: 11, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '3px 10px', borderRadius: 100 }}>Approved</span>
+            : <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '3px 10px', borderRadius: 100 }}>Active Partner</span>
+          }
           <button onClick={() => signOut().then(() => navigate('/contractor/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
       </nav>
@@ -784,6 +760,32 @@ export default function ContractorDashboard() {
         />
       )}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
+
+        {contractorStatus === 'pending' && (
+          <div style={{ background: S.amber + '15', border: `1px solid ${S.amber}44`, borderRadius: 10, padding: '14px 20px', marginBottom: 24, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <span style={{ fontSize: 18, marginTop: 1 }}>⏳</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: S.amber, marginBottom: 3 }}>Application under review</div>
+              <div style={{ fontSize: 13, color: S.muted, lineHeight: 1.5 }}>We typically respond within 1–2 business days. Use this time to complete your profile and rate card — you'll be ready to go the moment you're approved.</div>
+            </div>
+          </div>
+        )}
+
+        {contractorStatus === 'approved' && (
+          <div style={{ background: S.green + '15', border: `1px solid ${S.green}44`, borderRadius: 10, padding: '14px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 18 }}>🎉</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: S.green, marginBottom: 3 }}>You're approved!</div>
+                <div style={{ fontSize: 13, color: S.muted }}>Subscribe to activate your account and start receiving pre-qualified leads.</div>
+              </div>
+            </div>
+            <button onClick={() => navigate('/contractor/checkout')} style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '10px 20px', borderRadius: 8, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
+              Subscribe now →
+            </button>
+          </div>
+        )}
+
         <div style={{ marginBottom: 8 }}>
           <div style={{ fontFamily: C.display, fontSize: 26, color: S.offwhite }}>Good morning, {profile.name} 👋</div>
           <div style={{ fontSize: 14, color: S.muted, marginTop: 4 }}>{profile.trade} Partner · Salt Lake County</div>
@@ -812,7 +814,24 @@ export default function ContractorDashboard() {
         </div>
 
         {/* Lead Inbox */}
-        {tab === 'leads' && (
+        {tab === 'leads' && !isActive && (
+          <Card style={{ padding: '52px 24px', textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>📥</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite, marginBottom: 8 }}>Your leads will appear here</div>
+            <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6, maxWidth: 380, margin: '0 auto 20px' }}>
+              {contractorStatus === 'approved'
+                ? 'Subscribe to activate your account and start receiving pre-qualified leads.'
+                : 'Once your application is approved and your subscription is active, leads will be routed here based on your service area.'}
+            </p>
+            {contractorStatus === 'approved' && (
+              <button onClick={() => navigate('/contractor/checkout')} style={{ background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '11px 24px', borderRadius: 9, cursor: 'pointer' }}>
+                Subscribe now →
+              </button>
+            )}
+          </Card>
+        )}
+
+        {tab === 'leads' && isActive && (
           <div>
             {leads.filter(l => l.status === 'pending' && (!zipReady || matchesServiceArea(profile.serviceArea, l.zip))).length > 0 && (
               <div style={{ marginBottom: 20 }}>

@@ -95,7 +95,7 @@ export default function ContractorLogin() {
           <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 12, padding: 20, marginTop: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite, marginBottom: 8 }}>Not a SUBS partner yet?</div>
             <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.5, margin: '0 0 14px' }}>Join our vetted contractor network. Pre-qualified homeowners sent directly to you. Zero lead cost.</p>
-            <Link to="/">
+            <Link to="/contractor/apply">
               <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 8, cursor: 'pointer' }}>
                 Apply to join →
               </button>
