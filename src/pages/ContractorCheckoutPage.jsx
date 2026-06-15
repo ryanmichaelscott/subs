@@ -16,6 +16,7 @@ export default function ContractorCheckoutPage() {
   const [promoCode, setPromoCode] = useState('')
   const [contractor, setContractor] = useState(null)
   const [confirmed, setConfirmed] = useState(false)
+  const [price, setPrice] = useState(null)
 
   useEffect(() => {
     if (!isLoaded) return
@@ -50,6 +51,11 @@ export default function ContractorCheckoutPage() {
       }
 
       setContractor(data)
+
+      // Fetch live price from Stripe
+      const { data: priceData } = await supabase.functions.invoke('get-contractor-price', {})
+      if (priceData?.unit_amount) setPrice(priceData)
+
       setChecking(false)
     }
     init()
@@ -135,8 +141,10 @@ export default function ContractorCheckoutPage() {
                 <div style={{ fontSize: 13, color: S.muted }}>AI-matched leads · Instant payment · Zero bidding</div>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 16 }}>
-                <div style={{ fontFamily: C.display, fontSize: 34, color: S.offwhite, lineHeight: 1 }}>$299</div>
-                <div style={{ fontSize: 12, color: S.muted }}>/yr</div>
+                <div style={{ fontFamily: C.display, fontSize: 34, color: S.offwhite, lineHeight: 1 }}>
+                  {price ? `$${(price.unit_amount / 100).toLocaleString()}` : '—'}
+                </div>
+                <div style={{ fontSize: 12, color: S.muted }}>/{price?.interval ?? 'yr'}</div>
               </div>
             </div>
 
