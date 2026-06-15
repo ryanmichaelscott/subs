@@ -4,38 +4,18 @@ import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
 
-const MEMBERS = [
-  { id: 'M-001', name: 'Ryan Scott', email: 'ryan@neumi.com', tier: 'Member+', since: 'Jan 2026', jobs: 5, status: 'Active' },
-  { id: 'M-002', name: 'Sarah K.', email: 'sarah.k@gmail.com', tier: 'Member+', since: 'Feb 2026', jobs: 8, status: 'Active' },
-  { id: 'M-003', name: 'Tom B.', email: 'tomb@outlook.com', tier: 'Elite', since: 'Jan 2026', jobs: 12, status: 'Active' },
-  { id: 'M-004', name: 'Dana M.', email: 'danam@yahoo.com', tier: 'Member', since: 'Mar 2026', jobs: 3, status: 'Active' },
-  { id: 'M-005', name: 'Chris W.', email: 'chrisw@gmail.com', tier: 'Member', since: 'Apr 2026', jobs: 1, status: 'Active' },
-  { id: 'M-006', name: 'James R.', email: 'jamesr@icloud.com', tier: 'Elite', since: 'Jan 2026', jobs: 7, status: 'Churned' },
-  { id: 'M-007', name: 'Lisa T.', email: 'lisat@gmail.com', tier: 'Member+', since: 'May 2026', jobs: 0, status: 'Active' },
-  { id: 'M-008', name: 'Mark C.', email: 'markc@hotmail.com', tier: 'Member', since: 'Jun 2026', jobs: 0, status: 'Trial' },
-]
-
-const CONTRACTOR_QUEUE = [
-  { id: 'CA-041', company: 'Summit HVAC', trade: 'HVAC', contact: 'Dave Hill', email: 'dave@summithvac.com', years: 12, licensed: true, submitted: 'Jun 10', status: 'pending' },
-  { id: 'CA-040', company: 'Valley Plumbing', trade: 'Plumbing', contact: 'Maria Cruz', email: 'maria@valleyplumb.com', years: 8, licensed: true, submitted: 'Jun 8', status: 'pending' },
-  { id: 'CA-039', company: 'CleanCut Lawn', trade: 'Lawn Care', contact: 'Jake Torres', email: 'jake@cleancut.co', years: 5, licensed: false, submitted: 'Jun 6', status: 'pending' },
-  { id: 'CA-038', company: 'Apex Roofing', trade: 'Roofing', contact: 'Sam Nguyen', email: 'sam@apexroofing.com', years: 15, licensed: true, submitted: 'Jun 5', status: 'approved' },
-  { id: 'CA-037', company: 'FastFix Electric', trade: 'Electrical', contact: 'Tony Kim', email: 'tony@fastfix.com', years: 3, licensed: true, submitted: 'Jun 3', status: 'rejected' },
-]
-
-const LEAD_ACTIVITY = [
-  { time: '2m ago', event: 'Lead accepted', detail: 'Peak HVAC accepted L-1041 — Sarah K. · AC Tune-Up', type: 'accept' },
-  { time: '14m ago', event: 'Lead dispatched', detail: 'L-1041 sent to Peak HVAC — Sarah K. at 4821 Maple Dr', type: 'dispatch' },
-  { time: '1h ago', event: 'Job completed', detail: 'J-1035 confirmed — Dana M. · HVAC Tune-Up · $165 · member pricing verified', type: 'complete' },
-  { time: '2h ago', event: 'New member', detail: 'Mark C. joined as Member — Salt Lake City, UT', type: 'member' },
-  { time: '3h ago', event: 'Job requested', detail: 'Tom B. (Elite) requested HVAC repair — 339 Birch Ln, SLC', type: 'request' },
-  { time: '5h ago', event: 'Job completed', detail: 'J-1029 confirmed — Chris W. · Filter Swap · $65 · member pricing verified', type: 'complete' },
-  { time: '8h ago', event: 'Contractor applied', detail: "Summit HVAC applied to join the network — Dave Hill, 12 yrs exp, licensed", type: 'apply' },
-  { time: '1d ago', event: 'Lead declined', detail: 'Peak HVAC declined L-1038 — Lisa T. · AC Repair', type: 'decline' },
-]
-
 const TIER_COLORS = { Member: S.green, 'Member+': S.blue, Elite: S.purple }
 const STATUS_COLORS = { Active: S.green, Churned: S.danger, Trial: S.amber }
+const TIER_PRICE = { Member: 99, 'Member+': 199, Elite: 399 }
+
+function timeAgo(ts) {
+  if (!ts) return '—'
+  const secs = Math.floor((Date.now() - new Date(ts).getTime()) / 1000)
+  if (secs < 60) return `${secs}s ago`
+  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`
+  return `${Math.floor(secs / 86400)}d ago`
+}
 const EVENT_COLORS = { accept: S.green, dispatch: S.blue, complete: S.green, member: S.purple, request: S.amber, apply: S.blue, decline: S.danger }
 const EVENT_ICONS = { accept: '✓', dispatch: '→', complete: '✓', member: '👤', request: '📋', apply: '📝', decline: '✗' }
 
@@ -49,6 +29,8 @@ export default function AdminDashboard() {
   const { signOut } = useClerk()
   const [tab, setTab] = useState('stats')
   const [contractors, setContractors] = useState([])
+  const [members, setMembers] = useState([])
+  const [activity, setActivity] = useState([])
   const [memberSearch, setMemberSearch] = useState('')
   const [actionError, setActionError] = useState(null)
   const [actionLoading, setActionLoading] = useState(null)
@@ -57,11 +39,41 @@ export default function AdminDashboard() {
   const [adminDocError, setAdminDocError] = useState(null)
 
   useEffect(() => {
-    supabase
-      .from('contractors')
-      .select('*')
-      .order('submitted_at', { ascending: false })
+    supabase.from('contractors').select('*').order('submitted_at', { ascending: false })
       .then(({ data }) => setContractors(data || []))
+
+    supabase.from('members').select('*').order('id', { ascending: false })
+      .then(({ data }) => setMembers(data || []))
+
+    // Build activity feed from lead_notifications + job_requests
+    Promise.all([
+      supabase.from('lead_notifications')
+        .select('id, status, notified_at, responded_at, job_requests(trade, zip, member_name), contractors(name)')
+        .order('notified_at', { ascending: false })
+        .limit(30),
+      supabase.from('job_requests')
+        .select('id, trade, zip, member_name, status, submitted_at')
+        .order('submitted_at', { ascending: false })
+        .limit(20),
+    ]).then(([{ data: notifs }, { data: reqs }]) => {
+      const events = []
+      for (const n of notifs || []) {
+        const lead = n.job_requests
+        const contractor = n.contractors
+        if (n.status === 'accepted' && n.responded_at) {
+          events.push({ time: n.responded_at, type: 'accept', event: 'Lead accepted', detail: `${contractor?.name || 'Contractor'} accepted ${lead?.trade || 'job'} · Zip ${lead?.zip || '—'} · ${lead?.member_name || 'Member'}` })
+        } else if (n.status === 'declined' && n.responded_at) {
+          events.push({ time: n.responded_at, type: 'decline', event: 'Lead declined', detail: `${contractor?.name || 'Contractor'} declined ${lead?.trade || 'job'} · Zip ${lead?.zip || '—'}` })
+        } else if (n.status === 'pending') {
+          events.push({ time: n.notified_at, type: 'dispatch', event: 'Lead dispatched', detail: `${lead?.trade || 'Job'} sent to ${contractor?.name || 'contractor'} · Zip ${lead?.zip || '—'}` })
+        }
+      }
+      for (const r of reqs || []) {
+        events.push({ time: r.submitted_at, type: 'request', event: 'Job requested', detail: `${r.member_name || 'Member'} requested ${r.trade || '—'} · Zip ${r.zip || '—'}` })
+      }
+      events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      setActivity(events.slice(0, 30))
+    })
   }, [])
 
   const handleContractor = async (id, action) => {
@@ -176,16 +188,16 @@ export default function AdminDashboard() {
     }
   }
 
-  const filteredMembers = MEMBERS.filter(m =>
-    m.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
-    m.email.toLowerCase().includes(memberSearch.toLowerCase())
+  const filteredMembers = members.filter(m =>
+    (m.name || '').toLowerCase().includes(memberSearch.toLowerCase()) ||
+    (m.email || '').toLowerCase().includes(memberSearch.toLowerCase())
   )
 
-  const activeMembers = MEMBERS.filter(m => m.status === 'Active').length
-  const mrr = MEMBERS.filter(m => m.status === 'Active').reduce((sum, m) => sum + (m.tier === 'Elite' ? 399 : m.tier === 'Member+' ? 199 : 99), 0) / 12
-  const arr = mrr * 12
-  const churnCount = MEMBERS.filter(m => m.status === 'Churned').length
-  const churnRate = ((churnCount / MEMBERS.length) * 100).toFixed(1)
+  const activeMembers = members.filter(m => m.status === 'Active').length
+  const arr = members.filter(m => m.status === 'Active').reduce((sum, m) => sum + (TIER_PRICE[m.tier] || 99), 0)
+  const mrr = arr / 12
+  const churnCount = members.filter(m => m.status === 'Churned').length
+  const churnRate = members.length ? ((churnCount / members.length) * 100).toFixed(1) : '0.0'
 
   const tabs = [['stats', '📊 Revenue Stats'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity']]
 
@@ -205,7 +217,7 @@ export default function AdminDashboard() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontFamily: C.display, fontSize: 26, color: S.offwhite }}>SUBS Admin</div>
-          <div style={{ fontSize: 14, color: S.muted, marginTop: 4 }}>Operations dashboard · Jun 11, 2026</div>
+          <div style={{ fontSize: 14, color: S.muted, marginTop: 4 }}>Operations dashboard · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
         </div>
 
         {/* Tabs */}
@@ -248,8 +260,8 @@ export default function AdminDashboard() {
                   { tier: 'Member+', price: 199, color: S.blue },
                   { tier: 'Elite', price: 399, color: S.purple },
                 ].map(({ tier, price, color }) => {
-                  const count = MEMBERS.filter(m => m.tier === tier && m.status === 'Active').length
-                  const pct = (count / activeMembers) * 100
+                  const count = members.filter(m => m.tier === tier && m.status === 'Active').length
+                  const pct = activeMembers ? (count / activeMembers) * 100 : 0
                   return (
                     <div key={tier} style={{ marginBottom: 14 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
@@ -283,11 +295,11 @@ export default function AdminDashboard() {
               <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 16 }}>Network Overview</div>
               <div className="stat-grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
                 {[
-                  ['8', 'Total members'],
-                  ['5', 'Active contractors'],
-                  ['3', 'Pending approvals'],
-                  ['52', 'Jobs this month'],
-                  ['100%', 'Pricing compliance'],
+                  [String(members.length), 'Total members'],
+                  [String(contractors.filter(c => c.status === 'active').length), 'Active contractors'],
+                  [String(contractors.filter(c => c.status === 'pending').length), 'Pending approvals'],
+                  [String(activity.filter(a => a.type === 'request').length), 'Lead requests'],
+                  [String(contractors.filter(c => c.status === 'approved').length), 'Awaiting payment'],
                 ].map(([val, label]) => (
                   <div key={label} style={{ textAlign: 'center' }}>
                     <div style={{ fontFamily: C.display, fontSize: 28, color: S.offwhite }}>{val}</div>
@@ -307,21 +319,25 @@ export default function AdminDashboard() {
             </div>
             <div className="rate-table-wrap">
             <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 80px 60px 80px 110px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
-                {['ID', 'Name', 'Email', 'Tier', 'Since', 'Jobs', 'Status', ''].map(h => (
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 100px 80px 110px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
+                {['ID', 'Name', 'Email', 'Tier', 'Joined', 'Status', ''].map(h => (
                   <div key={h} style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
                 ))}
               </div>
+              {filteredMembers.length === 0 && (
+                <div style={{ padding: '32px 20px', textAlign: 'center', color: S.muted, fontSize: 14 }}>
+                  {members.length === 0 ? 'No members yet.' : 'No members match your search.'}
+                </div>
+              )}
               {filteredMembers.map((m, i) => (
-                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 80px 60px 80px 110px', padding: '14px 20px', borderBottom: i < filteredMembers.length - 1 ? `1px solid ${S.border}` : 'none', alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, fontFamily: 'monospace', color: S.muted }}>{m.id}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{m.name}</span>
-                  <span style={{ fontSize: 13, color: S.muted }}>{m.email}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: TIER_COLORS[m.tier] || S.green }}>{m.tier}</span>
-                  <span style={{ fontSize: 13, color: S.muted }}>{m.since}</span>
-                  <span style={{ fontSize: 14, color: S.offwhite }}>{m.jobs}</span>
+                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 100px 80px 110px', padding: '14px 20px', borderBottom: i < filteredMembers.length - 1 ? `1px solid ${S.border}` : 'none', alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, fontFamily: 'monospace', color: S.muted }}>{m.id.slice(0, 8)}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{m.name || '—'}</span>
+                  <span style={{ fontSize: 13, color: S.muted }}>{m.email || '—'}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: TIER_COLORS[m.tier] || S.green }}>{m.tier || 'Member'}</span>
+                  <span style={{ fontSize: 12, color: S.muted }}>{m.joined_at ? new Date(m.joined_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'}</span>
                   <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 100, background: (STATUS_COLORS[m.status] || S.muted) + '22', color: STATUS_COLORS[m.status] || S.muted }}>
-                    {m.status}
+                    {m.status || '—'}
                   </span>
                   <button onClick={() => handleImpersonate(m.name, m.email, 'member')} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer' }}>
                     Impersonate
@@ -404,8 +420,10 @@ export default function AdminDashboard() {
                     >
                       {actionLoading === c.id ? '…' : 'Delete'}
                     </button>
-                    <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100, background: c.status === 'approved' ? S.green + '22' : S.danger + '22', color: c.status === 'approved' ? S.green : S.danger }}>
-                      {c.status === 'approved' ? '✓ Approved' : '✗ Rejected'}
+                    <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100,
+                      background: c.status === 'active' ? S.green + '22' : c.status === 'approved' ? S.blue + '22' : S.danger + '22',
+                      color: c.status === 'active' ? S.green : c.status === 'approved' ? S.blue : S.danger }}>
+                      {c.status === 'active' ? '✓ Active' : c.status === 'approved' ? '⏳ Approved' : '✗ Rejected'}
                     </span>
                   </div>
                 </Card>
@@ -423,13 +441,15 @@ export default function AdminDashboard() {
                 <button onClick={() => setActionError(null)} style={{ background: 'none', border: 'none', color: S.danger, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
               </div>
             )}
-            {['approved', 'rejected'].map(statusGroup => {
+            {['active', 'approved', 'rejected'].map(statusGroup => {
               const group = contractors.filter(c => c.status === statusGroup)
               if (!group.length) return null
+              const groupLabel = statusGroup === 'active' ? '✓ Active Partners' : statusGroup === 'approved' ? '⏳ Approved — Awaiting Payment' : '✗ Removed'
+              const groupColor = statusGroup === 'active' ? S.green : statusGroup === 'approved' ? S.amber : S.muted
               return (
                 <div key={statusGroup} style={{ marginBottom: 28 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: statusGroup === 'approved' ? S.green : S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
-                    {statusGroup === 'approved' ? '✓ Active Partners' : '✗ Removed'}
+                  <div style={{ fontSize: 11, fontWeight: 700, color: groupColor, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+                    {groupLabel}
                   </div>
                   <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, overflow: 'hidden' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 1fr 120px 80px 120px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
@@ -468,7 +488,7 @@ export default function AdminDashboard() {
                                   {actionLoading === c.id ? '…' : 'Resend Invite'}
                                 </button>
                               )}
-                              {statusGroup === 'approved' ? (
+                              {statusGroup !== 'rejected' ? (
                                 <button
                                   onClick={() => handleStatusUpdate(c.id, 'rejected')}
                                   disabled={actionLoading === c.id}
@@ -549,26 +569,36 @@ export default function AdminDashboard() {
         )}
 
         {/* Lead Activity */}
-        {tab === 'activity' && (
-          <div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {LEAD_ACTIVITY.map((event, i) => (
-                <div key={i} style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '14px 16px', background: S.card, border: `1px solid ${S.border}`, borderRadius: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: (EVENT_COLORS[event.type] || S.muted) + '22', border: `1px solid ${(EVENT_COLORS[event.type] || S.muted)}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: EVENT_COLORS[event.type] || S.muted, flexShrink: 0, marginTop: 1 }}>
-                    {EVENT_ICONS[event.type]}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: S.offwhite }}>{event.event}</span>
-                      <span style={{ fontSize: 11, color: S.muted, flexShrink: 0 }}>{event.time}</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: S.muted, marginTop: 2, lineHeight: 1.4 }}>{event.detail}</div>
-                  </div>
+        {tab === 'activity' && (() => {
+          const EVENT_COLORS = { accept: S.green, dispatch: S.blue, complete: S.green, member: S.purple, request: S.amber, apply: S.blue, decline: S.danger }
+          const EVENT_ICONS = { accept: '✓', dispatch: '→', complete: '✓', member: '👤', request: '📋', apply: '📝', decline: '✗' }
+          return (
+            <div>
+              {activity.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '60px 0', color: S.muted, fontSize: 14 }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>⚡</div>
+                  No activity yet. Activity will appear here as members request jobs and contractors respond.
                 </div>
-              ))}
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {activity.map((event, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '14px 16px', background: S.card, border: `1px solid ${S.border}`, borderRadius: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: (EVENT_COLORS[event.type] || S.muted) + '22', border: `1px solid ${(EVENT_COLORS[event.type] || S.muted)}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: EVENT_COLORS[event.type] || S.muted, flexShrink: 0, marginTop: 1 }}>
+                      {EVENT_ICONS[event.type] || '·'}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: S.offwhite }}>{event.event}</span>
+                        <span style={{ fontSize: 11, color: S.muted, flexShrink: 0 }}>{timeAgo(event.time)}</span>
+                      </div>
+                      <div style={{ fontSize: 13, color: S.muted, marginTop: 2, lineHeight: 1.4 }}>{event.detail}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
       </div>
     </div>
   )
