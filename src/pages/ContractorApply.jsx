@@ -13,9 +13,27 @@ const TRADES_LIST = [
   'Decks & Patios', 'Framing', 'House Cleaning', 'Gutters', 'Carpet Cleaning',
 ]
 
+const US_STATES = [
+  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
+  ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],
+  ['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
+  ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],
+  ['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],
+  ['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],
+  ['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
+  ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],
+  ['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],
+  ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
+]
+
 export default function ContractorApply() {
   const [form, setForm] = useState({ company_name: '', contact_name: '', email: '', phone: '' })
   const [trades, setTrades] = useState([])
+  const [saType, setSaType] = useState('county')
+  const [saState, setSaState] = useState('UT')
+  const [saCounties, setSaCounties] = useState('')
+  const [saZip, setSaZip] = useState('')
+  const [saRadius, setSaRadius] = useState('25')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [submitted, setSubmitted] = useState(false)
@@ -28,10 +46,17 @@ export default function ContractorApply() {
     if (!form.company_name.trim()) { setError('Please enter your company name.'); return }
     if (!form.email.trim()) { setError('Please enter your email address.'); return }
     if (!trades.length) { setError('Please select at least one trade.'); return }
+    if (saType === 'county' && !saCounties.trim()) { setError('Please enter the counties you serve.'); return }
+    if (saType === 'radius' && !saZip.trim()) { setError('Please enter your zip code.'); return }
+
+    const service_area = saType === 'county'
+      ? { type: 'county', state: saState, counties: saCounties.trim() }
+      : { type: 'radius', zip: saZip.trim(), radius: parseInt(saRadius), state: saState }
+
     setError(null)
     setLoading(true)
     const { data, error: fnError } = await supabase.functions.invoke('create-contractor-account', {
-      body: { ...form, trades },
+      body: { ...form, trades, service_area },
     })
     let msg = null
     if (fnError?.context) {
@@ -136,6 +161,90 @@ export default function ContractorApply() {
                 <option value="">{trades.length === 0 ? 'Select your primary trade...' : '+ Add another trade'}</option>
                 {TRADES_LIST.filter(t => !trades.includes(t)).map(t => <option key={t} value={t}>{t}</option>)}
               </select>
+            </div>
+
+            {/* Service Area */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Service Area</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                {[['county', '📍 By County', 'Select counties you cover'], ['radius', '📡 By Radius', 'Distance from your location']].map(([val, title, desc]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => { setSaType(val); setError(null) }}
+                    style={{
+                      background: saType === val ? S.green + '18' : S.surface,
+                      border: `1px solid ${saType === val ? S.green : S.border}`,
+                      borderRadius: 10, padding: '12px 14px', cursor: 'pointer', textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: saType === val ? S.green : S.offwhite, marginBottom: 3 }}>{title}</div>
+                    <div style={{ fontSize: 11, color: S.muted }}>{desc}</div>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: saType === 'radius' ? '1fr 1fr' : '120px 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>State</label>
+                  <select
+                    value={saState}
+                    onChange={e => { setSaState(e.target.value); setError(null) }}
+                    style={{ ...inp, color: S.offwhite }}
+                  >
+                    {US_STATES.map(([code, name]) => (
+                      <option key={code} value={code}>{code} — {name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {saType === 'county' ? (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Counties <span style={{ fontWeight: 400, textTransform: 'none' }}>(comma-separated)</span></label>
+                    <input
+                      type="text"
+                      value={saCounties}
+                      onChange={e => { setSaCounties(e.target.value); setError(null) }}
+                      placeholder="Salt Lake, Utah, Davis"
+                      style={inp}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Your Zip Code</label>
+                      <input
+                        type="text"
+                        value={saZip}
+                        onChange={e => { setSaZip(e.target.value.replace(/\D/g, '').slice(0, 5)); setError(null) }}
+                        placeholder="84101"
+                        maxLength={5}
+                        style={inp}
+                      />
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 8, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Radius</label>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {['10', '25', '50', '75', '100'].map(r => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => setSaRadius(r)}
+                            style={{
+                              flex: 1, padding: '10px 0', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                              background: saRadius === r ? S.green + '18' : S.surface,
+                              border: `1px solid ${saRadius === r ? S.green : S.border}`,
+                              color: saRadius === r ? S.green : S.muted,
+                            }}
+                          >
+                            {r} mi
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {error && (
