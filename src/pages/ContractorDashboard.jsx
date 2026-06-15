@@ -737,18 +737,25 @@ export default function ContractorDashboard() {
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
-      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
+      <style>{`
+        .cd-nav-meta { display: flex; align-items: center; gap: 8px; }
+        .cd-nav-email, .cd-nav-name { display: inline; }
+        @media (max-width: 600px) {
+          .cd-nav-email, .cd-nav-name { display: none; }
+        }
+      `}</style>
+      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 16px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
         <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || profile.email}</span>
-          <span style={{ fontSize: 13, color: S.offwhite, fontWeight: 600 }}>{user?.fullName || profile.name}</span>
+        <div className="cd-nav-meta">
+          <span className="cd-nav-email" style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || profile.email}</span>
+          <span className="cd-nav-name" style={{ fontSize: 13, color: S.offwhite, fontWeight: 600 }}>{user?.fullName || profile.name}</span>
           {contractorStatus === 'pending'
-            ? <span style={{ fontSize: 11, fontWeight: 700, color: S.amber, background: S.amber + '22', padding: '3px 10px', borderRadius: 100 }}>Pending Review</span>
+            ? <span style={{ fontSize: 11, fontWeight: 700, color: S.amber, background: S.amber + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>Pending Review</span>
             : contractorStatus === 'approved'
-            ? <span style={{ fontSize: 11, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '3px 10px', borderRadius: 100 }}>Approved</span>
-            : <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '3px 10px', borderRadius: 100 }}>Active Partner</span>
+            ? <span style={{ fontSize: 11, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>Approved</span>
+            : <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>Active Partner</span>
           }
-          <button onClick={() => signOut().then(() => navigate('/contractor/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
+          <button onClick={() => signOut().then(() => navigate('/contractor/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer', whiteSpace: 'nowrap' }}>Sign out</button>
         </div>
       </nav>
 
