@@ -362,17 +362,17 @@ function RateCardBuilder({ contractorId }) {
 
   useEffect(() => {
     if (!contractorId) return
-    supabase.from('contractor_rates').select('*').eq('contractor_id', contractorId)
+    supabase.functions.invoke('get-contractor-rates', { body: { contractor_id: contractorId } })
       .then(({ data }) => {
-        if (data?.length) {
-          setRates(data.map((r, i) => ({
+        if (data?.rates?.length) {
+          setRates(data.rates.map((r, i) => ({
             id: i + 1,
             service: r.service_name,
             pricingType: 'per job',
             marketRate: r.market_price || '',
             memberRate: r.member_price || '',
           })))
-          nextId = data.length + 1
+          nextId = data.rates.length + 1
         }
       })
   }, [contractorId])
@@ -641,6 +641,11 @@ export default function ContractorDashboard() {
   const [docUploading, setDocUploading] = useState(null)
   const [docError, setDocError] = useState(null)
   const [dataLoading, setDataLoading] = useState(true)
+  const [saType, setSaType] = useState('county')
+  const [saState, setSaState] = useState('UT')
+  const [saCounties, setSaCounties] = useState('')
+  const [saZip, setSaZip] = useState('')
+  const [saRadius, setSaRadius] = useState('25')
 
   const isActive = contractorStatus === 'active'
   const tabs = [['leads', '📥 Lead Inbox'], ['rates', '💲 Rate Card'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
@@ -664,6 +669,13 @@ export default function ContractorDashboard() {
         trades: data.trades?.length ? data.trades : [data.trade].filter(Boolean),
         bio: data.bio || p.bio,
       }))
+      const sa = (() => { try { return JSON.parse(data.service_area || 'null') } catch { return null } })()
+      if (sa) {
+        setSaType(sa.type || 'county')
+        setSaState(sa.state || 'UT')
+        if (sa.type === 'radius') { setSaZip(sa.zip || ''); setSaRadius(String(sa.radius || '25')) }
+        else setSaCounties(Array.isArray(sa.counties) ? sa.counties.join(', ') : (sa.counties || ''))
+      }
       setDataLoading(false)
       return
     }
@@ -697,6 +709,13 @@ export default function ContractorDashboard() {
           trades: data.trades?.length ? data.trades : [data.trade].filter(Boolean),
           bio: data.bio || p.bio,
         }))
+        const sa = (() => { try { return JSON.parse(data.service_area || 'null') } catch { return null } })()
+        if (sa) {
+          setSaType(sa.type || 'county')
+          setSaState(sa.state || 'UT')
+          if (sa.type === 'radius') { setSaZip(sa.zip || ''); setSaRadius(String(sa.radius || '25')) }
+          else setSaCounties(Array.isArray(sa.counties) ? sa.counties.join(', ') : (sa.counties || ''))
+        }
         setDataLoading(false)
       })
       .catch(() => setDataLoading(false))
@@ -1053,6 +1072,50 @@ export default function ContractorDashboard() {
               <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Bio (shown to members)</label>
               <textarea value={profile.bio} onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))} rows={4} style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
             </div>
+
+            {/* Service Area */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 8, fontWeight: 500 }}>Service Area</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                {[['county', '📍 By County'], ['radius', '📡 By Radius']].map(([val, label]) => (
+                  <button key={val} type="button" onClick={() => setSaType(val)} style={{ background: saType === val ? S.green + '18' : S.surface, border: `1px solid ${saType === val ? S.green : S.border}`, borderRadius: 9, padding: '10px 14px', cursor: 'pointer', textAlign: 'left' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: saType === val ? S.green : S.offwhite }}>{label}</div>
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: saType === 'radius' ? '1fr 1fr' : '120px 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>State</label>
+                  <select value={saState} onChange={e => setSaState(e.target.value)} style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}>
+                    {US_STATES.map(s => <option key={s.abbr} value={s.abbr}>{s.abbr} — {s.name}</option>)}
+                  </select>
+                </div>
+                {saType === 'county' ? (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Counties <span style={{ fontWeight: 400, textTransform: 'none' }}>(comma-separated)</span></label>
+                    <input type="text" value={saCounties} onChange={e => setSaCounties(e.target.value)} placeholder="Salt Lake, Utah, Davis" style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Zip Code</label>
+                      <input type="text" value={saZip} onChange={e => setSaZip(e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="84101" maxLength={5} style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Radius</label>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {['10', '25', '50', '75', '100'].map(r => (
+                          <button key={r} type="button" onClick={() => setSaRadius(r)} style={{ flex: 1, padding: '9px 0', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', background: saRadius === r ? S.green + '18' : S.surface, border: `1px solid ${saRadius === r ? S.green : S.border}`, color: saRadius === r ? S.green : S.muted }}>
+                            {r} mi
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 12 }}>Documents</div>
               {[
@@ -1105,6 +1168,9 @@ export default function ContractorDashboard() {
                 setProfileSaving(true)
                 const primaryTrade = profile.trades?.[0] || profile.trade || ''
                 const allTrades = profile.trades?.length ? profile.trades : [primaryTrade].filter(Boolean)
+                const serviceAreaObj = saType === 'county'
+                  ? { type: 'county', state: saState, counties: saCounties.trim() }
+                  : { type: 'radius', state: saState, zip: saZip.trim(), radius: parseInt(saRadius) }
                 const { data, error } = await supabase.functions.invoke('update-contractor-profile', {
                   body: {
                     contractor_id: contractorId,
@@ -1114,6 +1180,7 @@ export default function ContractorDashboard() {
                     trade: primaryTrade,
                     trades: allTrades,
                     bio: profile.bio,
+                    service_area: JSON.stringify(serviceAreaObj),
                   },
                 })
                 setProfileSaving(false)
