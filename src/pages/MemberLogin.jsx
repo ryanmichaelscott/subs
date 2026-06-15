@@ -53,6 +53,10 @@ const appearance = {
 export default function MemberLogin() {
   const [searchParams] = useSearchParams()
   const isSignUp = searchParams.get('mode') === 'signup'
+  const plan = searchParams.get('plan')
+
+  const afterUrl = plan ? `/dashboard?plan=${plan}` : '/dashboard'
+  const signUpUrl = plan ? `/login?mode=signup&plan=${plan}` : '/login?mode=signup'
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0C0F0A', padding: 24 }}>
@@ -67,15 +71,15 @@ export default function MemberLogin() {
           {isSignUp ? (
             <SignUp
               routing="hash"
-              afterSignUpUrl="/dashboard"
+              afterSignUpUrl={afterUrl}
               signInUrl="/login"
               appearance={appearance}
             />
           ) : (
             <SignIn
               routing="hash"
-              afterSignInUrl="/dashboard"
-              signUpUrl="/login?mode=signup"
+              afterSignInUrl={afterUrl}
+              signUpUrl={signUpUrl}
               appearance={appearance}
             />
           )}

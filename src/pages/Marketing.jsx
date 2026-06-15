@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useUser } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
 
@@ -40,6 +41,7 @@ const TIERS = [
   {
     id: 'member',
     name: 'Member',
+    priceId: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
     price: 99,
     color: S.green,
     tagline: 'Contractor pricing on every trade.',
@@ -54,6 +56,7 @@ const TIERS = [
   {
     id: 'plus',
     name: 'Member+',
+    priceId: 'price_1TiRQBAYDs9oVarW14DBq2HL',
     price: 199,
     color: S.blue,
     tagline: 'Deeper discounts + concierge coordination.',
@@ -70,6 +73,7 @@ const TIERS = [
   {
     id: 'elite',
     name: 'Elite',
+    priceId: 'price_1TiRQZAYDs9oVarWcZ10xjDG',
     price: 399,
     color: S.purple,
     tagline: 'Maximum savings. One call does it all.',
@@ -230,6 +234,38 @@ function HowItWorks() {
 }
 
 function Membership() {
+  const { user } = useUser()
+  const navigate = useNavigate()
+  const [joiningId, setJoiningId] = useState(null)
+  const [joinError, setJoinError] = useState(null)
+
+  const handleJoin = async (tier) => {
+    setJoinError(null)
+    if (!user) {
+      navigate(`/login?plan=${tier.id}`)
+      return
+    }
+    setJoiningId(tier.id)
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          price_id: tier.priceId,
+          clerk_user_id: user.id,
+          email: user.primaryEmailAddress?.emailAddress,
+          success_url: `${window.location.origin}/dashboard`,
+          cancel_url: `${window.location.origin}/signup`,
+        },
+      })
+      if (error || !data?.url) {
+        setJoinError('Could not start checkout. Please try again.')
+        return
+      }
+      window.location.href = data.url
+    } finally {
+      setJoiningId(null)
+    }
+  }
+
   return (
     <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
       <div style={{ textAlign: 'center', marginBottom: 56 }}>
@@ -238,6 +274,9 @@ function Membership() {
         </h2>
         <p style={{ fontSize: 14, color: S.muted }}>Annual billing only. Cancel in the first 14 days for a full refund.</p>
       </div>
+      {joinError && (
+        <div style={{ textAlign: 'center', color: S.danger, fontSize: 13, marginBottom: 20 }}>{joinError}</div>
+      )}
       <div className="tier-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, alignItems: 'start' }}>
         {TIERS.map((tier) => (
           <div key={tier.id} style={{ background: S.card, border: `2px solid ${tier.popular ? tier.color : S.border}`, borderRadius: 16, padding: 28, position: 'relative' }}>
@@ -258,11 +297,13 @@ function Membership() {
                 </li>
               ))}
             </ul>
-            <Link to="/login">
-              <button style={{ width: '100%', background: tier.popular ? tier.color : S.surface, border: `1px solid ${tier.popular ? 'transparent' : S.border}`, color: tier.popular ? S.black : S.offwhite, fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: 'pointer' }}>
-                Join {tier.name}
-              </button>
-            </Link>
+            <button
+              onClick={() => handleJoin(tier)}
+              disabled={joiningId === tier.id}
+              style={{ width: '100%', background: tier.popular ? tier.color : S.surface, border: `1px solid ${tier.popular ? 'transparent' : S.border}`, color: tier.popular ? S.black : S.offwhite, fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: joiningId === tier.id ? 'not-allowed' : 'pointer', opacity: joiningId === tier.id ? 0.7 : 1 }}
+            >
+              {joiningId === tier.id ? 'Redirecting…' : `Join ${tier.name}`}
+            </button>
           </div>
         ))}
       </div>

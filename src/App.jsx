@@ -13,6 +13,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Marketing />} />
+        <Route path="/signup" element={<Marketing />} />
         <Route path="/login" element={<MemberLogin />} />
         <Route path="/dashboard" element={
           <ProtectedRoute role="member"><MemberDashboard /></ProtectedRoute>

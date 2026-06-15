@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
@@ -75,8 +75,10 @@ export default function MemberDashboard() {
   const displayName = user?.fullName || user?.firstName || 'Member'
   const displayEmail = user?.primaryEmailAddress?.emailAddress || 'ryan@neumi.com'
 
+  const [searchParams] = useSearchParams()
   const [member, setMember] = useState(null)
   const [tab, setTab] = useState('directory')
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [tradeFilter, setTradeFilter] = useState('')
   const [zipFilter, setZipFilter] = useState('')
   const [selectedContractor, setSelectedContractor] = useState(null)
@@ -84,37 +86,86 @@ export default function MemberDashboard() {
   const [jobSubmitted, setJobSubmitted] = useState(false)
   const [searching, setSearching] = useState(false)
 
+  const PLAN_PRICE_IDS = {
+    member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
+    plus: 'price_1TiRQBAYDs9oVarW14DBq2HL',
+    elite: 'price_1TiRQZAYDs9oVarWcZ10xjDG',
+  }
+
   useEffect(() => {
     if (!user) return
-    const upsertMember = async () => {
-      const { data } = await supabase
+    const init = async () => {
+      // Check if member already exists
+      const { data: existing } = await supabase
         .from('members')
-        .upsert({
-          clerk_user_id: user.id,
-          email: user.primaryEmailAddress?.emailAddress || '',
-          name: user.fullName || user.firstName || '',
-          phone: user.phoneNumbers?.[0]?.phoneNumber || null,
-          tier: 'Member',
-          status: 'Active',
-        }, { onConflict: 'clerk_user_id', ignoreDuplicates: false })
-        .select()
+        .select('*')
+        .eq('clerk_user_id', user.id)
         .single()
-      if (data) {
-        setMember(data)
-        // Send welcome email if this is a new signup (created within last 5 minutes)
-        const createdAt = user.createdAt ? new Date(user.createdAt).getTime() : 0
-        const isNewUser = Date.now() - createdAt < 5 * 60 * 1000
-        if (isNewUser) {
-          supabase.functions.invoke('send-welcome-email', {
-            body: {
-              email: user.primaryEmailAddress?.emailAddress || '',
-              name: user.firstName || user.fullName || 'there',
-            },
+
+      if (existing) {
+        // Update profile fields only — preserve tier/status set by Stripe webhook
+        await supabase
+          .from('members')
+          .update({
+            email: user.primaryEmailAddress?.emailAddress || existing.email,
+            name: user.fullName || user.firstName || existing.name,
+            phone: user.phoneNumbers?.[0]?.phoneNumber || existing.phone,
           })
+          .eq('clerk_user_id', user.id)
+        setMember(existing)
+      } else {
+        // New member — insert with defaults
+        const { data } = await supabase
+          .from('members')
+          .insert({
+            clerk_user_id: user.id,
+            email: user.primaryEmailAddress?.emailAddress || '',
+            name: user.fullName || user.firstName || '',
+            phone: user.phoneNumbers?.[0]?.phoneNumber || null,
+            tier: 'Member',
+            status: 'Active',
+          })
+          .select()
+          .single()
+        if (data) {
+          setMember(data)
+          // Send welcome email for fresh signups
+          const createdAt = user.createdAt ? new Date(user.createdAt).getTime() : 0
+          const isNewUser = Date.now() - createdAt < 5 * 60 * 1000
+          if (isNewUser) {
+            supabase.functions.invoke('send-welcome-email', {
+              body: {
+                email: user.primaryEmailAddress?.emailAddress || '',
+                name: user.firstName || user.fullName || 'there',
+              },
+            })
+          }
+        }
+      }
+
+      // If ?plan= is in the URL, redirect to Stripe Checkout
+      const plan = searchParams.get('plan')
+      const priceId = plan ? PLAN_PRICE_IDS[plan] : null
+      if (priceId) {
+        setCheckoutLoading(true)
+        const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+          body: {
+            price_id: priceId,
+            clerk_user_id: user.id,
+            email: user.primaryEmailAddress?.emailAddress,
+            success_url: `${window.location.origin}/dashboard`,
+            cancel_url: `${window.location.origin}/signup`,
+          },
+        })
+        if (data?.url) {
+          window.location.href = data.url
+        } else {
+          setCheckoutLoading(false)
+          console.error('Checkout session error:', error)
         }
       }
     }
-    upsertMember()
+    init()
   }, [user])
 
   const filtered = CONTRACTORS.filter(c =>
@@ -124,6 +175,15 @@ export default function MemberDashboard() {
 
   const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }
   const tabs = [['directory', '📋 Contractor Directory'], ['request', '➕ Request a Job'], ['history', '🕐 Job History']]
+
+  if (checkoutLoading) {
+    return (
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: S.offwhite }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: S.green, letterSpacing: '0.06em', marginBottom: 24 }}>SUBS</div>
+        <div style={{ fontSize: 15, color: S.muted }}>Redirecting to checkout…</div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
