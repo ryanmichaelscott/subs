@@ -248,6 +248,7 @@ function Membership() {
   const handleJoin = async (tier) => {
     setJoinError(null)
     if (!user) {
+      localStorage.setItem('subs_pending_plan', tier.id)
       navigate(`/login?plan=${tier.id}`)
       return
     }

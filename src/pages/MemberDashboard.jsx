@@ -6,24 +6,7 @@ import { supabase } from '../lib/supabase'
 
 const TRADES = ['HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors', 'Concrete Work', 'Interior Painting', 'Exterior Painting', 'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Handyman', 'Pool Service', 'Flooring', 'Fencing', 'Decks & Patios', 'House Cleaning']
 
-const CONTRACTORS = [
-  { name: 'Peak HVAC', trade: 'HVAC', rating: 4.9, jobs: 47, area: 'Salt Lake County', discount: '15–20% off', bio: 'Family-owned HVAC company serving the Wasatch Front since 2011. Emergency repair specialists.', rates: [{ service: 'AC Tune-Up', member: '$165', market: '$220–$260' }, { service: 'Diagnostic', member: '$89', market: '$120–$150' }, { service: 'Filter Swap', member: '$55', market: '$80–$100' }] },
-  { name: 'BlueLine Plumbing', trade: 'Plumbing', rating: 4.8, jobs: 31, area: 'Salt Lake + Utah County', discount: '38–40% off', bio: 'Licensed master plumbers with 15+ years in residential service. No trip fees for SUBS members.', rates: [{ service: 'Service Call', member: '$79', market: '$120–$150' }, { service: 'Labor Rate', member: '$95/hr', market: '$150–$180/hr' }, { service: 'Drain Cleaning', member: '$119', market: '$175–$250' }] },
-  { name: 'ClearView Windows', trade: 'Windows & Doors', rating: 4.9, jobs: 22, area: 'Wasatch Front', discount: '38–45% off', bio: 'Whole-home window cleaning specialists. Interior + exterior. SUBS members get priority scheduling.', rates: [{ service: 'Whole Home', member: '$145', market: '$220–$300' }, { service: 'Exterior Only', member: '$95', market: '$140–$180' }, { service: 'Add-on Screens', member: '$25', market: '$40–$60' }] },
-  { name: 'GreenBlade Lawn', trade: 'Lawn Care', rating: 4.7, jobs: 63, area: 'Salt Lake County', discount: 'Contractor rates', bio: 'Full-service lawn care and maintenance. Weekly, bi-weekly, and one-time service.', rates: [{ service: 'Weekly Mow', member: '$35', market: '$55–$75' }, { service: 'Full Service', member: '$120', market: '$180–$220' }, { service: 'Aeration', member: '$89', market: '$130–$160' }] },
-  { name: 'ProRoofing Utah', trade: 'Roofing', rating: 4.8, jobs: 18, area: 'Wasatch Front', discount: 'Up to 15% off', bio: 'Certified roofing installers. Full replacement, repair, and inspection services.', rates: [{ service: 'Inspection', member: '$0', market: '$150–$300' }, { service: 'Repair', member: 'Market −10%', market: 'Varies' }, { service: 'Full Replace', member: 'Market −15%', market: '$8K–$25K' }] },
-  { name: 'Bright Electrical', trade: 'Electrical', rating: 4.9, jobs: 29, area: 'Salt Lake County', discount: '15–20% off', bio: 'Licensed master electrician. Panel upgrades, EV charging, whole-home rewires.', rates: [{ service: 'Service Call', member: '$85', market: '$120–$150' }, { service: 'Labor Rate', member: '$95/hr', market: '$120–$140/hr' }, { service: 'Panel Upgrade', member: 'Market −18%', market: '$2K–$5K' }] },
-]
-
-const JOB_HISTORY = [
-  { id: 'J-1041', contractor: 'Peak HVAC', trade: 'HVAC', service: 'AC Tune-Up', date: 'Jun 14, 2026', paid: '$165', status: 'Scheduled' },
-  { id: 'J-1035', contractor: 'Peak HVAC', trade: 'HVAC', service: 'AC Tune-Up', date: 'Jun 10, 2026', paid: '$165', status: 'Complete' },
-  { id: 'J-1028', contractor: 'BlueLine Plumbing', trade: 'Plumbing', service: 'Drain Cleaning', date: 'May 28, 2026', paid: '$119', status: 'Complete' },
-  { id: 'J-1012', contractor: 'GreenBlade Lawn', trade: 'Lawn Care', service: 'Weekly Mow', date: 'May 15, 2026', paid: '$35', status: 'Complete' },
-  { id: 'J-0998', contractor: 'ProRoofing Utah', trade: 'Roofing', service: 'Inspection', date: 'Apr 22, 2026', paid: '$0', status: 'Complete' },
-]
-
-const STATUS_COLORS = { Complete: S.green, Scheduled: S.blue, Pending: S.amber }
+const STATUS_COLORS = { Complete: S.green, Scheduled: S.blue, pending: S.amber }
 
 function Card({ children, style }) {
   return <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, ...style }}>{children}</div>
@@ -42,7 +25,7 @@ function MemberCard({ name, member }) {
     <Card style={{ padding: '20px 24px', background: `linear-gradient(135deg, ${S.forest} 0%, #0f1f12 100%)`, border: `1px solid ${S.greenDim}` }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div style={{ fontFamily: C.body, fontSize: 16, fontWeight: 800, color: S.green, letterSpacing: '0.1em' }}>SUBS</div>
-        <div style={{ fontSize: 11, color: S.muted }}>SUBS.co</div>
+        <div style={{ fontSize: 11, color: S.muted }}>SUBS.app</div>
       </div>
       <div style={{ fontSize: 14, color: S.muted, letterSpacing: '0.1em', marginBottom: 4 }}>•••• •••• •••• 4821</div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -77,6 +60,8 @@ export default function MemberDashboard() {
 
   const [searchParams] = useSearchParams()
   const [member, setMember] = useState(null)
+  const [contractors, setContractors] = useState([])
+  const [jobRequests, setJobRequests] = useState([])
   const [tab, setTab] = useState('directory')
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [tradeFilter, setTradeFilter] = useState('')
@@ -143,10 +128,11 @@ export default function MemberDashboard() {
         }
       }
 
-      // If ?plan= is in the URL, redirect to Stripe Checkout
-      const plan = searchParams.get('plan')
-      const priceId = plan ? PLAN_PRICE_IDS[plan] : null
+      // Check localStorage first (survives Clerk multi-step auth), then URL param
+      const pendingPlan = localStorage.getItem('subs_pending_plan') || searchParams.get('plan')
+      const priceId = pendingPlan ? PLAN_PRICE_IDS[pendingPlan] : null
       if (priceId) {
+        localStorage.removeItem('subs_pending_plan')
         setCheckoutLoading(true)
         const { data, error } = await supabase.functions.invoke('create-checkout-session', {
           body: {
@@ -163,15 +149,35 @@ export default function MemberDashboard() {
           setCheckoutLoading(false)
           console.error('Checkout session error:', error)
         }
+        return
       }
+
+      // Fetch real data
+      const [{ data: contractorRows }, { data: jobRows }] = await Promise.all([
+        supabase
+          .from('contractors')
+          .select('*, contractor_rates(*)')
+          .eq('status', 'approved')
+          .order('rating', { ascending: false }),
+        supabase
+          .from('job_requests')
+          .select('*')
+          .eq('clerk_user_id', user.id)
+          .order('submitted_at', { ascending: false }),
+      ])
+      if (contractorRows) setContractors(contractorRows)
+      if (jobRows) setJobRequests(jobRows)
     }
     init()
   }, [user])
 
-  const filtered = CONTRACTORS.filter(c =>
+  const filtered = contractors.filter(c =>
     (!tradeFilter || c.trade === tradeFilter) &&
-    (!zipFilter || c.area.toLowerCase().includes('salt lake'))
+    (!zipFilter || (c.service_area || '').toLowerCase().includes(zipFilter.toLowerCase()))
   )
+
+  const jobsDone = jobRequests.filter(j => j.status === 'Complete').length
+  const tradesUsed = new Set(jobRequests.map(j => j.trade).filter(Boolean)).size
 
   const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }
   const tabs = [['directory', '📋 Contractor Directory'], ['request', '➕ Request a Job'], ['history', '🕐 Job History']]
@@ -193,7 +199,9 @@ export default function MemberDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <a href="tel:18884543019" style={{ fontSize: 12, fontWeight: 600, color: S.green, textDecoration: 'none' }}>1-888-454-3019</a>
           <span style={{ fontSize: 12, color: S.muted }}>{displayEmail}</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '3px 10px', borderRadius: 100 }}>Member+</span>
+          {member?.tier && (
+            <span style={{ fontSize: 11, fontWeight: 700, color: TIER_COLORS[member.tier] || S.blue, background: (TIER_COLORS[member.tier] || S.blue) + '22', padding: '3px 10px', borderRadius: 100 }}>{member.tier}</span>
+          )}
           <button onClick={() => signOut().then(() => navigate('/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
       </nav>
@@ -205,7 +213,7 @@ export default function MemberDashboard() {
             <MemberCard name={displayName} member={member} />
             <Card style={{ padding: 20 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Stats</div>
-              {[['5', 'Jobs completed'], ['$484', 'Total saved est.'], ['3', 'Trades used']].map(([val, label]) => (
+              {[[String(jobsDone), 'Jobs completed'], [String(tradesUsed), 'Trades used'], [String(jobRequests.length), 'Total requests']].map(([val, label]) => (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <span style={{ fontSize: 13, color: S.muted }}>{label}</span>
                   <span style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{val}</span>
@@ -249,36 +257,38 @@ export default function MemberDashboard() {
                   <button onClick={() => { setTradeFilter(''); setZipFilter('') }} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 13, padding: '10px 16px', borderRadius: 8, cursor: 'pointer' }}>Clear</button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {filtered.map((c, i) => (
-                    <Card key={i} style={{ padding: 20, cursor: 'pointer', border: selectedContractor === i ? `1px solid ${S.green}` : `1px solid ${S.border}` }} onClick={() => setSelectedContractor(selectedContractor === i ? null : i)}>
+                  {filtered.map((c) => (
+                    <Card key={c.id} style={{ padding: 20, cursor: 'pointer', border: selectedContractor === c.id ? `1px solid ${S.green}` : `1px solid ${S.border}` }} onClick={() => setSelectedContractor(selectedContractor === c.id ? null : c.id)}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                         <div>
                           <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite, marginBottom: 2 }}>{c.name}</div>
-                          <div style={{ fontSize: 12, color: S.muted }}>{c.trade} · {c.area}</div>
+                          <div style={{ fontSize: 12, color: S.muted }}>{c.trade}{c.service_area ? ` · ${c.service_area}` : ''}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: S.green }}>{c.discount}</div>
-                          <div style={{ fontSize: 12, color: S.muted }}>⭐ {c.rating} · {c.jobs} jobs</div>
+                          {c.discount_description && <div style={{ fontSize: 13, fontWeight: 700, color: S.green }}>{c.discount_description}</div>}
+                          <div style={{ fontSize: 12, color: S.muted }}>⭐ {c.rating ?? '—'} · {c.jobs_count ?? 0} jobs</div>
                         </div>
                       </div>
-                      {selectedContractor === i && (
+                      {selectedContractor === c.id && (
                         <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${S.border}` }}>
-                          <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.6, marginBottom: 14 }}>{c.bio}</p>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Member Rate Card</div>
-                          {c.rates.map((r, j) => (
-                            <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, fontSize: 13 }}>
-                              <span style={{ color: S.offwhite }}>{r.service}</span>
-                              <div style={{ textAlign: 'right' }}>
-                                <span style={{ color: S.green, fontWeight: 700 }}>{r.member}</span>
-                                <span style={{ color: S.muted, fontSize: 11, marginLeft: 8 }}>market: {r.market}</span>
-                              </div>
-                            </div>
-                          ))}
+                          {c.bio && <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.6, marginBottom: 14 }}>{c.bio}</p>}
+                          {c.contractor_rates?.length > 0 && (
+                            <>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Member Rate Card</div>
+                              {c.contractor_rates.map((r) => (
+                                <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, fontSize: 13 }}>
+                                  <span style={{ color: S.offwhite }}>{r.service_name}</span>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <span style={{ color: S.green, fontWeight: 700 }}>{r.member_price}</span>
+                                    {r.market_price && <span style={{ color: S.muted, fontSize: 11, marginLeft: 8 }}>market: {r.market_price}</span>}
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${S.border}`, fontSize: 12 }}>
                             <span style={{ color: S.green }}>✓ Verified</span>
                             <span style={{ color: S.muted }}>Licensed & insured</span>
-                            <span style={{ color: S.muted }}>·</span>
-                            <span style={{ color: S.muted }}>All {c.jobs} jobs confirmed member pricing</span>
                           </div>
                         </div>
                       )}
@@ -287,7 +297,7 @@ export default function MemberDashboard() {
                   {filtered.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '48px 0', color: S.muted }}>
                       <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
-                      <div>No contractors match your filters.</div>
+                      <div>{contractors.length === 0 ? 'No contractors in your area yet. More coming soon.' : 'No contractors match your filters.'}</div>
                     </div>
                   )}
                 </div>
@@ -371,20 +381,31 @@ export default function MemberDashboard() {
             {/* History tab */}
             {tab === 'history' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {JOB_HISTORY.map((job, i) => (
-                  <Card key={i} style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                {jobRequests.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '60px 0', color: S.muted }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+                    <div style={{ fontSize: 15, marginBottom: 8 }}>No jobs yet.</div>
+                    <div style={{ fontSize: 13 }}>Submit a request to get started.</div>
+                  </div>
+                )}
+                {jobRequests.map((job) => (
+                  <Card key={job.id} style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                      <div style={{ fontSize: 11, color: S.muted, fontFamily: 'monospace' }}>{job.id}</div>
+                      <div style={{ fontSize: 11, color: S.muted, fontFamily: 'monospace' }}>{job.display_id || job.id.slice(0, 8).toUpperCase()}</div>
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{job.contractor}</div>
-                        <div style={{ fontSize: 12, color: S.muted }}>{job.service} · {job.date}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{job.trade}</div>
+                        <div style={{ fontSize: 12, color: S.muted }}>
+                          {job.service || job.description?.slice(0, 40) || '—'} · {new Date(job.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{job.paid}</div>
-                        <div style={{ fontSize: 11, color: S.green }}>member rate</div>
-                      </div>
+                      {job.rate && (
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{job.rate}</div>
+                          <div style={{ fontSize: 11, color: S.green }}>member rate</div>
+                        </div>
+                      )}
                       <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100, background: (STATUS_COLORS[job.status] || S.muted) + '22', color: STATUS_COLORS[job.status] || S.muted }}>
                         {job.status}
                       </span>

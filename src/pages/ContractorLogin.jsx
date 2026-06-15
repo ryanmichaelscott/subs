@@ -30,6 +30,12 @@ const appearance = {
       color: '#F0EEE8',
       borderRadius: '10px',
     },
+    otpCodeFieldInput: {
+      background: '#141814',
+      border: '1px solid #252A23',
+      color: '#F0EEE8',
+      borderRadius: '8px',
+    },
     formFieldLabel: { color: '#8A9088', fontWeight: 500 },
     formButtonPrimary: {
       background: '#5DFF8A',
