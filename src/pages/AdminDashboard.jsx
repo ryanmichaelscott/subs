@@ -91,6 +91,30 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleDeleteContractor = async (id, name) => {
+    if (!window.confirm(`Permanently delete ${name} from Supabase and Clerk? This cannot be undone.`)) return
+    setActionError(null)
+    setActionLoading(id)
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-contractor', { body: { contractor_id: id } })
+      if (error) {
+        let detail = error.message
+        try {
+          const body = error.context?.json ? await error.context.json() : error.context
+          detail = body?.error || body?.message || error.message
+        } catch {}
+        setActionError(`Delete failed: ${detail}`)
+        return
+      }
+      if (data?.error) { setActionError(`Delete failed: ${data.error}`); return }
+      setContractors(cs => cs.filter(c => c.id !== id))
+    } catch (e) {
+      setActionError(`Unexpected error: ${e.message}`)
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   const handleResendInvitation = async (id) => {
     setActionError(null)
     setActionLoading(id)
@@ -336,12 +360,15 @@ export default function AdminDashboard() {
                           <div style={{ fontSize: 13, color: S.muted, marginTop: 2 }}>{c.years_experience ? `${c.years_experience} years in business · ` : ''}Licensed: {c.licensed ? '✓ Yes' : '✗ No'}</div>
                           <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>Applied {c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</div>
                         </div>
-                        <div style={{ display: 'flex', gap: 10 }}>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button onClick={() => handleContractor(c.id, 'approved')} disabled={actionLoading === c.id} style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.6 : 1 }}>
                             {actionLoading === c.id ? '…' : '✓ Approve'}
                           </button>
                           <button onClick={() => handleContractor(c.id, 'rejected')} disabled={actionLoading === c.id} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.danger, fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 8, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.6 : 1 }}>
                             Reject
+                          </button>
+                          <button onClick={() => handleDeleteContractor(c.id, c.name)} disabled={actionLoading === c.id} style={{ background: 'transparent', border: `1px solid ${S.danger}44`, color: S.danger, fontSize: 12, fontWeight: 600, padding: '9px 14px', borderRadius: 8, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.6 : 1 }}>
+                            Delete
                           </button>
                         </div>
                       </div>
@@ -370,6 +397,13 @@ export default function AdminDashboard() {
                         {actionLoading === c.id ? '…' : 'Resend Invite'}
                       </button>
                     )}
+                    <button
+                      onClick={() => handleDeleteContractor(c.id, c.name)}
+                      disabled={actionLoading === c.id}
+                      style={{ background: 'transparent', border: `1px solid ${S.danger}44`, color: S.danger, fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                    >
+                      {actionLoading === c.id ? '…' : 'Delete'}
+                    </button>
                     <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100, background: c.status === 'approved' ? S.green + '22' : S.danger + '22', color: c.status === 'approved' ? S.green : S.danger }}>
                       {c.status === 'approved' ? '✓ Approved' : '✗ Rejected'}
                     </span>
@@ -451,6 +485,13 @@ export default function AdminDashboard() {
                                   {actionLoading === c.id ? '…' : 'Reinstate'}
                                 </button>
                               )}
+                              <button
+                                onClick={() => handleDeleteContractor(c.id, c.name)}
+                                disabled={actionLoading === c.id}
+                                style={{ background: 'transparent', border: `1px solid ${S.danger}44`, color: S.danger, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                              >
+                                {actionLoading === c.id ? '…' : 'Delete'}
+                              </button>
                             </div>
                           </div>
                           {isExpanded && (
