@@ -22,8 +22,8 @@ const US_STATES = [
 
 const STATUS_COLORS = { Complete: S.green, Scheduled: S.blue, pending: S.amber }
 
-function Card({ children, style }) {
-  return <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, ...style }}>{children}</div>
+function Card({ children, style, ...props }) {
+  return <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, ...style }} {...props}>{children}</div>
 }
 
 const TIER_COLORS = { Member: S.green, 'Member+': S.blue, Elite: S.purple }
