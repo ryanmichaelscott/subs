@@ -115,8 +115,9 @@ function Nav({ setSection }) {
   return (
     <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: S.black + 'E8', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${S.border}` }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-        <button onClick={() => setSection('home')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-          <span style={{ fontFamily: C.body, fontSize: 20, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</span>
+        <button onClick={() => setSection('home')} style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+          <span style={{ display: 'block', fontFamily: C.body, fontSize: 20, fontWeight: 800, color: S.green, letterSpacing: '0.06em', lineHeight: 1 }}>SUBS</span>
+          <span style={{ display: 'block', fontSize: 11, fontWeight: 400, color: S.green + '80', letterSpacing: '0.1em', lineHeight: 1, marginTop: 3 }}>Home Services Membership</span>
         </button>
         {/* Desktop nav links — hidden on mobile via .nav-links CSS class */}
         <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'nowrap' }}>
@@ -205,12 +206,6 @@ function Hero() {
           .hero-invoice { flex-direction: column; }
         }
       `}</style>
-
-      {/* Logo + label */}
-      <div style={{ marginBottom: 'clamp(28px, 4vw, 52px)' }}>
-        <div style={{ fontFamily: C.body, fontSize: 22, fontWeight: 800, color: S.green, letterSpacing: '0.06em', lineHeight: 1 }}>SUBS.</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: S.muted, letterSpacing: '0.18em', textTransform: 'uppercase', marginTop: 5 }}>Home Services Membership</div>
-      </div>
 
       <div className="hero-grid">
         {/* Left column */}
