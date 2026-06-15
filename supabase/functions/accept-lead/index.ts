@@ -1,6 +1,29 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+function formatPhone(phone: string): string | null {
+  const digits = (phone || '').replace(/\D/g, '')
+  if (digits.length === 10) return `+1${digits}`
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`
+  return null
+}
+
+async function sendSms(to: string, body: string) {
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID')
+  const auth = Deno.env.get('TWILIO_AUTH_TOKEN')
+  const from = Deno.env.get('TWILIO_PHONE_NUMBER')
+  const toFormatted = formatPhone(to)
+  if (!sid || !auth || !from || !toFormatted) return
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${btoa(`${sid}:${auth}`)}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({ From: from, To: toFormatted, Body: body }).toString(),
+  })
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -107,6 +130,21 @@ serve(async (req) => {
           html,
         }),
       })
+    }
+
+    // SMS the member
+    if (updated.clerk_user_id && contractor) {
+      const { data: member } = await supabase
+        .from('members')
+        .select('phone')
+        .eq('clerk_user_id', updated.clerk_user_id)
+        .single()
+
+      if (member?.phone) {
+        const contractorName = contractor.name || contractor.contact_name || 'Your contractor'
+        const msg = `Your SUBS contractor is confirmed — ${contractorName} accepted your ${updated.trade} request. They'll be in touch shortly. subs.app/dashboard`
+        await sendSms(member.phone, msg)
+      }
     }
 
     return new Response(
