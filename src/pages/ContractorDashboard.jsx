@@ -611,7 +611,10 @@ export default function ContractorDashboard() {
 
   useEffect(() => {
     const targetEmail = isImpersonating ? impersonating.email : user?.primaryEmailAddress?.emailAddress
-    if (!targetEmail) return
+    if (!targetEmail) {
+      setDataLoading(false)
+      return
+    }
     supabase
       .from('contractors')
       .select('*')
@@ -635,6 +638,7 @@ export default function ContractorDashboard() {
         }))
         setDataLoading(false)
       })
+      .catch(() => setDataLoading(false))
   }, [user, isImpersonating])
 
   const handleOnboardingComplete = async (data) => {
@@ -716,8 +720,14 @@ export default function ContractorDashboard() {
 
   if (dataLoading) {
     return (
-      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 28, height: 28, border: `3px solid ${S.border}`, borderTopColor: S.green, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px' }}>
+          <span style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</span>
+        </nav>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+          <div style={{ width: 32, height: 32, border: `3px solid ${S.border}`, borderTopColor: S.green, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ fontSize: 13, color: S.muted }}>Loading dashboard…</div>
+        </div>
       </div>
     )
   }
