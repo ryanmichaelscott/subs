@@ -38,16 +38,18 @@ function Timer({ seconds }) {
     const t = setTimeout(() => setLeft(l => l - 1), 1000)
     return () => clearTimeout(t)
   }, [left])
-  const m = Math.floor(left / 60)
+  const h = Math.floor(left / 3600)
+  const m = Math.floor((left % 3600) / 60)
   const s = left % 60
   const pct = (left / seconds) * 100
   const color = pct > 50 ? S.green : pct > 20 ? S.amber : S.danger
+  const display = h > 0 ? `${h}h ${m}m` : `${m}:${String(s).padStart(2, '0')}`
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ width: 36, height: 36, borderRadius: '50%', border: `3px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color, flexShrink: 0 }}>
-        {m}:{String(s).padStart(2, '0')}
+      <div style={{ width: 44, height: 44, borderRadius: '50%', border: `3px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: h > 0 ? 9 : 10, fontWeight: 700, color, flexShrink: 0 }}>
+        {display}
       </div>
-      <span style={{ fontSize: 11, color: S.muted }}>to respond</span>
+      <span style={{ fontSize: 11, color: S.muted }}>left</span>
     </div>
   )
 }
@@ -648,17 +650,34 @@ export default function ContractorDashboard() {
     setShowOnboarding(false)
   }
 
-  const handleLead = (id, action) => {
-    setLeads(ls => ls.map(l => l.id === id ? { ...l, status: action } : l))
+  const fetchLeads = async (cId) => {
+    if (!cId) return
+    const { data } = await supabase.functions.invoke('get-contractor-leads', {
+      body: { contractor_id: cId },
+    })
+    if (data?.leads) setLeads(data.leads)
+  }
+
+  useEffect(() => {
+    if (!contractorId || !isActive) return
+    fetchLeads(contractorId)
+    const interval = setInterval(() => fetchLeads(contractorId), 30000)
+    return () => clearInterval(interval)
+  }, [contractorId, isActive])
+
+  const handleLead = async (lead, action) => {
+    setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, notification_status: action } : l))
     if (action === 'accepted') {
-      const lead = leads.find(l => l.id === id)
-      supabase.functions.invoke('notify-member-accepted', {
-        body: {
-          lead_id: id,
-          contractor_name: profile.name,
-          service: lead?.service,
-          rate: lead?.rate,
-        },
+      const { data, error } = await supabase.functions.invoke('accept-lead', {
+        body: { job_request_id: lead.job_request_id, contractor_id: lead.contractor_id },
+      })
+      if (error || !data?.success) {
+        setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, notification_status: 'pending' } : l))
+        alert('This lead was already taken by another contractor.')
+      }
+    } else {
+      await supabase.functions.invoke('decline-lead', {
+        body: { job_request_id: lead.job_request_id, contractor_id: lead.contractor_id },
       })
     }
   }
@@ -809,9 +828,9 @@ export default function ContractorDashboard() {
           {tabs.map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{ flex: 1, background: tab === id ? S.card : 'transparent', border: tab === id ? `1px solid ${S.border}` : '1px solid transparent', borderRadius: 8, padding: '10px 0', fontSize: 13, fontWeight: 600, color: tab === id ? S.offwhite : S.muted, cursor: 'pointer', position: 'relative' }}>
               {label}
-              {id === 'leads' && leads.filter(l => l.status === 'pending').length > 0 && (
+              {id === 'leads' && leads.filter(l => l.notification_status === 'pending').length > 0 && (
                 <span style={{ position: 'absolute', top: 4, right: 8, background: S.amber, color: S.black, borderRadius: '50%', width: 16, height: 16, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {leads.filter(l => l.status === 'pending').length}
+                  {leads.filter(l => l.notification_status === 'pending').length}
                 </span>
               )}
             </button>
@@ -836,68 +855,76 @@ export default function ContractorDashboard() {
           </Card>
         )}
 
-        {tab === 'leads' && isActive && (
-          <div>
-            {leads.filter(l => l.status === 'pending' && (!zipReady || matchesServiceArea(profile.serviceArea, l.zip))).length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: S.amber, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>⚡ Awaiting Response</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {leads.filter(l => l.status === 'pending' && (!zipReady || matchesServiceArea(profile.serviceArea, l.zip))).map(lead => (
-                    <Card key={lead.id} style={{ padding: 20, border: `1px solid ${S.amber}44` }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                            <span style={{ fontSize: 12, fontFamily: 'monospace', color: S.muted }}>{lead.id}</span>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '2px 8px', borderRadius: 100 }}>{lead.tier}</span>
+        {tab === 'leads' && isActive && (() => {
+          const pending = leads.filter(l => l.notification_status === 'pending')
+          const responded = leads.filter(l => l.notification_status !== 'pending')
+          return (
+            <div>
+              {pending.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: S.amber, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>⚡ Awaiting Response</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {pending.map(lead => (
+                      <Card key={lead.id} style={{ padding: 20, border: `1px solid ${S.amber}44` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite, marginBottom: 2 }}>{lead.service}</div>
+                            <div style={{ fontSize: 13, color: S.muted, marginBottom: 4 }}>Zip {lead.zip}{lead.state ? ` · ${lead.state}` : ''}</div>
+                            {lead.description && (
+                              <div style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.5, maxWidth: 420 }}>{lead.description}</div>
+                            )}
+                            {lead.preferred_date && (
+                              <div style={{ fontSize: 12, color: S.muted, marginTop: 6 }}>
+                                Preferred: {new Date(lead.preferred_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </div>
+                            )}
                           </div>
-                          <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite }}>{lead.member}</div>
-                          <div style={{ fontSize: 13, color: S.muted }}>{lead.address}</div>
-                          <div style={{ fontSize: 13, color: S.offwhite, marginTop: 4 }}>
-                            <span style={{ fontWeight: 600 }}>{lead.service}</span> · {lead.date} · <span style={{ color: S.green, fontWeight: 700 }}>{lead.rate}</span>
-                          </div>
+                          {lead.seconds_left > 0 && <Timer seconds={lead.seconds_left} />}
                         </div>
-                        <Timer seconds={lead.timer} />
+                        <div style={{ display: 'flex', gap: 10 }}>
+                          <button onClick={() => handleLead(lead, 'accepted')} style={{ flex: 1, background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '11px 0', borderRadius: 9, cursor: 'pointer' }}>
+                            ✓ Accept Lead
+                          </button>
+                          <button onClick={() => handleLead(lead, 'declined')} style={{ flex: 1, background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, fontWeight: 600, padding: '11px 0', borderRadius: 9, cursor: 'pointer' }}>
+                            Decline
+                          </button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {responded.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Responded</div>
+                  {responded.map(lead => (
+                    <Card key={lead.id} style={{ padding: '14px 20px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{lead.service}</div>
+                        <div style={{ fontSize: 12, color: S.muted }}>Zip {lead.zip}</div>
                       </div>
-                      <div style={{ display: 'flex', gap: 10 }}>
-                        <button onClick={() => handleLead(lead.id, 'accepted')} style={{ flex: 1, background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '11px 0', borderRadius: 9, cursor: 'pointer' }}>
-                          ✓ Accept Lead
-                        </button>
-                        <button onClick={() => handleLead(lead.id, 'declined')} style={{ flex: 1, background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, fontWeight: 600, padding: '11px 0', borderRadius: 9, cursor: 'pointer' }}>
-                          Decline
-                        </button>
-                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 100, flexShrink: 0,
+                        background: lead.notification_status === 'accepted' ? S.green + '22' : lead.notification_status === 'expired' ? S.border : S.danger + '22',
+                        color: lead.notification_status === 'accepted' ? S.green : lead.notification_status === 'expired' ? S.muted : S.danger,
+                      }}>
+                        {lead.notification_status === 'accepted' ? '✓ Accepted' : lead.notification_status === 'expired' ? 'Expired' : '✗ Declined'}
+                      </span>
                     </Card>
                   ))}
                 </div>
-              </div>
-            )}
-            {leads.filter(l => l.status !== 'pending').length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Responded</div>
-                {leads.filter(l => l.status !== 'pending').map(lead => (
-                  <Card key={lead.id} style={{ padding: '14px 20px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <span style={{ fontSize: 12, fontFamily: 'monospace', color: S.muted, marginRight: 12 }}>{lead.id}</span>
-                      <span style={{ fontSize: 14, color: S.offwhite }}>{lead.member} · {lead.service}</span>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 100, background: lead.status === 'accepted' ? S.green + '22' : S.danger + '22', color: lead.status === 'accepted' ? S.green : S.danger }}>
-                      {lead.status === 'accepted' ? '✓ Accepted' : '✗ Declined'}
-                    </span>
-                  </Card>
-                ))}
-              </div>
-            )}
-            {leads.filter(l => l.status === 'pending').length === 0 && leads.filter(l => l.status !== 'pending').length === 0 && (
-              <Card style={{ padding: '52px 24px', textAlign: 'center' }}>
-                <div style={{ fontSize: 40, marginBottom: 16 }}>📥</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite, marginBottom: 8 }}>No leads yet</div>
-                <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6, maxWidth: 380, margin: '0 auto' }}>
-                  Leads will appear here as SUBS members in your service area request your trade. Check back soon.
-                </p>
-              </Card>
-            )}
-          </div>
-        )}
+              )}
+              {pending.length === 0 && responded.length === 0 && (
+                <Card style={{ padding: '52px 24px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 40, marginBottom: 16 }}>📥</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite, marginBottom: 8 }}>No leads yet</div>
+                  <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6, maxWidth: 380, margin: '0 auto' }}>
+                    Leads will appear here as SUBS members in your service area request your trade. Check back soon.
+                  </p>
+                </Card>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Rate Card */}
         {tab === 'rates' && <RateCardBuilder />}

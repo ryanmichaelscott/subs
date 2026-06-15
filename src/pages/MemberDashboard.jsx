@@ -7,6 +7,19 @@ import ImpersonationBanner from '../components/ImpersonationBanner'
 
 const TRADES = ['HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors', 'Concrete Work', 'Interior Painting', 'Exterior Painting', 'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Handyman', 'Pool Service', 'Flooring', 'Fencing', 'Decks & Patios', 'House Cleaning']
 
+const US_STATES = [
+  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
+  ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],
+  ['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
+  ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],
+  ['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],
+  ['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],
+  ['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
+  ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],
+  ['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],
+  ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
+]
+
 const STATUS_COLORS = { Complete: S.green, Scheduled: S.blue, pending: S.amber }
 
 function Card({ children, style }) {
@@ -70,7 +83,7 @@ export default function MemberDashboard() {
   const [tradeFilter, setTradeFilter] = useState('')
   const [zipFilter, setZipFilter] = useState('')
   const [selectedContractor, setSelectedContractor] = useState(null)
-  const [jobForm, setJobForm] = useState({ trade: '', description: '', zip: memberZip, date: '' })
+  const [jobForm, setJobForm] = useState({ trade: '', description: '', zip: memberZip, state: 'UT', date: '' })
   const [jobSubmitted, setJobSubmitted] = useState(false)
   const [searching, setSearching] = useState(false)
   const [profileForm, setProfileForm] = useState({ name: '', phone: '', zip: '' })
@@ -401,9 +414,9 @@ export default function MemberDashboard() {
                     <div style={{ fontSize: 40, marginBottom: 16 }}>🎉</div>
                     <div style={{ fontFamily: C.display, fontSize: 24, color: S.offwhite, marginBottom: 8 }}>Request submitted</div>
                     <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6 }}>
-                      We found contractors near <span style={{ color: S.green, fontWeight: 600 }}>{jobForm.zip}</span>. We'll confirm within 24 hours with their contact info and your member rate.
+                      Your request is live. Vetted contractors in <span style={{ color: S.green, fontWeight: 600 }}>{jobForm.state}</span> have been notified. You'll get an email the moment one accepts — usually within a few hours.
                     </p>
-                    <button onClick={() => { setJobSubmitted(false); setJobForm({ trade: '', description: '', zip: memberZip, date: '' }) }} style={{ marginTop: 24, background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 14, padding: '10px 20px', borderRadius: 8, cursor: 'pointer' }}>
+                    <button onClick={() => { setJobSubmitted(false); setJobForm({ trade: '', description: '', zip: memberZip, state: 'UT', date: '' }) }} style={{ marginTop: 24, background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 14, padding: '10px 20px', borderRadius: 8, cursor: 'pointer' }}>
                       Request another job
                     </button>
                   </div>
@@ -420,27 +433,40 @@ export default function MemberDashboard() {
                         </select>
                       </div>
                       <div>
+                        <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>State</label>
+                        <select value={jobForm.state} onChange={e => setJobForm(f => ({ ...f, state: e.target.value }))} style={inp}>
+                          {US_STATES.map(([abbr, name]) => <option key={abbr} value={abbr}>{name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                      <div>
                         <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Zip code</label>
                         <input value={jobForm.zip} onChange={e => setJobForm(f => ({ ...f, zip: e.target.value }))} placeholder="84101" style={inp} />
                       </div>
-                    </div>
-                    <div style={{ marginBottom: 14 }}>
-                      <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Preferred date</label>
-                      <input type="date" value={jobForm.date} onChange={e => setJobForm(f => ({ ...f, date: e.target.value }))} style={inp} />
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Preferred date</label>
+                        <input type="date" value={jobForm.date} onChange={e => setJobForm(f => ({ ...f, date: e.target.value }))} style={inp} />
+                      </div>
                     </div>
                     <div style={{ marginBottom: 24 }}>
                       <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Describe the job</label>
                       <textarea value={jobForm.description} onChange={e => setJobForm(f => ({ ...f, description: e.target.value }))} placeholder="My AC isn't cooling properly. Unit is 8 years old, Lennox 3-ton system..." rows={4} style={{ ...inp, resize: 'vertical' }} />
                     </div>
                     <button onClick={async () => {
+                      if (!jobForm.trade || !jobForm.zip) return
                       setSearching(true)
-                      await supabase.from('job_requests').insert({
-                        clerk_user_id: user.id,
-                        trade: jobForm.trade,
-                        description: jobForm.description,
-                        zip: jobForm.zip,
-                        preferred_date: jobForm.date || null,
-                        status: 'pending',
+                      const { data } = await supabase.functions.invoke('create-lead', {
+                        body: {
+                          trade: jobForm.trade,
+                          description: jobForm.description,
+                          zip: jobForm.zip,
+                          state: jobForm.state,
+                          preferred_date: jobForm.date || null,
+                          member_email: user?.primaryEmailAddress?.emailAddress || '',
+                          member_name: user?.fullName || user?.firstName || '',
+                          clerk_user_id: user?.id || '',
+                        },
                       })
                       setTimeout(() => { setSearching(false); setJobSubmitted(true) }, 1800)
                     }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 24px', borderRadius: 10, cursor: 'pointer' }}>
