@@ -125,6 +125,9 @@ function Nav({ setSection }) {
               {label}
             </button>
           ))}
+          <a href="tel:18884543019" style={{ fontSize: 13, fontWeight: 600, color: S.muted, textDecoration: 'none', marginLeft: 4, padding: '6px 10px' }}>
+            1-888-454-3019
+          </a>
           <Link to="/contractor/login">
             <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', marginLeft: 4 }}>
               Partner Login
@@ -151,6 +154,9 @@ function Nav({ setSection }) {
               {label}
             </button>
           ))}
+          <a href="tel:18884543019" style={{ display: 'block', textAlign: 'center', fontSize: 14, fontWeight: 600, color: S.green, textDecoration: 'none', padding: '13px 0', borderBottom: `1px solid ${S.border}`, minHeight: 44 }}>
+            1-888-454-3019
+          </a>
           <Link to="/contractor/login" style={{ display: 'block', marginTop: 12 }}>
             <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 14, fontWeight: 600, padding: '13px 0', borderRadius: 8, cursor: 'pointer', width: '100%', minHeight: 44 }}>
               Partner Login

@@ -191,6 +191,7 @@ export default function MemberDashboard() {
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
         <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <a href="tel:18884543019" style={{ fontSize: 12, fontWeight: 600, color: S.green, textDecoration: 'none' }}>1-888-454-3019</a>
           <span style={{ fontSize: 12, color: S.muted }}>{displayEmail}</span>
           <span style={{ fontSize: 11, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '3px 10px', borderRadius: 100 }}>Member+</span>
           <button onClick={() => signOut().then(() => navigate('/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
