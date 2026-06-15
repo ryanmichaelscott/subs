@@ -91,6 +91,29 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleResendInvitation = async (id) => {
+    setActionError(null)
+    setActionLoading(id)
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-contractor-invitation', { body: { contractor_id: id } })
+      if (error) {
+        let detail = error.message
+        try {
+          const body = error.context?.json ? await error.context.json() : error.context
+          detail = body?.error || body?.message || error.message
+        } catch {}
+        setActionError(`Resend failed: ${detail}`)
+        return
+      }
+      if (data?.error) { setActionError(`Resend failed: ${data.error}`); return }
+      // Brief success flash via actionLoading null
+    } catch (e) {
+      setActionError(`Unexpected error: ${e.message}`)
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   const handleStatusUpdate = async (id, newStatus) => {
     setActionLoading(id)
     try {
@@ -337,9 +360,20 @@ export default function AdminDashboard() {
                     <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{c.name}</span>
                     <span style={{ fontSize: 13, color: S.muted, marginLeft: 12 }}>{c.trade} · {c.contact_name}</span>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100, background: c.status === 'approved' ? S.green + '22' : S.danger + '22', color: c.status === 'approved' ? S.green : S.danger }}>
-                    {c.status === 'approved' ? '✓ Approved' : '✗ Rejected'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {c.status === 'approved' && (
+                      <button
+                        onClick={() => handleResendInvitation(c.id)}
+                        disabled={actionLoading === c.id}
+                        style={{ background: 'transparent', border: `1px solid ${S.blue}66`, color: S.blue, fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                      >
+                        {actionLoading === c.id ? '…' : 'Resend Invite'}
+                      </button>
+                    )}
+                    <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100, background: c.status === 'approved' ? S.green + '22' : S.danger + '22', color: c.status === 'approved' ? S.green : S.danger }}>
+                      {c.status === 'approved' ? '✓ Approved' : '✗ Rejected'}
+                    </span>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -387,10 +421,19 @@ export default function AdminDashboard() {
                             >
                               {isExpanded ? 'Close ▲' : 'Docs ▼'}
                             </button>
-                            <div style={{ display: 'flex', gap: 6 }}>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                               <button onClick={() => handleImpersonate(c.name, c.contact_email, 'contractor')} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer' }}>
                                 Impersonate
                               </button>
+                              {statusGroup === 'approved' && (
+                                <button
+                                  onClick={() => handleResendInvitation(c.id)}
+                                  disabled={actionLoading === c.id}
+                                  style={{ background: 'transparent', border: `1px solid ${S.blue}66`, color: S.blue, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                                >
+                                  {actionLoading === c.id ? '…' : 'Resend Invite'}
+                                </button>
+                              )}
                               {statusGroup === 'approved' ? (
                                 <button
                                   onClick={() => handleStatusUpdate(c.id, 'rejected')}

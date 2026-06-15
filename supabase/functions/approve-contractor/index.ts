@@ -45,49 +45,61 @@ serve(async (req) => {
     })
   }
 
-  // Create Clerk invitation with notify: false — we'll send our own branded email via Resend
-  const clerkRes = await fetch('https://api.clerk.com/v1/invitations', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${Deno.env.get('CLERK_SECRET_KEY')}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email_address: contractor.contact_email,
-      public_metadata: { role: 'contractor' },
-      notify: false,
-    }),
-  })
+  const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
+  const clerkKey = Deno.env.get('CLERK_SECRET_KEY')
+  let clerkInviteId: string | undefined
 
-  const clerkData = await clerkRes.json()
+  // Create Clerk invitation — notify:false since we send our own approval email via Resend.
+  // Any 4xx means the email already exists in Clerk (pending invite OR existing user) — non-fatal.
+  // A 5xx from Clerk is logged but we still proceed so the approval + email always land.
+  if (clerkKey) {
+    const clerkRes = await fetch('https://api.clerk.com/v1/invitations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${clerkKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email_address: contractor.contact_email,
+        redirect_url: `${appUrl}/contractor/dashboard`,
+        public_metadata: { role: 'contractor' },
+        notify: false,
+      }),
+    })
 
-  const isDuplicate = !clerkRes.ok &&
-    clerkData?.errors?.some((e: any) => e.code === 'duplicate_record')
+    const clerkData = await clerkRes.json()
 
-  if (!clerkRes.ok && !isDuplicate) {
-    return new Response(
-      JSON.stringify({ error: 'Failed to create Clerk invitation', details: clerkData }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    )
+    if (clerkRes.ok) {
+      clerkInviteId = clerkData.id
+    } else {
+      // 4xx = duplicate invite or user already exists in Clerk — not a blocker
+      // 5xx = Clerk server error — log it but still approve
+      console.error(`Clerk invitation ${clerkRes.status}:`, JSON.stringify(clerkData))
+    }
   }
 
-  // Update contractor to approved and store the invitation ID
+  // Update contractor to approved
   const { error: updateError } = await supabase
     .from('contractors')
     .update({
       status: 'approved',
-      clerk_invitation_id: clerkData.id,
+      ...(clerkInviteId ? { clerk_invitation_id: clerkInviteId } : {}),
     })
     .eq('id', contractor_id)
 
   if (updateError) {
     console.error('Failed to update contractor status:', updateError)
+    return new Response(JSON.stringify({ error: 'Failed to update contractor status' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 
   // Send branded approval email via Resend
   const resendKey = Deno.env.get('RESEND_API_KEY')
-  const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
   const checkoutLink = `${appUrl}/contractor/checkout`
+  const loginLink = `${appUrl}/contractor/login`
+
   if (resendKey) {
     const approvalHtml = `
 <!DOCTYPE html>
@@ -102,19 +114,22 @@ serve(async (req) => {
       Your application for <strong style="color:#F0EEE8;">${contractor.name}</strong> has been reviewed and approved by the SUBS team.
     </p>
     <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 32px;">
-      Select your plan below to activate your account and start receiving pre-qualified homeowners in your service area — no bidding, no slow seasons.
+      Select your plan to activate your account and start receiving pre-qualified homeowners — no bidding, no slow seasons.
     </p>
-    <a href="${checkoutLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;">
+    <a href="${checkoutLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;margin-bottom:24px;">
       Select Your Plan →
     </a>
-    <p style="font-size:13px;color:#8A9088;margin-top:40px;line-height:1.6;">
+    <p style="font-size:13px;color:#8A9088;line-height:1.6;margin:0 0 8px;">
+      Need to log in first? Go to <a href="${loginLink}" style="color:#5DFF8A;text-decoration:none;">${loginLink}</a> and enter your email — we'll send a one-time code.
+    </p>
+    <p style="font-size:13px;color:#8A9088;margin-top:32px;line-height:1.6;">
       Questions? <a href="mailto:partners@subs.app" style="color:#5DFF8A;text-decoration:none;">partners@subs.app</a>
     </p>
   </div>
 </body>
 </html>`
 
-    await fetch('https://api.resend.com/emails', {
+    const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${resendKey}`,
@@ -127,10 +142,15 @@ serve(async (req) => {
         html: approvalHtml,
       }),
     })
+
+    if (!resendRes.ok) {
+      const resendErr = await resendRes.json().catch(() => ({}))
+      console.error('Resend error:', JSON.stringify(resendErr))
+    }
   }
 
   return new Response(
-    JSON.stringify({ success: true, invitation_id: clerkData.id }),
+    JSON.stringify({ success: true, invitation_id: clerkInviteId }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
   )
 })
