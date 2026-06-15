@@ -73,15 +73,23 @@ serve(async (req) => {
       tier = tierFromSubscription(sub) || 'Member'
     }
 
-    await supabase
+    const { data: existingMember } = await supabase
       .from('members')
-      .update({
-        tier,
-        status: 'Active',
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscriptionId,
-      })
+      .select('id')
       .eq('clerk_user_id', clerkUserId)
+      .single()
+
+    if (existingMember) {
+      await supabase
+        .from('members')
+        .update({ tier, status: 'Active', stripe_customer_id: customerId, stripe_subscription_id: subscriptionId })
+        .eq('clerk_user_id', clerkUserId)
+    } else {
+      const sessionEmail = session.customer_details?.email || session.customer_email || ''
+      await supabase
+        .from('members')
+        .insert({ clerk_user_id: clerkUserId, email: sessionEmail, tier, status: 'Active', stripe_customer_id: customerId, stripe_subscription_id: subscriptionId })
+    }
   }
 
   else if (event.type === 'customer.subscription.updated') {

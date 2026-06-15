@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useUser } from '@clerk/clerk-react'
+import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
 
@@ -52,6 +52,7 @@ const TIERS = [
 
 export default function CheckoutPage() {
   const { user, isLoaded, isSignedIn } = useUser()
+  const { signOut } = useClerk()
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
   const [loadingId, setLoadingId] = useState(null)
@@ -67,17 +68,14 @@ export default function CheckoutPage() {
     }
 
     const check = async () => {
-      const { data } = await supabase
-        .from('members')
-        .select('stripe_subscription_id, phone')
-        .eq('clerk_user_id', user.id)
-        .single()
-
-      if (data?.stripe_subscription_id) {
+      const { data } = await supabase.functions.invoke('admin-get-member', {
+        body: { clerk_user_id: user.id },
+      })
+      if (data?.member?.stripe_subscription_id) {
         navigate('/dashboard')
         return
       }
-      if (data?.phone) setPhone(data.phone)
+      if (data?.member?.phone) setPhone(data.member.phone)
       setChecking(false)
     }
     check()
@@ -130,7 +128,10 @@ export default function CheckoutPage() {
 
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between' }}>
         <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em', textDecoration: 'none' }}>SUBS</Link>
-        <span style={{ fontSize: 13, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 13, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress}</span>
+          <button onClick={() => signOut().then(() => navigate('/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
+        </div>
       </nav>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>

@@ -80,6 +80,7 @@ export default function MemberDashboard() {
   const [jobRequests, setJobRequests] = useState([])
   const [tab, setTab] = useState('directory')
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutMsg, setCheckoutMsg] = useState('Redirecting to checkout…')
   const [tradeFilter, setTradeFilter] = useState('')
   const [zipFilter, setZipFilter] = useState('')
   const [selectedContractor, setSelectedContractor] = useState(null)
@@ -115,72 +116,46 @@ export default function MemberDashboard() {
         return
       }
 
-      // Check if member already exists
-      const { data: existing } = await supabase
-        .from('members')
-        .select('*')
-        .eq('clerk_user_id', user.id)
-        .single()
+      const email = user.primaryEmailAddress?.emailAddress || ''
+      const name = user.fullName || user.firstName || ''
+      const phone = user.phoneNumbers?.[0]?.phoneNumber || null
 
-      let memberRow = existing
-      if (existing) {
-        // Update profile fields only — preserve tier/status set by Stripe webhook
-        await supabase
-          .from('members')
-          .update({
-            email: user.primaryEmailAddress?.emailAddress || existing.email,
-            name: user.fullName || user.firstName || existing.name,
-            phone: user.phoneNumbers?.[0]?.phoneNumber || existing.phone,
-          })
-          .eq('clerk_user_id', user.id)
-        setMember(existing)
+      // Upsert member via service role (bypasses RLS, preserves Stripe/tier fields on update)
+      const { data: upsertData } = await supabase.functions.invoke('upsert-member', {
+        body: { clerk_user_id: user.id, email, name, phone },
+      })
+      let memberRow = upsertData?.member
+
+      if (memberRow) {
+        setMember(memberRow)
         setProfileForm({
-          name: existing.name || user.fullName || '',
-          phone: existing.phone || user.phoneNumbers?.[0]?.phoneNumber || '',
-          zip: existing.zip || '',
+          name: memberRow.name || name,
+          phone: memberRow.phone || '',
+          zip: memberRow.zip || '',
         })
-      } else {
-        // New member — insert with defaults
-        const { data: inserted } = await supabase
-          .from('members')
-          .insert({
-            clerk_user_id: user.id,
-            email: user.primaryEmailAddress?.emailAddress || '',
-            name: user.fullName || user.firstName || '',
-            phone: user.phoneNumbers?.[0]?.phoneNumber || null,
-            tier: 'Member',
-            status: 'Active',
+      }
+
+      // Send welcome email for brand-new members
+      if (upsertData?.created) {
+        const createdAt = user.createdAt ? new Date(user.createdAt).getTime() : 0
+        if (Date.now() - createdAt < 5 * 60 * 1000) {
+          supabase.functions.invoke('send-welcome-email', {
+            body: { email, name: user.firstName || name || 'there' },
           })
-          .select()
-          .single()
-        if (inserted) {
-          memberRow = inserted
-          setMember(inserted)
-          // Send welcome email for fresh signups
-          const createdAt = user.createdAt ? new Date(user.createdAt).getTime() : 0
-          const isNewUser = Date.now() - createdAt < 5 * 60 * 1000
-          if (isNewUser) {
-            supabase.functions.invoke('send-welcome-email', {
-              body: {
-                email: user.primaryEmailAddress?.emailAddress || '',
-                name: user.firstName || user.fullName || 'there',
-              },
-            })
-          }
         }
       }
 
-      // Check localStorage first (survives Clerk multi-step auth), then URL param
+      // Handle pending plan (pre-login checkout flow via localStorage)
       const pendingPlan = localStorage.getItem('subs_pending_plan') || searchParams.get('plan')
       const priceId = pendingPlan ? PLAN_PRICE_IDS[pendingPlan] : null
       if (priceId) {
         localStorage.removeItem('subs_pending_plan')
         setCheckoutLoading(true)
-        const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        const { data } = await supabase.functions.invoke('create-checkout-session', {
           body: {
             price_id: priceId,
             clerk_user_id: user.id,
-            email: user.primaryEmailAddress?.emailAddress,
+            email,
             success_url: `${window.location.origin}/dashboard`,
             cancel_url: `${window.location.origin}/checkout`,
           },
@@ -189,9 +164,32 @@ export default function MemberDashboard() {
           window.location.href = data.url
         } else {
           setCheckoutLoading(false)
-          console.error('Checkout session error:', error)
         }
         return
+      }
+
+      // Handle post-Stripe return: checkout_session_id in URL means user just paid
+      const checkoutSessionId = searchParams.get('checkout_session_id')
+      if (checkoutSessionId && !memberRow?.stripe_subscription_id) {
+        setCheckoutMsg('Setting up your account…')
+        setCheckoutLoading(true)
+        const { data: activateData } = await supabase.functions.invoke('activate-membership', {
+          body: { checkout_session_id: checkoutSessionId, clerk_user_id: user.id },
+        })
+        setCheckoutLoading(false)
+        if (activateData?.member) {
+          memberRow = activateData.member
+          setMember(activateData.member)
+          setProfileForm({
+            name: activateData.member.name || name,
+            phone: activateData.member.phone || '',
+            zip: activateData.member.zip || '',
+          })
+          window.history.replaceState({}, '', '/dashboard')
+        } else {
+          navigate('/checkout')
+          return
+        }
       }
 
       // Subscription gate: redirect to /checkout if no active Stripe subscription
@@ -224,12 +222,17 @@ export default function MemberDashboard() {
     setProfileSaving(true)
     setAccountError(null)
     setProfileSaved(false)
-    const { error } = await supabase
-      .from('members')
-      .update({ name: profileForm.name, phone: profileForm.phone, zip: profileForm.zip })
-      .eq('clerk_user_id', user.id)
+    const { data, error } = await supabase.functions.invoke('upsert-member', {
+      body: {
+        clerk_user_id: user.id,
+        email: user.primaryEmailAddress?.emailAddress || '',
+        name: profileForm.name,
+        phone: profileForm.phone,
+        zip: profileForm.zip,
+      },
+    })
     setProfileSaving(false)
-    if (error) { setAccountError('Failed to save. Please try again.'); return }
+    if (error || !data?.member) { setAccountError('Failed to save. Please try again.'); return }
     setMember(m => ({ ...m, name: profileForm.name, phone: profileForm.phone, zip: profileForm.zip }))
     setProfileSaved(true)
     setTimeout(() => setProfileSaved(false), 3000)
@@ -265,7 +268,7 @@ export default function MemberDashboard() {
     return (
       <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: S.offwhite }}>
         <div style={{ fontSize: 22, fontWeight: 800, color: S.green, letterSpacing: '0.06em', marginBottom: 24 }}>SUBS</div>
-        <div style={{ fontSize: 15, color: S.muted }}>Redirecting to checkout…</div>
+        <div style={{ fontSize: 15, color: S.muted }}>{checkoutMsg}</div>
       </div>
     )
   }
