@@ -77,12 +77,20 @@ serve(async (req) => {
       const trades = Array.isArray(c.trades) && c.trades.length ? c.trades : [c.trade].filter(Boolean)
       if (!trades.includes(trade)) return false
 
+      // No state on the request → match any contractor
       if (!state) return true
+
       let sa = c.service_area
       if (typeof sa === 'string') { try { sa = JSON.parse(sa) } catch { return true } }
+      // No service_area set → match any state
       if (!sa) return true
+      // service_area has no state set → match any state (e.g. radius-only config)
+      if (!sa.state) return true
+
       return sa.state === state
     })
+
+    console.log(`create-lead: trade=${trade} state=${state} active=${contractors?.length ?? 0} matched=${matched.length}`)
 
     if (matched.length === 0) {
       return new Response(JSON.stringify({ success: true, lead_id: lead.id, contractor_count: 0 }), {
@@ -101,7 +109,7 @@ serve(async (req) => {
 
     // Email each contractor
     const resendKey = Deno.env.get('RESEND_API_KEY')
-    const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
+    const appUrl = Deno.env.get('APP_URL') || 'https://getsubs.co'
 
     if (resendKey) {
       const preferredDateStr = preferred_date
@@ -172,7 +180,7 @@ serve(async (req) => {
     // SMS each matched contractor
     await Promise.all(matched.map(c => {
       if (!c.phone) return Promise.resolve()
-      const msg = `New SUBS lead: ${trade} · Zip ${zip}${state ? `, ${state}` : ''}. Log in to accept → subs.app/contractor/dashboard`
+      const msg = `New SUBS lead: ${trade} · Zip ${zip}${state ? `, ${state}` : ''}. Log in to accept: https://getsubs.co/contractor/dashboard`
       return sendSms(c.phone, msg)
     }))
 
