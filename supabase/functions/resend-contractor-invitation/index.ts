@@ -42,59 +42,46 @@ serve(async (req) => {
 
     const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
     const clerkKey = Deno.env.get('CLERK_SECRET_KEY')
-    let clerkInviteSent = false
+    let clerkAccountCreated = false
 
     if (clerkKey) {
-      // Revoke any existing pending invitations for this email so we can create a fresh one
-      const listRes = await fetch(
-        `https://api.clerk.com/v1/invitations?status=pending&query=${encodeURIComponent(contractor.contact_email)}`,
-        { headers: { 'Authorization': `Bearer ${clerkKey}` } },
-      )
-      if (listRes.ok) {
-        const { data: pendingInvites } = await listRes.json().catch(() => ({ data: [] }))
-        if (Array.isArray(pendingInvites)) {
-          for (const invite of pendingInvites) {
-            if (invite.email_address === contractor.contact_email) {
-              await fetch(`https://api.clerk.com/v1/invitations/${invite.id}/revoke`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${clerkKey}` },
-              })
-            }
-          }
-        }
-      }
-
-      // Create a fresh invitation — notify:true so Clerk sends the magic-link email
-      const inviteRes = await fetch('https://api.clerk.com/v1/invitations', {
+      // Create the Clerk user account directly — this is what enables OTP login.
+      // Invitations only create a pending state; the user can't sign in via OTP until
+      // they have a real account. POST /v1/users creates it immediately.
+      const createRes = await fetch('https://api.clerk.com/v1/users', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${clerkKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email_address: contractor.contact_email,
-          redirect_url: `${appUrl}/contractor/dashboard`,
+          email_address: [contractor.contact_email],
           public_metadata: { role: 'contractor' },
-          notify: true,
+          skip_password_requirement: true,
+          skip_password_checks: true,
         }),
       })
 
-      const inviteData = await inviteRes.json()
+      const createData = await createRes.json()
 
-      if (inviteRes.ok) {
-        clerkInviteSent = true
-        // Store updated invitation ID
-        await supabase
-          .from('contractors')
-          .update({ clerk_invitation_id: inviteData.id })
-          .eq('id', contractor_id)
+      if (createRes.ok) {
+        clerkAccountCreated = true
+        console.log('Clerk user created:', createData.id)
       } else {
-        // 4xx usually means user already has a Clerk account — they can log in via OTP
-        console.log(`Clerk invitation ${inviteRes.status} (user may already exist):`, JSON.stringify(inviteData))
+        // 422 with form_identifier_exists means account already exists — that's fine
+        const alreadyExists = createData?.errors?.some((e: any) =>
+          e.code === 'form_identifier_exists' || e.code === 'duplicate_record'
+        )
+        if (alreadyExists) {
+          clerkAccountCreated = true // account exists, OTP will work
+          console.log('Clerk user already exists for', contractor.contact_email)
+        } else {
+          console.error(`Clerk user creation ${createRes.status}:`, JSON.stringify(createData))
+        }
       }
     }
 
-    // Always send a Resend email with a single login CTA
+    // Send login email via Resend
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (resendKey) {
       const loginLink = `${appUrl}/contractor/login`
@@ -115,7 +102,7 @@ serve(async (req) => {
       Log In to Your Account →
     </a>
     <p style="font-size:13px;color:#8A9088;line-height:1.6;margin:0 0 8px;">
-      Enter your email at the link above — we'll send a one-time code to sign you in.
+      Enter your email — we'll send a one-time code to sign you in.
     </p>
     <p style="font-size:13px;color:#8A9088;margin-top:32px;line-height:1.6;">
       Questions? <a href="mailto:partners@subs.app" style="color:#5DFF8A;text-decoration:none;">partners@subs.app</a>
@@ -145,7 +132,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, clerk_invite_sent: clerkInviteSent }),
+      JSON.stringify({ success: true, clerk_account_created: clerkAccountCreated }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (err) {

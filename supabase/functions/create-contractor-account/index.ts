@@ -52,28 +52,30 @@ serve(async (req) => {
 
     if (dbError) throw new Error(dbError.message)
 
-    // Create Clerk invitation — sends welcome email with sign-in link automatically
-    // Requires CLERK_SECRET_KEY secret in Supabase. Set role=contractor on user metadata.
+    // Create Clerk user account directly — enables OTP login immediately.
+    // Invitations only create a pending state; the contractor can't sign in via OTP
+    // until they have a real account. POST /v1/users creates it right away.
     const clerkKey = Deno.env.get('CLERK_SECRET_KEY')
     if (clerkKey) {
-      const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
-      const resp = await fetch('https://api.clerk.com/v1/invitations', {
+      const resp = await fetch('https://api.clerk.com/v1/users', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${clerkKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email_address: normalizedEmail,
-          redirect_url: `${appUrl}/contractor/dashboard`,
+          email_address: [normalizedEmail],
           public_metadata: { role: 'contractor' },
-          notify: true,
+          skip_password_requirement: true,
+          skip_password_checks: true,
         }),
       })
       if (!resp.ok) {
         const body = await resp.json().catch(() => ({}))
-        // 422 = existing invite / existing user — not fatal, they can still log in via OTP
-        if (resp.status !== 422) console.error('Clerk invitation error:', body)
+        const alreadyExists = body?.errors?.some((e: any) =>
+          e.code === 'form_identifier_exists' || e.code === 'duplicate_record'
+        )
+        if (!alreadyExists) console.error('Clerk user creation error:', body)
       }
     }
 
