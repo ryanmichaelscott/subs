@@ -97,7 +97,6 @@ serve(async (req) => {
 
   // Send branded approval email via Resend
   const resendKey = Deno.env.get('RESEND_API_KEY')
-  const checkoutLink = `${appUrl}/contractor/checkout`
   const loginLink = `${appUrl}/contractor/login`
 
   if (resendKey) {
@@ -110,17 +109,14 @@ serve(async (req) => {
     <h1 style="font-size:30px;font-weight:700;color:#F0EEE8;margin:0 0 16px;line-height:1.2;">
       You're approved, ${contractor.contact_name || contractor.name}!
     </h1>
-    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 12px;">
-      Your application for <strong style="color:#F0EEE8;">${contractor.name}</strong> has been reviewed and approved by the SUBS team.
-    </p>
     <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 32px;">
-      Select your plan to activate your account and start receiving pre-qualified homeowners — no bidding, no slow seasons.
+      Your application for <strong style="color:#F0EEE8;">${contractor.name}</strong> has been reviewed and approved. Log in to activate your account and start receiving pre-qualified homeowners in your area.
     </p>
-    <a href="${checkoutLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;margin-bottom:24px;">
-      Select Your Plan →
+    <a href="${loginLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;margin-bottom:24px;">
+      Log In to Your Account →
     </a>
-    <p style="font-size:13px;color:#8A9088;line-height:1.6;margin:0 0 8px;">
-      Need to log in first? Go to <a href="${loginLink}" style="color:#5DFF8A;text-decoration:none;">${loginLink}</a> and enter your email — we'll send a one-time code.
+    <p style="font-size:13px;color:#8A9088;line-height:1.6;margin:0;">
+      Enter your email — we'll send a one-time code to sign you in.
     </p>
     <p style="font-size:13px;color:#8A9088;margin-top:32px;line-height:1.6;">
       Questions? <a href="mailto:partners@subs.app" style="color:#5DFF8A;text-decoration:none;">partners@subs.app</a>

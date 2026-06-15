@@ -94,11 +94,10 @@ serve(async (req) => {
       }
     }
 
-    // Always send a Resend email with clear login + checkout instructions
+    // Always send a Resend email with a single login CTA
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (resendKey) {
       const loginLink = `${appUrl}/contractor/login`
-      const checkoutLink = `${appUrl}/contractor/checkout`
 
       const html = `
 <!DOCTYPE html>
@@ -109,31 +108,16 @@ serve(async (req) => {
     <h1 style="font-size:28px;font-weight:700;color:#F0EEE8;margin:0 0 16px;line-height:1.2;">
       Your SUBS partner account is ready.
     </h1>
-    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 28px;">
-      <strong style="color:#F0EEE8;">${contractor.name}</strong> — your application is approved. Complete these two steps to activate your account and start receiving leads.
+    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 32px;">
+      <strong style="color:#F0EEE8;">${contractor.name}</strong> — your application is approved. Log in to activate your account and start receiving pre-qualified homeowners in your area.
     </p>
-
-    <div style="background:#141814;border:1px solid #252A23;border-radius:12px;padding:24px;margin-bottom:24px;">
-      <div style="font-size:11px;font-weight:700;color:#5DFF8A;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px;">Step 1 — Log in</div>
-      <p style="font-size:14px;color:#8A9088;margin:0 0 16px;line-height:1.6;">
-        Go to your partner login page and enter your email. We'll send a one-time code to sign you in.
-      </p>
-      <a href="${loginLink}" style="display:inline-block;background:#141814;border:1px solid #252A23;color:#F0EEE8;font-weight:600;font-size:13px;padding:10px 20px;border-radius:8px;text-decoration:none;">
-        ${loginLink}
-      </a>
-    </div>
-
-    <div style="background:#141814;border:1px solid #252A23;border-radius:12px;padding:24px;margin-bottom:32px;">
-      <div style="font-size:11px;font-weight:700;color:#5DFF8A;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px;">Step 2 — Select your plan</div>
-      <p style="font-size:14px;color:#8A9088;margin:0 0 16px;line-height:1.6;">
-        Once logged in, subscribe to activate your account and start receiving pre-qualified homeowners.
-      </p>
-      <a href="${checkoutLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
-        Select Your Plan →
-      </a>
-    </div>
-
-    <p style="font-size:13px;color:#8A9088;line-height:1.6;">
+    <a href="${loginLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;margin-bottom:32px;">
+      Log In to Your Account →
+    </a>
+    <p style="font-size:13px;color:#8A9088;line-height:1.6;margin:0 0 8px;">
+      Enter your email at the link above — we'll send a one-time code to sign you in.
+    </p>
+    <p style="font-size:13px;color:#8A9088;margin-top:32px;line-height:1.6;">
       Questions? <a href="mailto:partners@subs.app" style="color:#5DFF8A;text-decoration:none;">partners@subs.app</a>
     </p>
   </div>
