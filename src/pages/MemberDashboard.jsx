@@ -364,26 +364,70 @@ export default function MemberDashboard() {
                         </div>
                       </div>
                       {selectedContractor === c.id && (
-                        <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${S.border}` }}>
-                          {c.bio && <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.6, marginBottom: 14 }}>{c.bio}</p>}
-                          {c.contractor_rates?.length > 0 && (
-                            <>
-                              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Member Rate Card</div>
-                              {c.contractor_rates.map((r) => (
-                                <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, fontSize: 13 }}>
-                                  <span style={{ color: S.offwhite }}>{r.service_name}</span>
-                                  <div style={{ textAlign: 'right' }}>
-                                    <span style={{ color: S.green, fontWeight: 700 }}>{r.member_price}</span>
-                                    {r.market_price && <span style={{ color: S.muted, fontSize: 11, marginLeft: 8 }}>market: {r.market_price}</span>}
-                                  </div>
-                                </div>
-                              ))}
-                            </>
+                        <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${S.border}` }}>
+
+                          {/* Bio */}
+                          {c.bio && (
+                            <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.7, margin: '0 0 16px' }}>{c.bio}</p>
                           )}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${S.border}`, fontSize: 12 }}>
-                            <span style={{ color: S.green }}>✓ Verified</span>
-                            <span style={{ color: S.muted }}>Licensed & insured</span>
+
+                          {/* Stats */}
+                          {(c.rating > 0 || c.jobs_count > 0 || c.years_experience) && (
+                            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+                              {c.rating > 0 && (
+                                <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '8px 14px', textAlign: 'center', minWidth: 64 }}>
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite }}>⭐ {c.rating}</div>
+                                  <div style={{ fontSize: 10, color: S.muted, marginTop: 2 }}>Rating</div>
+                                </div>
+                              )}
+                              {c.jobs_count > 0 && (
+                                <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '8px 14px', textAlign: 'center', minWidth: 64 }}>
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite }}>{c.jobs_count}</div>
+                                  <div style={{ fontSize: 10, color: S.muted, marginTop: 2 }}>Jobs done</div>
+                                </div>
+                              )}
+                              {c.years_experience > 0 && (
+                                <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '8px 14px', textAlign: 'center', minWidth: 64 }}>
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite }}>{c.years_experience} yrs</div>
+                                  <div style={{ fontSize: 10, color: S.muted, marginTop: 2 }}>Experience</div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Rate card */}
+                          {c.contractor_rates?.length > 0 && (
+                            <div style={{ marginBottom: 16 }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Member Rate Card</div>
+                              <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, overflow: 'hidden' }}>
+                                {c.contractor_rates.map((r, i) => (
+                                  <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottom: i < c.contractor_rates.length - 1 ? `1px solid ${S.border}` : 'none' }}>
+                                    <span style={{ fontSize: 13, color: S.offwhite }}>{r.service_name}</span>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                      <span style={{ fontSize: 14, fontWeight: 700, color: S.green }}>{r.member_price}</span>
+                                      {r.market_price && <span style={{ fontSize: 11, color: S.muted, textDecoration: 'line-through' }}>{r.market_price}</span>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Footer: credentials + request button */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, paddingTop: 12, borderTop: `1px solid ${S.border}` }}>
+                            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 12, color: S.green, fontWeight: 600 }}>✓ SUBS Verified</span>
+                              {c.licensed && <span style={{ fontSize: 12, color: S.muted }}>✓ Licensed</span>}
+                              {c.insurance_doc_url && <span style={{ fontSize: 12, color: S.muted }}>✓ Insured</span>}
+                            </div>
+                            <button
+                              onClick={e => { e.stopPropagation(); setTab('request'); setJobForm(f => ({ ...f, trade: (c.trades?.[0] || c.trade || '') })) }}
+                              style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: 'pointer', flexShrink: 0 }}
+                            >
+                              Request job →
+                            </button>
                           </div>
+
                         </div>
                       )}
                     </Card>
