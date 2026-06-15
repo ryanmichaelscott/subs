@@ -610,6 +610,23 @@ export default function ContractorDashboard() {
   useEffect(() => { loadZipData().then(() => setZipReady(true)) }, [])
 
   useEffect(() => {
+    // When impersonating, admin passes full contractor data via localStorage — no DB fetch needed
+    if (isImpersonating && impersonating.contractorData) {
+      const data = impersonating.contractorData
+      setContractorId(data.id)
+      setContractorStatus(data.status)
+      setDocs({ insurance_doc_url: data.insurance_doc_url, license_doc_url: data.license_doc_url })
+      setProfile(p => ({
+        ...p,
+        name: data.name || p.name,
+        trade: data.trade || p.trade,
+        trades: data.trades?.length ? data.trades : [data.trade].filter(Boolean),
+        bio: data.bio || p.bio,
+      }))
+      setDataLoading(false)
+      return
+    }
+
     const targetEmail = isImpersonating ? impersonating.email : user?.primaryEmailAddress?.emailAddress
     if (!targetEmail) {
       setDataLoading(false)

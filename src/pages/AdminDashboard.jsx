@@ -163,8 +163,8 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleImpersonate = (name, email, role) => {
-    localStorage.setItem('subs_impersonating', JSON.stringify({ name, email, role }))
+  const handleImpersonate = (name, email, role, contractorData) => {
+    localStorage.setItem('subs_impersonating', JSON.stringify({ name, email, role, contractorData: contractorData || null }))
     navigate(role === 'member' ? '/dashboard' : '/contractor/dashboard')
   }
 
@@ -478,7 +478,7 @@ export default function AdminDashboard() {
                               {isExpanded ? 'Close ▲' : 'Docs ▼'}
                             </button>
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                              <button onClick={() => handleImpersonate(c.name, c.contact_email, 'contractor')} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer' }}>
+                              <button onClick={() => handleImpersonate(c.name, c.contact_email, 'contractor', c)} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer' }}>
                                 Impersonate
                               </button>
                               {statusGroup === 'approved' && (
