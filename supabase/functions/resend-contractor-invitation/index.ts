@@ -48,6 +48,10 @@ serve(async (req) => {
       // Create the Clerk user account directly — this is what enables OTP login.
       // Invitations only create a pending state; the user can't sign in via OTP until
       // they have a real account. POST /v1/users creates it immediately.
+      const nameParts = (contractor.contact_name || contractor.name || '').trim().split(/\s+/)
+      const firstName = nameParts[0] || 'Partner'
+      const lastName = nameParts.slice(1).join(' ') || '-'
+
       const createRes = await fetch('https://api.clerk.com/v1/users', {
         method: 'POST',
         headers: {
@@ -56,6 +60,8 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           email_address: [contractor.contact_email],
+          first_name: firstName,
+          last_name: lastName,
           public_metadata: { role: 'contractor' },
           skip_password_requirement: true,
           skip_password_checks: true,
@@ -68,12 +74,11 @@ serve(async (req) => {
         clerkAccountCreated = true
         console.log('Clerk user created:', createData.id)
       } else {
-        // 422 with form_identifier_exists means account already exists — that's fine
         const alreadyExists = createData?.errors?.some((e: any) =>
           e.code === 'form_identifier_exists' || e.code === 'duplicate_record'
         )
         if (alreadyExists) {
-          clerkAccountCreated = true // account exists, OTP will work
+          clerkAccountCreated = true
           console.log('Clerk user already exists for', contractor.contact_email)
         } else {
           console.error(`Clerk user creation ${createRes.status}:`, JSON.stringify(createData))

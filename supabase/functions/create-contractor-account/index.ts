@@ -57,6 +57,10 @@ serve(async (req) => {
     // until they have a real account. POST /v1/users creates it right away.
     const clerkKey = Deno.env.get('CLERK_SECRET_KEY')
     if (clerkKey) {
+      const nameParts = (contact_name || company_name || '').trim().split(/\s+/)
+      const firstName = nameParts[0] || 'Partner'
+      const lastName = nameParts.slice(1).join(' ') || '-'
+
       const resp = await fetch('https://api.clerk.com/v1/users', {
         method: 'POST',
         headers: {
@@ -65,6 +69,8 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           email_address: [normalizedEmail],
+          first_name: firstName,
+          last_name: lastName,
           public_metadata: { role: 'contractor' },
           skip_password_requirement: true,
           skip_password_checks: true,
