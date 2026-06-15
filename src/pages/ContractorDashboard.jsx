@@ -647,6 +647,17 @@ export default function ContractorDashboard() {
 
   const handleLead = (id, action) => {
     setLeads(ls => ls.map(l => l.id === id ? { ...l, status: action } : l))
+    if (action === 'accepted') {
+      const lead = leads.find(l => l.id === id)
+      supabase.functions.invoke('notify-member-accepted', {
+        body: {
+          lead_id: id,
+          contractor_name: profile.name,
+          service: lead?.service,
+          rate: lead?.rate,
+        },
+      })
+    }
   }
 
   const handleDocUpload = async (docType, col, file) => {

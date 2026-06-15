@@ -6,6 +6,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+async function sendSms(to: string, body: string) {
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID')
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN')
+  const from = Deno.env.get('TWILIO_PHONE_NUMBER')
+  if (!sid || !token || !from || !to) return
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + btoa(`${sid}:${token}`),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({ From: from, To: to, Body: body }).toString(),
+  })
+}
+
 const leadEmail = (contractorName: string, lead: {
   member: string
   address: string
@@ -78,6 +93,8 @@ serve(async (req) => {
   let contractorName: string
   let lead: any
 
+  let contractorPhone: string | null = null
+
   if (body.lead_id) {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -85,7 +102,7 @@ serve(async (req) => {
     )
     const { data: leadRow, error } = await supabase
       .from('leads')
-      .select('*, contractors(name, contact_name, contact_email)')
+      .select('*, contractors(name, contact_name, contact_email, phone)')
       .eq('id', body.lead_id)
       .single()
 
@@ -98,6 +115,7 @@ serve(async (req) => {
 
     contractorEmail = leadRow.contractors.contact_email
     contractorName = leadRow.contractors.name
+    contractorPhone = leadRow.contractors.phone || null
     lead = {
       member: leadRow.member_name || 'SUBS Member',
       address: leadRow.address || leadRow.zip || '—',
@@ -107,9 +125,10 @@ serve(async (req) => {
       date: new Date(leadRow.dispatched_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     }
   } else {
-    // Accept inline payload: { contractor_email, contractor_name, lead: {...} }
+    // Accept inline payload: { contractor_email, contractor_name, contractor_phone, lead: {...} }
     contractorEmail = body.contractor_email
     contractorName = body.contractor_name || 'Partner'
+    contractorPhone = body.contractor_phone || null
     lead = body.lead
   }
 
@@ -148,6 +167,14 @@ serve(async (req) => {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
+  }
+
+  // SMS to contractor
+  if (contractorPhone) {
+    await sendSms(
+      contractorPhone,
+      `SUBS: New lead — ${lead.service} in ${lead.address}. Member rate: ${lead.rate}. Log in to accept: https://getsubs.co/contractor/dashboard`,
+    )
   }
 
   return new Response(JSON.stringify({ success: true }), {

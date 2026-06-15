@@ -345,6 +345,7 @@ function ForVendors() {
       name: form.company,
       contact_name: form.name,
       contact_email: form.email,
+      phone: form.phone || null,
       trade: form.category,
       years_experience: form.years ? parseInt(form.years) : null,
     })

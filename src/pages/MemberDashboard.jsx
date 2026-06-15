@@ -93,6 +93,7 @@ export default function MemberDashboard() {
           clerk_user_id: user.id,
           email: user.primaryEmailAddress?.emailAddress || '',
           name: user.fullName || user.firstName || '',
+          phone: user.phoneNumbers?.[0]?.phoneNumber || null,
           tier: 'Member',
           status: 'Active',
         }, { onConflict: 'clerk_user_id', ignoreDuplicates: false })
