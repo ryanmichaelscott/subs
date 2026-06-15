@@ -57,6 +57,7 @@ export default function CheckoutPage() {
   const [loadingId, setLoadingId] = useState(null)
   const [error, setError] = useState(null)
   const [preselected] = useState(() => localStorage.getItem('subs_pending_plan'))
+  const [phone, setPhone] = useState('')
 
   useEffect(() => {
     if (!isLoaded) return
@@ -68,7 +69,7 @@ export default function CheckoutPage() {
     const check = async () => {
       const { data } = await supabase
         .from('members')
-        .select('stripe_subscription_id')
+        .select('stripe_subscription_id, phone')
         .eq('clerk_user_id', user.id)
         .single()
 
@@ -76,6 +77,7 @@ export default function CheckoutPage() {
         navigate('/dashboard')
         return
       }
+      if (data?.phone) setPhone(data.phone)
       setChecking(false)
     }
     check()
@@ -86,6 +88,9 @@ export default function CheckoutPage() {
     setError(null)
     setLoadingId(tier.id)
     localStorage.removeItem('subs_pending_plan')
+    if (phone.trim()) {
+      await supabase.from('members').update({ phone: phone.trim() }).eq('clerk_user_id', user.id)
+    }
     const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
       body: {
         price_id: tier.priceId,
@@ -134,6 +139,30 @@ export default function CheckoutPage() {
           <p style={{ fontSize: 15, color: S.muted, margin: 0 }}>
             Unlock contractor pricing on every trade in your area.
           </p>
+        </div>
+
+        <div style={{ width: '100%', maxWidth: 400, marginBottom: 36 }}>
+          <label style={{ display: 'block', fontSize: 13, color: S.muted, marginBottom: 6 }}>
+            Mobile number <span style={{ fontWeight: 400 }}>(for SMS job updates)</span>
+          </label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            placeholder="(801) 555-0100"
+            style={{
+              width: '100%',
+              background: S.surface,
+              border: `1px solid ${S.border}`,
+              borderRadius: 10,
+              color: S.offwhite,
+              fontSize: 15,
+              padding: '11px 14px',
+              outline: 'none',
+              boxSizing: 'border-box',
+              fontFamily: C.body,
+            }}
+          />
         </div>
 
         {error && (
