@@ -605,6 +605,7 @@ export default function ContractorDashboard() {
   const [docs, setDocs] = useState({ insurance_doc_url: null, license_doc_url: null })
   const [docUploading, setDocUploading] = useState(null)
   const [docError, setDocError] = useState(null)
+  const [dataLoading, setDataLoading] = useState(true)
 
   useEffect(() => { loadZipData().then(() => setZipReady(true)) }, [])
 
@@ -618,6 +619,7 @@ export default function ContractorDashboard() {
       .single()
       .then(({ data }) => {
         if (!data) {
+          setDataLoading(false)
           if (!isImpersonating) navigate('/contractor/checkout')
           return
         }
@@ -631,6 +633,7 @@ export default function ContractorDashboard() {
           trades: data.trades?.length ? data.trades : [data.trade].filter(Boolean),
           bio: data.bio || p.bio,
         }))
+        setDataLoading(false)
       })
   }, [user, isImpersonating])
 
@@ -692,8 +695,10 @@ export default function ContractorDashboard() {
       const { error: upErr } = await supabase.storage.from('contractor-docs').upload(path, file, { upsert: true })
       if (upErr) throw upErr
       const { data: { publicUrl } } = supabase.storage.from('contractor-docs').getPublicUrl(path)
-      const { error: dbErr } = await supabase.from('contractors').update({ [col]: publicUrl }).eq('id', contractorId)
-      if (dbErr) throw dbErr
+      const { data: fnData, error: fnErr } = await supabase.functions.invoke('upload-contractor-doc', {
+        body: { contractor_id: contractorId, col, url: publicUrl },
+      })
+      if (fnErr || !fnData?.success) throw new Error(fnErr?.message || fnData?.error || 'Failed to save document URL')
       setDocs(d => ({ ...d, [col]: publicUrl }))
     } catch (e) {
       setDocError(`Upload failed: ${e.message}`)
@@ -707,6 +712,14 @@ export default function ContractorDashboard() {
 
   if (showOnboarding) {
     return <Onboarding onComplete={handleOnboardingComplete} />
+  }
+
+  if (dataLoading) {
+    return (
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 28, height: 28, border: `3px solid ${S.border}`, borderTopColor: S.green, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    )
   }
 
   if (contractorStatus === 'rejected') {

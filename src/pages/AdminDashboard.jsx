@@ -178,8 +178,10 @@ export default function AdminDashboard() {
       const { error: upErr } = await supabase.storage.from('contractor-docs').upload(path, file, { upsert: true })
       if (upErr) throw upErr
       const { data: { publicUrl } } = supabase.storage.from('contractor-docs').getPublicUrl(path)
-      const { error: dbErr } = await supabase.from('contractors').update({ [col]: publicUrl }).eq('id', contractorId)
-      if (dbErr) throw dbErr
+      const { data: fnData, error: fnErr } = await supabase.functions.invoke('upload-contractor-doc', {
+        body: { contractor_id: contractorId, col, url: publicUrl },
+      })
+      if (fnErr || !fnData?.success) throw new Error(fnErr?.message || fnData?.error || 'Failed to save document URL')
       setContractors(cs => cs.map(c => c.id === contractorId ? { ...c, [col]: publicUrl } : c))
     } catch (e) {
       setAdminDocError(`Upload failed: ${e.message}`)
