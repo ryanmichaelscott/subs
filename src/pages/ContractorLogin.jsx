@@ -32,17 +32,33 @@ const appearance = {
     },
     otpCodeFieldInput: {
       background: '#141814',
-      border: '1px solid #252A23',
+      border: '1px solid #5A6358',
       color: '#F0EEE8',
       borderRadius: '8px',
     },
-    formFieldLabel: { color: '#8A9088', fontWeight: 500 },
+    formFieldLabel: { color: '#8A9088', fontWeight: 500, overflow: 'visible' },
+    formFieldInputGroup: { overflow: 'visible' },
+    formFieldRow: { overflow: 'visible', marginBottom: '4px' },
     formButtonPrimary: {
       background: '#5DFF8A',
       color: '#0C0F0A',
       fontWeight: 700,
       borderRadius: '10px',
     },
+    formButtonSecondary: {
+      background: 'transparent',
+      border: '1px solid #252A23',
+      color: '#F0EEE8',
+      borderRadius: '10px',
+    },
+    alternativeMethodsBlockButton: {
+      background: '#141814',
+      border: '1px solid #252A23',
+      color: '#F0EEE8',
+      borderRadius: '10px',
+    },
+    alternativeMethodsBlockButtonText: { color: '#F0EEE8' },
+    alternativeMethodsBlockButtonArrow: { color: '#5DFF8A' },
     dividerLine: { background: '#252A23' },
     dividerText: { color: '#8A9088' },
     alertText: { color: '#F0EEE8' },
@@ -65,7 +81,7 @@ export default function ContractorLogin() {
               <span style={{ color: S.green, fontSize: 12, fontWeight: 600 }}>Contractor Portal</span>
             </div>
             <div style={{ fontFamily: C.display, fontSize: 34, color: S.offwhite, marginBottom: 8 }}>Partner sign in.</div>
-            <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Access your lead inbox and rate card.</p>
+            <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Enter your email — we'll send a verification code.</p>
           </div>
 
           <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', justifyContent: 'center' }}>

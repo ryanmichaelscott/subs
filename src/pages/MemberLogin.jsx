@@ -81,9 +81,12 @@ export default function MemberLogin() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0C0F0A', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite }}>
-            Join SUBS.
+          <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite, marginBottom: 8 }}>
+            {isSignUp ? 'Join SUBS.' : 'Welcome back.'}
           </div>
+          <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>
+            Enter your email — we'll send a verification code.
+          </p>
         </div>
 
         <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', justifyContent: 'center' }}>
