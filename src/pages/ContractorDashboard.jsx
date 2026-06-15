@@ -1065,9 +1065,9 @@ export default function ContractorDashboard() {
               </div>
             )}
             <button
-              disabled={profileSaving || !contractorId || isImpersonating}
+              disabled={profileSaving || !contractorId}
               onClick={async () => {
-                if (!contractorId || isImpersonating) return
+                if (!contractorId) return
                 setProfileSaving(true)
                 const primaryTrade = profile.trades?.[0] || profile.trade || ''
                 const allTrades = profile.trades?.length ? profile.trades : [primaryTrade].filter(Boolean)

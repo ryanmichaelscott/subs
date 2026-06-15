@@ -218,14 +218,15 @@ export default function MemberDashboard() {
   }, [user])
 
   const handleSaveProfile = async () => {
-    if (isImpersonating) return
     setProfileSaving(true)
     setAccountError(null)
     setProfileSaved(false)
+    const targetClerkId = isImpersonating ? member?.clerk_user_id : user.id
+    const targetEmail = isImpersonating ? impersonating.email : (user.primaryEmailAddress?.emailAddress || '')
     const { data, error } = await supabase.functions.invoke('upsert-member', {
       body: {
-        clerk_user_id: user.id,
-        email: user.primaryEmailAddress?.emailAddress || '',
+        clerk_user_id: targetClerkId,
+        email: targetEmail,
         name: profileForm.name,
         phone: profileForm.phone,
         zip: profileForm.zip,
