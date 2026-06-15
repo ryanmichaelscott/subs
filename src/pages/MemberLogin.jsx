@@ -31,7 +31,7 @@ const appearance = {
     },
     otpCodeFieldInput: {
       background: '#141814',
-      border: '1px solid #252A23',
+      border: '1px solid #5A6358',
       color: '#F0EEE8',
       borderRadius: '8px',
     },
