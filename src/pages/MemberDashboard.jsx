@@ -111,7 +111,7 @@ export default function MemberDashboard() {
           const { data: jobRows } = await supabase.from('job_requests').select('*').eq('clerk_user_id', adminData.member.clerk_user_id).order('submitted_at', { ascending: false })
           if (jobRows) setJobRequests(jobRows)
         }
-        const { data: contractorRows } = await supabase.from('contractors').select('*, contractor_rates(*)').eq('status', 'approved').order('rating', { ascending: false })
+        const { data: contractorRows } = await supabase.from('contractors').select('*, contractor_rates(*)').eq('status', 'active').order('rating', { ascending: false })
         if (contractorRows) setContractors(contractorRows)
         return
       }
@@ -203,7 +203,7 @@ export default function MemberDashboard() {
         supabase
           .from('contractors')
           .select('*, contractor_rates(*)')
-          .eq('status', 'approved')
+          .eq('status', 'active')
           .order('rating', { ascending: false }),
         supabase
           .from('job_requests')
