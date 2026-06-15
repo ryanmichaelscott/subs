@@ -440,31 +440,73 @@ function Testimonials() {
   )
 }
 
+const VENDOR_US_STATES = [
+  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
+  ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],
+  ['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
+  ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],
+  ['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],
+  ['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],
+  ['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
+  ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],
+  ['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],
+  ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
+]
+
 function ForVendors() {
   const [submitted, setSubmitted] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [form, setForm] = useState({ name: '', company: '', email: '', phone: '', category: '', years: '' })
-  const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none' }
+  const [form, setForm] = useState({ company_name: '', contact_name: '', email: '', phone: '' })
+  const [trades, setTrades] = useState([])
+  const [saType, setSaType] = useState('county')
+  const [saState, setSaState] = useState('UT')
+  const [saCounties, setSaCounties] = useState('')
+  const [saZip, setSaZip] = useState('')
+  const [saRadius, setSaRadius] = useState('25')
+
+  const set = (key) => (e) => { setForm(f => ({ ...f, [key]: e.target.value })); setError(null) }
+  const addTrade = (t) => { if (t && !trades.includes(t)) setTrades(ts => [...ts, t]) }
+  const removeTrade = (t) => setTrades(ts => ts.filter(x => x !== t))
+
+  const inp = {
+    width: '100%', background: S.surface, border: `1px solid ${S.border}`,
+    borderRadius: 10, padding: '11px 13px', color: S.offwhite, fontSize: 14,
+    outline: 'none', boxSizing: 'border-box', fontFamily: C.body,
+  }
 
   async function handleApply() {
+    if (!form.company_name.trim()) { setError('Please enter your company name.'); return }
+    if (!form.email.trim()) { setError('Please enter your email address.'); return }
+    if (!trades.length) { setError('Please select at least one trade.'); return }
+    if (saType === 'county' && !saCounties.trim()) { setError('Please enter the counties you serve.'); return }
+    if (saType === 'radius' && !saZip.trim()) { setError('Please enter your zip code.'); return }
+
+    const service_area = saType === 'county'
+      ? { type: 'county', state: saState, counties: saCounties.trim() }
+      : { type: 'radius', zip: saZip.trim(), radius: parseInt(saRadius), state: saState }
+
     setError(null)
-    setSubmitting(true)
-    const { error: err } = await supabase.from('contractors').insert({
-      name: form.company,
-      contact_name: form.name,
-      contact_email: form.email,
-      phone: form.phone || null,
-      trade: form.category,
-      years_experience: form.years ? parseInt(form.years) : null,
+    setLoading(true)
+    const { data, error: fnError } = await supabase.functions.invoke('create-contractor-account', {
+      body: { ...form, trades, service_area },
     })
-    setSubmitting(false)
-    if (err) { setError(err.message); return }
+    let msg = null
+    if (fnError?.context) {
+      try { const b = await fnError.context.json(); msg = b.error } catch {}
+    } else if (data?.error) {
+      msg = data.error
+    } else if (fnError?.message) {
+      msg = fnError.message
+    }
+    if (msg) { setError(msg); setLoading(false); return }
     setSubmitted(true)
+    setLoading(false)
   }
 
   return (
     <section style={{ background: S.surface, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
         <div className="vendors-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
@@ -489,32 +531,112 @@ function ForVendors() {
               </div>
             ))}
           </div>
-          <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 32 }}>
+
+          <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28 }}>
             {submitted ? (
-              <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <div style={{ fontSize: 36, marginBottom: 16 }}>✅</div>
-                <div style={{ fontFamily: C.display, fontSize: 22, color: S.offwhite, marginBottom: 8 }}>Application received</div>
-                <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6 }}>We review every application personally. You'll hear back within 2 business days.</p>
+              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>📬</div>
+                <div style={{ fontFamily: C.display, fontSize: 22, color: S.offwhite, marginBottom: 8 }}>Application submitted!</div>
+                <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6, marginBottom: 20 }}>
+                  Check your inbox — we sent login instructions to <strong style={{ color: S.offwhite }}>{form.email}</strong>. Log in to upload your documents while we review.
+                </p>
+                <Link to="/contractor/login" style={{ textDecoration: 'none' }}>
+                  <button style={{ background: S.green, border: 'none', color: S.black, fontWeight: 700, fontSize: 14, padding: '11px 22px', borderRadius: 10, cursor: 'pointer' }}>
+                    Log in to dashboard →
+                  </button>
+                </Link>
               </div>
             ) : (
               <>
-                <div style={{ fontFamily: C.display, fontSize: 22, color: S.offwhite, marginBottom: 24 }}>Apply to join the network</div>
-                {[['Your name', 'name', 'text'], ['Company name', 'company', 'text'], ['Email', 'email', 'email'], ['Phone', 'phone', 'tel'], ['Years in business', 'years', 'number']].map(([label, key, type]) => (
-                  <div key={key} style={{ marginBottom: 12 }}>
-                    <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 5, fontWeight: 500 }}>{label}</label>
-                    <input type={type} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} style={inp} />
-                  </div>
-                ))}
+                <div style={{ fontFamily: C.display, fontSize: 20, color: S.offwhite, marginBottom: 20 }}>Apply to join the network</div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                  {[['Company Name', 'company_name', 'text', 'Peak HVAC LLC'], ['Contact Name', 'contact_name', 'text', 'Jake Morrison']].map(([label, key, type, ph]) => (
+                    <div key={key}>
+                      <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</label>
+                      <input type={type} value={form[key]} onChange={set(key)} placeholder={ph} style={inp} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  {[['Email', 'email', 'email', 'jake@peakhvac.com'], ['Phone', 'phone', 'tel', '(801) 555-0100']].map(([label, key, type, ph]) => (
+                    <div key={key}>
+                      <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</label>
+                      <input type={type} value={form[key]} onChange={set(key)} placeholder={ph} style={inp} />
+                    </div>
+                  ))}
+                </div>
+
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 5, fontWeight: 500 }}>Service category</label>
-                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={{ ...inp, background: S.surface }}>
-                    <option value="">Select trade...</option>
-                    {TRADES.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+                  <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Trade(s)</label>
+                  {trades.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                      {trades.map(t => (
+                        <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: S.green + '22', border: `1px solid ${S.green}44`, color: S.green, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 100 }}>
+                          {t}
+                          <button onClick={() => removeTrade(t)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: S.green, fontSize: 14, lineHeight: 1, padding: 0, marginLeft: 2 }}>×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <select value="" onChange={e => { addTrade(e.target.value); setError(null) }} style={{ ...inp, color: S.muted }}>
+                    <option value="">{trades.length === 0 ? 'Select your primary trade...' : '+ Add another trade'}</option>
+                    {TRADES.filter(t => !trades.includes(t.name)).map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
                   </select>
                 </div>
-                {error && <div style={{ fontSize: 13, color: '#FF5A5A', marginBottom: 12 }}>{error}</div>}
-                <button onClick={handleApply} disabled={submitting} style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 10, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
-                  {submitting ? 'Submitting…' : 'Apply Now'}
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Service Area</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                    {[['county', '📍 By County', 'Select counties you cover'], ['radius', '📡 By Radius', 'Distance from your location']].map(([val, title, desc]) => (
+                      <button key={val} type="button" onClick={() => { setSaType(val); setError(null) }} style={{ background: saType === val ? S.green + '18' : S.surface, border: `1px solid ${saType === val ? S.green : S.border}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer', textAlign: 'left' }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: saType === val ? S.green : S.offwhite, marginBottom: 2 }}>{title}</div>
+                        <div style={{ fontSize: 11, color: S.muted }}>{desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: saType === 'radius' ? '1fr 1fr' : '110px 1fr', gap: 10 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>State</label>
+                      <select value={saState} onChange={e => { setSaState(e.target.value); setError(null) }} style={{ ...inp, color: S.offwhite }}>
+                        {VENDOR_US_STATES.map(([code, name]) => <option key={code} value={code}>{code} — {name}</option>)}
+                      </select>
+                    </div>
+                    {saType === 'county' ? (
+                      <div>
+                        <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Counties <span style={{ fontWeight: 400, textTransform: 'none' }}>(comma-separated)</span></label>
+                        <input type="text" value={saCounties} onChange={e => { setSaCounties(e.target.value); setError(null) }} placeholder="Salt Lake, Utah, Davis" style={inp} />
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Your Zip Code</label>
+                          <input type="text" value={saZip} onChange={e => { setSaZip(e.target.value.replace(/\D/g, '').slice(0, 5)); setError(null) }} placeholder="84101" maxLength={5} style={inp} />
+                        </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Radius</label>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            {['10', '25', '50', '75', '100'].map(r => (
+                              <button key={r} type="button" onClick={() => setSaRadius(r)} style={{ flex: 1, padding: '9px 0', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: saRadius === r ? S.green + '18' : S.surface, border: `1px solid ${saRadius === r ? S.green : S.border}`, color: saRadius === r ? S.green : S.muted }}>
+                                {r} mi
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {error && (
+                  <div style={{ background: '#2D1010', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 14px', marginBottom: 14, color: S.danger, fontSize: 13 }}>
+                    {error}
+                  </div>
+                )}
+                <button onClick={handleApply} disabled={loading} style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontFamily: C.body, fontSize: 14, fontWeight: 700, padding: '13px 0', borderRadius: 10, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.8 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  {loading ? (
+                    <><div style={{ width: 14, height: 14, border: `2px solid ${S.black}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Submitting...</>
+                  ) : 'Submit Application →'}
                 </button>
                 <div style={{ textAlign: 'center', marginTop: 14 }}>
                   <Link to="/contractor/login" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>
