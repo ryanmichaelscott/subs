@@ -18,33 +18,9 @@ const TRADES_LIST = [
 
 const PRICING_TYPES = ['per job', 'per hour', 'per sq ft', 'per unit', 'per visit', 'custom']
 
-const INITIAL_LEADS = [
-  { id: 'L-1041', member: 'Sarah K.', address: '4821 Maple Dr, SLC', zip: '84108', service: 'AC Tune-Up', date: 'Jun 14', rate: '$165', tier: 'Member+', status: 'pending', timer: 300 },
-  { id: 'L-1040', member: 'Tom B.', address: '339 Birch Ln, SLC', zip: '84109', service: 'AC Repair', date: 'Jun 12', rate: '$340', tier: 'Elite', status: 'pending', timer: 180 },
-  { id: 'L-1039', member: 'Dana M.', address: '71 Elm St, Murray', zip: '84107', service: 'Filter Swap', date: 'Jun 12', rate: '$65', tier: 'Member', status: 'pending', timer: 480 },
-]
+const INITIAL_LEADS = []
 
-const JOB_HISTORY = [
-  { id: 'J-1035', member: 'Dana M.', service: 'HVAC Tune-Up', date: 'Jun 10', amount: '$165', status: 'Complete' },
-  { id: 'J-1029', member: 'Chris W.', service: 'Filter Swap', date: 'Jun 8', amount: '$65', status: 'Complete' },
-  { id: 'J-1021', member: 'James R.', service: 'AC Install', date: 'Jun 3', amount: '$4,200', status: 'Complete' },
-  { id: 'J-1018', member: 'Lisa T.', service: 'AC Repair', date: 'Jun 1', amount: '$340', status: 'Complete' },
-]
-
-const PAYOUTS = [
-  { month: 'Jun 1', amount: '$1,840', jobs: 12 },
-  { month: 'May 1', amount: '$2,210', jobs: 14 },
-  { month: 'Apr 1', amount: '$1,660', jobs: 10 },
-  { month: 'Mar 1', amount: '$1,920', jobs: 13 },
-]
-
-const INITIAL_RATES = [
-  { id: 1, service: 'AC Tune-Up', pricingType: 'per job', marketRate: '220', memberRate: '165' },
-  { id: 2, service: 'Heating Tune-Up', pricingType: 'per job', marketRate: '225', memberRate: '165' },
-  { id: 3, service: 'AC Repair Diagnostic', pricingType: 'per job', marketRate: '135', memberRate: '89' },
-  { id: 4, service: 'Filter Swap', pricingType: 'per job', marketRate: '90', memberRate: '55' },
-  { id: 5, service: 'System Install', pricingType: 'custom', marketRate: '10000', memberRate: '8500' },
-]
+const INITIAL_RATES = []
 
 let nextId = 6
 
@@ -611,14 +587,14 @@ export default function ContractorDashboard() {
   const [tab, setTab] = useState('leads')
   const [leads, setLeads] = useState(INITIAL_LEADS)
   const [profile, setProfile] = useState({
-    name: 'Peak HVAC',
-    trade: 'HVAC',
-    trades: ['HVAC'],
-    contact: 'Jake Morrison',
-    email: 'jake@peakhvac.com',
-    phone: '(801) 555-0192',
-    bio: 'Family-owned HVAC company serving the Wasatch Front since 2011. Specializing in residential installs, tune-ups, and emergency repair.',
-    serviceArea: { type: 'county', state: 'UT', counties: ['Salt Lake'] },
+    name: '',
+    trade: '',
+    trades: [],
+    contact: '',
+    email: '',
+    phone: '',
+    bio: '',
+    serviceArea: null,
   })
   const [zipReady, setZipReady] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
@@ -793,13 +769,35 @@ export default function ContractorDashboard() {
           </div>
         )}
 
+        {contractorStatus === 'active' && (!docs.insurance_doc_url || !docs.license_doc_url) && (
+          <div style={{ background: S.blue + '15', border: `1px solid ${S.blue}44`, borderRadius: 10, padding: '14px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 18 }}>📄</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: S.blue, marginBottom: 3 }}>Add your documents</div>
+                <div style={{ fontSize: 13, color: S.muted }}>
+                  Upload your {!docs.insurance_doc_url && !docs.license_doc_url ? 'proof of insurance and business license' : !docs.insurance_doc_url ? 'proof of insurance' : 'business license'} to complete your profile.
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setTab('profile')} style={{ background: S.blue, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, padding: '10px 20px', borderRadius: 8, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
+              Upload now →
+            </button>
+          </div>
+        )}
+
         <div style={{ marginBottom: 8 }}>
-          <div style={{ fontFamily: C.display, fontSize: 26, color: S.offwhite }}>Good morning, {profile.name} 👋</div>
-          <div style={{ fontSize: 14, color: S.muted, marginTop: 4 }}>{profile.trade} Partner · Salt Lake County</div>
+          <div style={{ fontFamily: C.display, fontSize: 26, color: S.offwhite }}>Welcome, {profile.name || 'Partner'} 👋</div>
+          <div style={{ fontSize: 14, color: S.muted, marginTop: 4 }}>{profile.trade ? `${profile.trade} Partner` : 'Partner'}</div>
         </div>
 
         <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, margin: '24px 0' }}>
-          {[['3', 'Pending leads', S.amber], ['47', 'Jobs this year', S.green], ['$1,840', 'Jun payout', S.blue], ['100%', 'Verification rate', S.green]].map(([val, label, color]) => (
+          {[
+            [String(leads.filter(l => l.status === 'pending').length), 'Pending leads', S.amber],
+            ['0', 'Jobs this year', S.green],
+            ['—', 'Last payout', S.blue],
+            ['—', 'Verification rate', S.green],
+          ].map(([val, label, color]) => (
             <Card key={label} style={{ padding: '16px 20px' }}>
               <div style={{ fontFamily: C.display, fontSize: 28, color, marginBottom: 4 }}>{val}</div>
               <div style={{ fontSize: 12, color: S.muted }}>{label}</div>
@@ -889,24 +887,15 @@ export default function ContractorDashboard() {
                 ))}
               </div>
             )}
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Recent Jobs</div>
-              {JOB_HISTORY.map((job, i) => (
-                <Card key={i} style={{ padding: '14px 20px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, fontFamily: 'monospace', color: S.muted }}>{job.id}</span>
-                    <div>
-                      <div style={{ fontSize: 14, color: S.offwhite }}>{job.member} · {job.service}</div>
-                      <div style={{ fontSize: 12, color: S.muted }}>{job.date}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{job.amount}</span>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 100, background: S.green + '22', color: S.green }}>✓ {job.status}</span>
-                  </div>
-                </Card>
-              ))}
-            </div>
+            {leads.filter(l => l.status === 'pending').length === 0 && leads.filter(l => l.status !== 'pending').length === 0 && (
+              <Card style={{ padding: '52px 24px', textAlign: 'center' }}>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>📥</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite, marginBottom: 8 }}>No leads yet</div>
+                <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6, maxWidth: 380, margin: '0 auto' }}>
+                  Leads will appear here as SUBS members in your service area request your trade. Check back soon.
+                </p>
+              </Card>
+            )}
           </div>
         )}
 
@@ -986,13 +975,15 @@ export default function ContractorDashboard() {
               })}
               {docError && <div style={{ fontSize: 12, color: S.danger, marginTop: 4 }}>{docError}</div>}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '12px 16px', background: S.surface, borderRadius: 8, border: `1px solid ${S.border}` }}>
-              <span style={{ color: S.green, fontSize: 16 }}>✓</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>Verified Partner</div>
-                <div style={{ fontSize: 12, color: S.muted }}>Licensed · Insured · Background checked · 4.9 ⭐</div>
+            {contractorStatus === 'active' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '12px 16px', background: S.green + '10', borderRadius: 8, border: `1px solid ${S.green}44` }}>
+                <span style={{ color: S.green, fontSize: 16 }}>✓</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>Active Partner</div>
+                  <div style={{ fontSize: 12, color: S.muted }}>Your account is active and receiving leads.</div>
+                </div>
               </div>
-            </div>
+            )}
             <button onClick={() => { setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000) }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '12px 24px', borderRadius: 10, cursor: 'pointer' }}>
               Save Profile
             </button>
@@ -1005,38 +996,34 @@ export default function ContractorDashboard() {
             <div>
               <Card style={{ padding: 24, marginBottom: 16 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16 }}>Listing Status</div>
-                {[['Status', null, '✓ Active', S.green], ['Annual listing fee', null, '$299/yr', S.offwhite], ['Renewal date', null, 'Jan 1, 2027', S.offwhite], ['Per-job fee', null, '$0', S.green]].map(([label, , val, color]) => (
+                {[
+                  ['Status', contractorStatus === 'active' ? '✓ Active' : contractorStatus === 'approved' ? 'Approved' : 'Pending', contractorStatus === 'active' ? S.green : S.amber, true],
+                  ['Per-job fee', '$0', S.green, false],
+                ].map(([label, val, color, badge]) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                     <span style={{ fontSize: 14, color: S.offwhite }}>{label}</span>
-                    <span style={{ fontSize: label === 'Status' ? 12 : 14, fontWeight: 700, color, background: label === 'Status' ? S.green + '22' : 'transparent', padding: label === 'Status' ? '4px 12px' : 0, borderRadius: 100 }}>{val}</span>
+                    <span style={{ fontSize: badge ? 12 : 14, fontWeight: 700, color, background: badge ? color + '22' : 'transparent', padding: badge ? '4px 12px' : 0, borderRadius: 100 }}>{val}</span>
                   </div>
                 ))}
               </Card>
               <Card style={{ padding: 24 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16 }}>Verification Rate</div>
                 <div style={{ textAlign: 'center', padding: '8px 0' }}>
-                  <div style={{ fontFamily: C.display, fontSize: 52, color: S.green }}>100%</div>
-                  <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>47 / 47 jobs confirmed member pricing</div>
+                  <div style={{ fontFamily: C.display, fontSize: 52, color: S.muted }}>—</div>
+                  <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>No jobs completed yet</div>
                 </div>
                 <div style={{ marginTop: 16, fontSize: 12, color: S.muted, lineHeight: 1.5 }}>
-                  After every job, SUBS texts the member: 'Did you receive member pricing?' Two unresolved disputes = removal from network.
+                  After every job, SUBS texts the member: "Did you receive member pricing?" Two unresolved disputes = removal from network.
                 </div>
               </Card>
             </div>
             <Card style={{ padding: 24 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16 }}>Payout History</div>
-              {PAYOUTS.map((p, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < PAYOUTS.length - 1 ? `1px solid ${S.border}` : 'none' }}>
-                  <div>
-                    <div style={{ fontSize: 14, color: S.offwhite }}>{p.month}</div>
-                    <div style={{ fontSize: 12, color: S.muted }}>{p.jobs} jobs</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite }}>{p.amount}</div>
-                    <div style={{ fontSize: 11, color: S.green }}>✓ Paid</div>
-                  </div>
-                </div>
-              ))}
+              <div style={{ padding: '32px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>💳</div>
+                <div style={{ fontSize: 14, color: S.muted }}>No payouts yet</div>
+                <div style={{ fontSize: 12, color: S.muted, marginTop: 6 }}>Payouts will appear here after your first completed jobs.</div>
+              </div>
             </Card>
           </div>
         )}
