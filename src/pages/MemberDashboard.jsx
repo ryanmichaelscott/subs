@@ -70,6 +70,11 @@ export default function MemberDashboard() {
   const [jobForm, setJobForm] = useState({ trade: '', description: '', zip: memberZip, date: '' })
   const [jobSubmitted, setJobSubmitted] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [profileForm, setProfileForm] = useState({ name: '', phone: '', zip: '' })
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [accountError, setAccountError] = useState(null)
 
   const PLAN_PRICE_IDS = {
     member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
@@ -98,6 +103,11 @@ export default function MemberDashboard() {
           })
           .eq('clerk_user_id', user.id)
         setMember(existing)
+        setProfileForm({
+          name: existing.name || user.fullName || '',
+          phone: existing.phone || user.phoneNumbers?.[0]?.phoneNumber || '',
+          zip: existing.zip || '',
+        })
       } else {
         // New member — insert with defaults
         const { data } = await supabase
@@ -171,6 +181,35 @@ export default function MemberDashboard() {
     init()
   }, [user])
 
+  const handleSaveProfile = async () => {
+    setProfileSaving(true)
+    setAccountError(null)
+    setProfileSaved(false)
+    const { error } = await supabase
+      .from('members')
+      .update({ name: profileForm.name, phone: profileForm.phone, zip: profileForm.zip })
+      .eq('clerk_user_id', user.id)
+    setProfileSaving(false)
+    if (error) { setAccountError('Failed to save. Please try again.'); return }
+    setMember(m => ({ ...m, name: profileForm.name, phone: profileForm.phone, zip: profileForm.zip }))
+    setProfileSaved(true)
+    setTimeout(() => setProfileSaved(false), 3000)
+  }
+
+  const handleOpenPortal = async () => {
+    setPortalLoading(true)
+    setAccountError(null)
+    const { data, error } = await supabase.functions.invoke('create-billing-portal-session', {
+      body: { clerk_user_id: user.id, return_url: `${window.location.origin}/dashboard` },
+    })
+    setPortalLoading(false)
+    if (error || !data?.url) {
+      setAccountError('Could not open billing portal. Please try again.')
+      return
+    }
+    window.location.href = data.url
+  }
+
   const filtered = contractors.filter(c =>
     (!tradeFilter || c.trade === tradeFilter) &&
     (!zipFilter || (c.service_area || '').toLowerCase().includes(zipFilter.toLowerCase()))
@@ -180,7 +219,7 @@ export default function MemberDashboard() {
   const tradesUsed = new Set(jobRequests.map(j => j.trade).filter(Boolean)).size
 
   const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }
-  const tabs = [['directory', '📋 Contractor Directory'], ['request', '➕ Request a Job'], ['history', '🕐 Job History']]
+  const tabs = [['directory', '📋 Directory'], ['request', '➕ Request'], ['history', '🕐 History'], ['account', '⚙️ Account']]
 
   if (checkoutLoading) {
     return (
@@ -412,6 +451,125 @@ export default function MemberDashboard() {
                     </div>
                   </Card>
                 ))}
+              </div>
+            )}
+
+            {/* Account tab */}
+            {tab === 'account' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {accountError && (
+                  <div style={{ background: S.danger + '18', border: `1px solid ${S.danger}44`, borderRadius: 10, padding: '12px 16px', fontSize: 13, color: S.danger }}>
+                    {accountError}
+                  </div>
+                )}
+
+                {/* Contact info */}
+                <Card style={{ padding: 28 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite, marginBottom: 4 }}>Contact Info</div>
+                  <p style={{ fontSize: 13, color: S.muted, marginBottom: 20 }}>Update your name, phone, and zip code. Email is managed through your sign-in provider.</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Full name</label>
+                      <input value={profileForm.name} onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} style={inp} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Email</label>
+                      <input value={displayEmail} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
+                      <div style={{ fontSize: 11, color: S.muted, marginTop: 4 }}>To change your email, sign out and sign back in with a different address.</div>
+                    </div>
+                    <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Phone</label>
+                        <input value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} placeholder="(801) 555-0100" style={inp} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Zip code</label>
+                        <input value={profileForm.zip} onChange={e => setProfileForm(f => ({ ...f, zip: e.target.value }))} placeholder="84101" style={inp} />
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 20 }}>
+                    <button
+                      onClick={handleSaveProfile}
+                      disabled={profileSaving}
+                      style={{ background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '11px 24px', borderRadius: 9, cursor: profileSaving ? 'not-allowed' : 'pointer', opacity: profileSaving ? 0.7 : 1 }}
+                    >
+                      {profileSaving ? 'Saving…' : 'Save changes'}
+                    </button>
+                    {profileSaved && <span style={{ fontSize: 13, color: S.green }}>✓ Saved</span>}
+                  </div>
+                </Card>
+
+                {/* Membership */}
+                <Card style={{ padding: 28 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite, marginBottom: 4 }}>Membership</div>
+                  <p style={{ fontSize: 13, color: S.muted, marginBottom: 20 }}>Change your plan, update payment method, or cancel — all handled securely through Stripe.</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
+                    <div>
+                      <div style={{ fontSize: 12, color: S.muted, marginBottom: 4 }}>Current plan</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: TIER_COLORS[member?.tier] || S.green }}>{member?.tier || 'Member'}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: member?.status === 'Active' ? S.green + '22' : S.amber + '22', color: member?.status === 'Active' ? S.green : S.amber }}>
+                          {member?.status || '—'}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: S.offwhite }}>
+                      {member?.tier === 'Member' ? '$99' : member?.tier === 'Member+' ? '$199' : member?.tier === 'Elite' ? '$399' : '—'}
+                      <span style={{ fontSize: 13, color: S.muted, fontWeight: 400 }}>/yr</span>
+                    </div>
+                  </div>
+                  {member?.stripe_customer_id ? (
+                    <button
+                      onClick={handleOpenPortal}
+                      disabled={portalLoading}
+                      style={{ background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 14, fontWeight: 600, padding: '11px 24px', borderRadius: 9, cursor: portalLoading ? 'not-allowed' : 'pointer', opacity: portalLoading ? 0.7 : 1 }}
+                    >
+                      {portalLoading ? 'Opening…' : 'Manage plan →'}
+                    </button>
+                  ) : (
+                    <div>
+                      <p style={{ fontSize: 13, color: S.muted, marginBottom: 14 }}>No active subscription found. Choose a plan to get started.</p>
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                        {[['member', 'Member', '$99/yr', 'price_1TiRPcAYDs9oVarWLWpp0wLZ'], ['plus', 'Member+', '$199/yr', 'price_1TiRQBAYDs9oVarW14DBq2HL'], ['elite', 'Elite', '$399/yr', 'price_1TiRQZAYDs9oVarWcZ10xjDG']].map(([id, name, price, priceId]) => (
+                          <button
+                            key={id}
+                            onClick={async () => {
+                              setPortalLoading(true)
+                              const { data } = await supabase.functions.invoke('create-checkout-session', {
+                                body: { price_id: priceId, clerk_user_id: user.id, email: user.primaryEmailAddress?.emailAddress, success_url: `${window.location.origin}/dashboard`, cancel_url: `${window.location.origin}/signup` },
+                              })
+                              if (data?.url) window.location.href = data.url
+                              else setPortalLoading(false)
+                            }}
+                            style={{ background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 13, fontWeight: 600, padding: '10px 18px', borderRadius: 9, cursor: 'pointer' }}
+                          >
+                            {name} — {price}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+
+                {/* Danger zone */}
+                <Card style={{ padding: 28, border: `1px solid ${S.danger}33` }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite, marginBottom: 4 }}>Cancel membership</div>
+                  <p style={{ fontSize: 13, color: S.muted, marginBottom: 16, lineHeight: 1.6 }}>
+                    Cancelling will end your access at the end of the current billing period. You'll lose contractor pricing and priority dispatch. This is handled through Stripe.
+                  </p>
+                  {member?.stripe_customer_id ? (
+                    <button
+                      onClick={handleOpenPortal}
+                      disabled={portalLoading}
+                      style={{ background: 'transparent', border: `1px solid ${S.danger}66`, color: S.danger, fontSize: 13, fontWeight: 600, padding: '10px 20px', borderRadius: 9, cursor: portalLoading ? 'not-allowed' : 'pointer' }}
+                    >
+                      {portalLoading ? 'Opening…' : 'Cancel membership'}
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: 13, color: S.muted }}>No active subscription to cancel.</span>
+                  )}
+                </Card>
               </div>
             )}
           </div>
