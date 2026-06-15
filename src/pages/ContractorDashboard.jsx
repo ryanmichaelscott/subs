@@ -998,17 +998,37 @@ export default function ContractorDashboard() {
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Responded</div>
                   {responded.map(lead => (
-                    <Card key={lead.id} style={{ padding: '14px 20px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{lead.service}</div>
-                        <div style={{ fontSize: 12, color: S.muted }}>Zip {lead.zip}</div>
+                    <Card key={lead.id} style={{ padding: '16px 20px', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{lead.service}</div>
+                          <div style={{ fontSize: 12, color: S.muted }}>Zip {lead.zip}</div>
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 100, flexShrink: 0,
+                          background: lead.notification_status === 'accepted' ? S.green + '22' : lead.notification_status === 'expired' ? S.border : S.danger + '22',
+                          color: lead.notification_status === 'accepted' ? S.green : lead.notification_status === 'expired' ? S.muted : S.danger,
+                        }}>
+                          {lead.notification_status === 'accepted' ? '✓ Accepted' : lead.notification_status === 'expired' ? 'Expired' : '✗ Declined'}
+                        </span>
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 100, flexShrink: 0,
-                        background: lead.notification_status === 'accepted' ? S.green + '22' : lead.notification_status === 'expired' ? S.border : S.danger + '22',
-                        color: lead.notification_status === 'accepted' ? S.green : lead.notification_status === 'expired' ? S.muted : S.danger,
-                      }}>
-                        {lead.notification_status === 'accepted' ? '✓ Accepted' : lead.notification_status === 'expired' ? 'Expired' : '✗ Declined'}
-                      </span>
+                      {lead.notification_status === 'accepted' && (lead.member_phone || lead.member_email || lead.member) && (
+                        <div style={{ marginTop: 12, padding: '12px 14px', background: S.green + '11', border: `1px solid ${S.green}33`, borderRadius: 8 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: S.green, letterSpacing: '0.08em', marginBottom: 8 }}>MEMBER CONTACT</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite, marginBottom: 4 }}>{lead.member}</div>
+                          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                            {lead.member_phone && (
+                              <a href={`tel:${lead.member_phone}`} style={{ fontSize: 13, color: S.green, textDecoration: 'none', fontWeight: 600 }}>
+                                {lead.member_phone}
+                              </a>
+                            )}
+                            {lead.member_email && (
+                              <a href={`mailto:${lead.member_email}`} style={{ fontSize: 13, color: S.blue, textDecoration: 'none' }}>
+                                {lead.member_email}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </Card>
                   ))}
                 </div>

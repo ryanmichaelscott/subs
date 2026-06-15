@@ -41,6 +41,7 @@ serve(async (req) => {
           preferred_date,
           member_name,
           member_email,
+          clerk_user_id,
           status,
           expires_at,
           submitted_at
@@ -54,13 +55,11 @@ serve(async (req) => {
 
     const now = new Date().toISOString()
 
-    const leads = (data || [])
+    let leads = (data || [])
       .filter(n => {
         const req = n.job_requests as any
         if (!req) return false
-        // Always show accepted/declined (history)
         if (n.status !== 'pending') return true
-        // For pending: hide if lead itself is expired or accepted by someone else
         if (req.expires_at && req.expires_at < now) return false
         if (req.status !== 'open') return false
         return true
@@ -75,6 +74,9 @@ serve(async (req) => {
           contractor_id: n.contractor_id,
           notification_status: n.status,
           member: req?.member_name || 'SUBS Member',
+          member_email: req?.member_email || null,
+          member_phone: null as string | null,
+          clerk_user_id: req?.clerk_user_id || null,
           zip: req?.zip || '',
           state: req?.state || '',
           service: req?.trade || '',
@@ -86,6 +88,28 @@ serve(async (req) => {
           lead_status: req?.status || 'open',
         }
       })
+
+    // For accepted leads, fetch member phone numbers
+    const acceptedLeads = leads.filter(l => l.notification_status === 'accepted' && l.clerk_user_id)
+    if (acceptedLeads.length > 0) {
+      const clerkIds = [...new Set(acceptedLeads.map(l => l.clerk_user_id as string))]
+      const { data: members } = await supabase
+        .from('members')
+        .select('clerk_user_id, phone')
+        .in('clerk_user_id', clerkIds)
+
+      if (members && members.length > 0) {
+        const phoneMap: Record<string, string> = {}
+        for (const m of members) {
+          if (m.clerk_user_id && m.phone) phoneMap[m.clerk_user_id] = m.phone
+        }
+        leads = leads.map(l =>
+          l.notification_status === 'accepted' && l.clerk_user_id && phoneMap[l.clerk_user_id]
+            ? { ...l, member_phone: phoneMap[l.clerk_user_id] }
+            : l
+        )
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, leads }),
