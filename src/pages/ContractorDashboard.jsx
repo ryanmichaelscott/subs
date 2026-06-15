@@ -1105,22 +1105,24 @@ export default function ContractorDashboard() {
                 setProfileSaving(true)
                 const primaryTrade = profile.trades?.[0] || profile.trade || ''
                 const allTrades = profile.trades?.length ? profile.trades : [primaryTrade].filter(Boolean)
-                const { error } = await supabase
-                  .from('contractors')
-                  .update({
+                const { data, error } = await supabase.functions.invoke('update-contractor-profile', {
+                  body: {
+                    contractor_id: contractorId,
                     name: profile.name,
                     contact_name: profile.contact,
                     phone: profile.phone,
                     trade: primaryTrade,
                     trades: allTrades,
                     bio: profile.bio,
-                  })
-                  .eq('id', contractorId)
+                  },
+                })
                 setProfileSaving(false)
-                if (!error) {
-                  setProfileSaved(true)
-                  setTimeout(() => setProfileSaved(false), 3000)
+                if (error || data?.error) {
+                  alert(data?.error || error?.message || 'Failed to save profile.')
+                  return
                 }
+                setProfileSaved(true)
+                setTimeout(() => setProfileSaved(false), 3000)
               }}
               style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '12px 24px', borderRadius: 10, cursor: profileSaving ? 'not-allowed' : 'pointer', opacity: profileSaving ? 0.7 : 1 }}
             >
