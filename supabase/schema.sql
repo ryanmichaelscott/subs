@@ -131,3 +131,6 @@ alter table members add column if not exists stripe_subscription_id text;
 -- create policy "contractor_docs_insert" on storage.objects for insert with check (bucket_id = 'contractor-docs');
 -- create policy "contractor_docs_select" on storage.objects for select using (bucket_id = 'contractor-docs');
 -- create policy "contractor_docs_update" on storage.objects for update using (bucket_id = 'contractor-docs');
+
+-- Multi-trade support for contractors
+alter table contractors add column if not exists trades text[] default '{}';

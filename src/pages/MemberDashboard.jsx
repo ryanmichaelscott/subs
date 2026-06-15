@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
+import ImpersonationBanner from '../components/ImpersonationBanner'
 
 const TRADES = ['HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors', 'Concrete Work', 'Interior Painting', 'Exterior Painting', 'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Handyman', 'Pool Service', 'Flooring', 'Fencing', 'Decks & Patios', 'House Cleaning']
 
@@ -59,6 +60,8 @@ export default function MemberDashboard() {
   const displayEmail = user?.primaryEmailAddress?.emailAddress || 'ryan@neumi.com'
 
   const [searchParams] = useSearchParams()
+  const impersonating = (() => { try { return JSON.parse(localStorage.getItem('subs_impersonating') || 'null') } catch { return null } })()
+  const isImpersonating = impersonating?.role === 'member'
   const [member, setMember] = useState(null)
   const [contractors, setContractors] = useState([])
   const [jobRequests, setJobRequests] = useState([])
@@ -85,6 +88,20 @@ export default function MemberDashboard() {
   useEffect(() => {
     if (!user) return
     const init = async () => {
+      // Admin impersonation mode
+      if (isImpersonating) {
+        const { data: adminData } = await supabase.functions.invoke('admin-get-member', { body: { email: impersonating.email } })
+        if (adminData?.member) {
+          setMember(adminData.member)
+          setProfileForm({ name: adminData.member.name || '', phone: adminData.member.phone || '', zip: adminData.member.zip || '' })
+          const { data: jobRows } = await supabase.from('job_requests').select('*').eq('clerk_user_id', adminData.member.clerk_user_id).order('submitted_at', { ascending: false })
+          if (jobRows) setJobRequests(jobRows)
+        }
+        const { data: contractorRows } = await supabase.from('contractors').select('*, contractor_rates(*)').eq('status', 'approved').order('rating', { ascending: false })
+        if (contractorRows) setContractors(contractorRows)
+        return
+      }
+
       // Check if member already exists
       const { data: existing } = await supabase
         .from('members')
@@ -190,6 +207,7 @@ export default function MemberDashboard() {
   }, [user])
 
   const handleSaveProfile = async () => {
+    if (isImpersonating) return
     setProfileSaving(true)
     setAccountError(null)
     setProfileSaved(false)
@@ -218,10 +236,11 @@ export default function MemberDashboard() {
     window.location.href = data.url
   }
 
-  const filtered = contractors.filter(c =>
-    (!tradeFilter || c.trade === tradeFilter) &&
-    (!zipFilter || (c.service_area || '').toLowerCase().includes(zipFilter.toLowerCase()))
-  )
+  const filtered = contractors.filter(c => {
+    const allTrades = c.trades?.length ? c.trades : [c.trade].filter(Boolean)
+    return (!tradeFilter || allTrades.includes(tradeFilter)) &&
+      (!zipFilter || (c.service_area || '').toLowerCase().includes(zipFilter.toLowerCase()))
+  })
 
   const jobsDone = jobRequests.filter(j => j.status === 'Complete').length
   const tradesUsed = new Set(jobRequests.map(j => j.trade).filter(Boolean)).size
@@ -253,6 +272,13 @@ export default function MemberDashboard() {
         </div>
       </nav>
 
+      {isImpersonating && (
+        <ImpersonationBanner
+          name={impersonating.name}
+          role="member"
+          onExit={() => { localStorage.removeItem('subs_impersonating'); navigate('/admin/dashboard') }}
+        />
+      )}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
         <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
           {/* Sidebar */}
@@ -309,7 +335,12 @@ export default function MemberDashboard() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                         <div>
                           <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite, marginBottom: 2 }}>{c.name}</div>
-                          <div style={{ fontSize: 12, color: S.muted }}>{c.trade}{c.service_area ? ` · ${c.service_area}` : ''}</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 2 }}>
+                            {(c.trades?.length ? c.trades : [c.trade]).filter(Boolean).map(t => (
+                              <span key={t} style={{ fontSize: 11, fontWeight: 600, color: S.blue, background: S.blue + '18', padding: '1px 7px', borderRadius: 100 }}>{t}</span>
+                            ))}
+                            {c.service_area && <span style={{ fontSize: 11, color: S.muted }}>· {c.service_area}</span>}
+                          </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           {c.discount_description && <div style={{ fontSize: 13, fontWeight: 700, color: S.green }}>{c.discount_description}</div>}

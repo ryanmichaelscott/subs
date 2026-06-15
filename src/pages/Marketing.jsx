@@ -178,7 +178,7 @@ function Hero({ setSection }) {
     <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px 60px', textAlign: 'center' }}>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.surface, border: `1px solid ${S.border}`, borderRadius: 100, padding: '6px 16px', marginBottom: 32 }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: S.green, display: 'inline-block' }} />
-        <span style={{ color: S.green, fontSize: 12, fontWeight: 600, letterSpacing: '0.04em' }}>Founding member pricing — limited availability</span>
+        <span style={{ color: S.green, fontSize: 12, fontWeight: 600, letterSpacing: '0.04em' }}>Now accepting founding members</span>
       </div>
       <h1 style={{ fontFamily: C.display, fontSize: 'clamp(44px, 7vw, 80px)', fontWeight: 400, lineHeight: 1.05, color: S.offwhite, margin: '0 0 8px' }}>
         Stop paying retail
@@ -412,17 +412,17 @@ function ForVendors() {
               Zero lead cost.<br /><span style={{ color: S.green }}>Pre-qualified homeowners.</span>
             </h2>
             <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.7, marginBottom: 36 }}>
-              SUBS sends pre-qualified, pre-sold homeowners directly to our partners. No bidding, no slow seasons, no lead gen cost. Just booked jobs.
+              SUBS uses AI to match pre-qualified homeowners with the right partner based on ratings, response time, and expertise. No bidding, no slow seasons, no lead gen cost. The better you perform, the more leads you receive.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 32 }}>
-              {[['500+', 'Members by end of 2026'], ['$0', 'Lead gen cost to you'], ['48hr', 'Guaranteed payment'], ['1', 'Exclusive per category']].map(([stat, label]) => (
+              {[['500+', 'Members by end of 2026'], ['$0', 'Lead gen cost to you'], ['48hr', 'Guaranteed payment'], ['AI', 'Performance-based routing']].map(([stat, label]) => (
                 <div key={stat} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 10, padding: '16px 18px' }}>
                   <div style={{ fontFamily: C.display, fontSize: 28, color: S.green }}>{stat}</div>
                   <div style={{ fontSize: 12, color: S.muted, marginTop: 4 }}>{label}</div>
                 </div>
               ))}
             </div>
-            {['Pre-sold customers — zero marketing cost', 'Route density — multiple jobs per neighborhood', 'Exclusive territory in your category', 'Portal: jobs, payouts, and performance'].map((item, i) => (
+            {['Pre-sold customers — zero marketing cost', 'Route density — multiple jobs per neighborhood', 'AI-matched leads based on ratings and response rate', 'Portal: jobs, payouts, and performance metrics'].map((item, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 14, color: S.offwhite, marginBottom: 10 }}>
                 <span style={{ color: S.green }}>✓</span> {item}
               </div>
@@ -496,7 +496,7 @@ function BottomCTA() {
   return (
     <section style={{ background: S.forest, borderTop: `1px solid ${S.greenDim}` }}>
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '80px 20px', textAlign: 'center' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 16 }}>Limited Founding Member Pricing</div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 16 }}>Start Saving Today</div>
         <h2 style={{ fontFamily: C.display, fontSize: 'clamp(28px, 4vw, 48px)', color: S.offwhite, fontWeight: 400, margin: '0 0 20px', lineHeight: 1.15 }}>
           The most obvious purchase<br />a homeowner can make.
         </h2>
@@ -523,7 +523,7 @@ function Footer() {
             <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.6, maxWidth: 260, margin: 0 }}>The membership that unlocks contractor pricing on every trade that touches your home.</p>
           </div>
           {[
-            { title: 'Membership', links: ['Member', 'Member+', 'Elite', 'Founding Rate'] },
+            { title: 'Membership', links: ['Member', 'Member+', 'Elite', 'How It Works'] },
             { title: 'Company', links: ['How It Works', 'Vendor Network', 'FAQ', 'For Vendors'] },
             { title: 'Legal', links: ['Terms', 'Privacy', 'Licensing'] },
           ].map(col => (

@@ -4,6 +4,7 @@ import MemberLogin from './pages/MemberLogin'
 import CheckoutPage from './pages/CheckoutPage'
 import MemberDashboard from './pages/MemberDashboard'
 import ContractorLogin from './pages/ContractorLogin'
+import ContractorCheckoutPage from './pages/ContractorCheckoutPage'
 import ContractorDashboard from './pages/ContractorDashboard'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
@@ -24,6 +25,7 @@ export default function App() {
           <ProtectedRoute role="member"><MemberDashboard /></ProtectedRoute>
         } />
         <Route path="/contractor/login" element={<ContractorLogin />} />
+        <Route path="/contractor/checkout" element={<ContractorCheckoutPage />} />
         <Route path="/contractor/dashboard" element={
           <ProtectedRoute role="contractor"><ContractorDashboard /></ProtectedRoute>
         } />

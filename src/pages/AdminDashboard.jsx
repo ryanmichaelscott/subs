@@ -104,6 +104,11 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleImpersonate = (name, email, role) => {
+    localStorage.setItem('subs_impersonating', JSON.stringify({ name, email, role }))
+    navigate(role === 'member' ? '/dashboard' : '/contractor/dashboard')
+  }
+
   const handleAdminDocUpload = async (contractorId, docType, col, file) => {
     if (!file) return
     setAdminDocUploading(`${contractorId}-${docType}`)
@@ -255,13 +260,13 @@ export default function AdminDashboard() {
             </div>
             <div className="rate-table-wrap">
             <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 80px 60px 80px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
-                {['ID', 'Name', 'Email', 'Tier', 'Since', 'Jobs', 'Status'].map(h => (
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 80px 60px 80px 110px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
+                {['ID', 'Name', 'Email', 'Tier', 'Since', 'Jobs', 'Status', ''].map(h => (
                   <div key={h} style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
                 ))}
               </div>
               {filteredMembers.map((m, i) => (
-                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 80px 60px 80px', padding: '14px 20px', borderBottom: i < filteredMembers.length - 1 ? `1px solid ${S.border}` : 'none', alignItems: 'center' }}>
+                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 80px 60px 80px 110px', padding: '14px 20px', borderBottom: i < filteredMembers.length - 1 ? `1px solid ${S.border}` : 'none', alignItems: 'center' }}>
                   <span style={{ fontSize: 11, fontFamily: 'monospace', color: S.muted }}>{m.id}</span>
                   <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{m.name}</span>
                   <span style={{ fontSize: 13, color: S.muted }}>{m.email}</span>
@@ -271,6 +276,9 @@ export default function AdminDashboard() {
                   <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 100, background: (STATUS_COLORS[m.status] || S.muted) + '22', color: STATUS_COLORS[m.status] || S.muted }}>
                     {m.status}
                   </span>
+                  <button onClick={() => handleImpersonate(m.name, m.email, 'member')} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer' }}>
+                    Impersonate
+                  </button>
                 </div>
               ))}
             </div>
@@ -379,7 +387,10 @@ export default function AdminDashboard() {
                             >
                               {isExpanded ? 'Close ▲' : 'Docs ▼'}
                             </button>
-                            <div style={{ display: 'flex', gap: 8 }}>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button onClick={() => handleImpersonate(c.name, c.contact_email, 'contractor')} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer' }}>
+                                Impersonate
+                              </button>
                               {statusGroup === 'approved' ? (
                                 <button
                                   onClick={() => handleStatusUpdate(c.id, 'rejected')}

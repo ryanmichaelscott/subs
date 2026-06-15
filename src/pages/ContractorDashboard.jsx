@@ -4,6 +4,7 @@ import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { loadZipData, getCountiesForState, matchesServiceArea } from '../utils/serviceArea.js'
 import { supabase } from '../lib/supabase'
+import ImpersonationBanner from '../components/ImpersonationBanner'
 
 const TRADES_LIST = [
   'HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors',
@@ -103,7 +104,7 @@ const US_STATES = [
 
 function Onboarding({ onComplete }) {
   const [step, setStep] = useState(1)
-  const [form, setForm] = useState({ trade: '', title: '', description: '' })
+  const [form, setForm] = useState({ trades: [], title: '', description: '' })
   const [error, setError] = useState('')
 
   // Service area state
@@ -143,7 +144,7 @@ function Onboarding({ onComplete }) {
   const line = (n) => ({ flex: 1, height: 2, borderRadius: 1, background: step > n ? S.green : S.border })
 
   const handleNext = () => {
-    if (!form.trade) { setError('Please select your trade.'); return }
+    if (!form.trades.length) { setError('Please select at least one trade.'); return }
     if (!form.title.trim()) { setError('Please enter your business name.'); return }
     if (!form.description.trim()) { setError('Please add a short description.'); return }
     setError('')
@@ -160,7 +161,7 @@ function Onboarding({ onComplete }) {
     const serviceArea = { type: saType, state: saState }
     if (saType === 'county') serviceArea.counties = selectedCounties
     if (saType === 'radius') { serviceArea.zip = saZip; serviceArea.radius = saRadius }
-    onComplete({ ...form, serviceArea })
+    onComplete({ trades: form.trades, title: form.title, description: form.description, serviceArea })
   }
 
   const toggleCounty = (county) =>
@@ -195,10 +196,20 @@ function Onboarding({ onComplete }) {
               </div>
               <Card style={{ padding: 28 }}>
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 7, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your Trade</label>
-                  <select value={form.trade} onChange={e => { setForm(f => ({ ...f, trade: e.target.value })); setError('') }} style={{ ...inp, color: form.trade ? S.offwhite : S.muted }}>
-                    <option value="" disabled>Select a trade...</option>
-                    {TRADES_LIST.map(t => <option key={t} value={t}>{t}</option>)}
+                  <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 7, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your Trades</label>
+                  {form.trades.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                      {form.trades.map(t => (
+                        <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: S.green + '22', border: `1px solid ${S.green}44`, color: S.green, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 100 }}>
+                          {t}
+                          <button onClick={() => { setForm(f => ({ ...f, trades: f.trades.filter(x => x !== t) })); setError('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: S.green, fontSize: 14, lineHeight: 1, padding: 0, marginLeft: 2 }}>×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <select value="" onChange={e => { if (e.target.value && !form.trades.includes(e.target.value)) { setForm(f => ({ ...f, trades: [...f.trades, e.target.value] })); setError('') } }} style={{ ...inp, color: S.muted }}>
+                    <option value="">{form.trades.length === 0 ? 'Select a trade...' : '+ Add another trade'}</option>
+                    {TRADES_LIST.filter(t => !form.trades.includes(t)).map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div style={{ marginBottom: 20 }}>
@@ -594,12 +605,15 @@ export default function ContractorDashboard() {
   const navigate = useNavigate()
   const { user } = useUser()
   const { signOut } = useClerk()
+  const impersonating = (() => { try { return JSON.parse(localStorage.getItem('subs_impersonating') || 'null') } catch { return null } })()
+  const isImpersonating = impersonating?.role === 'contractor'
   const [showOnboarding, setShowOnboarding] = useState(location.state?.firstTime ?? false)
   const [tab, setTab] = useState('leads')
   const [leads, setLeads] = useState(INITIAL_LEADS)
   const [profile, setProfile] = useState({
     name: 'Peak HVAC',
     trade: 'HVAC',
+    trades: ['HVAC'],
     contact: 'Jake Morrison',
     email: 'jake@peakhvac.com',
     phone: '(801) 555-0192',
@@ -608,6 +622,7 @@ export default function ContractorDashboard() {
   })
   const [zipReady, setZipReady] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+  const [contractorStatus, setContractorStatus] = useState(null)
   const [contractorId, setContractorId] = useState(null)
   const [docs, setDocs] = useState({ insurance_doc_url: null, license_doc_url: null })
   const [docUploading, setDocUploading] = useState(null)
@@ -616,32 +631,44 @@ export default function ContractorDashboard() {
   useEffect(() => { loadZipData().then(() => setZipReady(true)) }, [])
 
   useEffect(() => {
-    const email = user?.primaryEmailAddress?.emailAddress
-    if (!email) return
+    const targetEmail = isImpersonating ? impersonating.email : user?.primaryEmailAddress?.emailAddress
+    if (!targetEmail) return
     supabase
       .from('contractors')
-      .select('id, insurance_doc_url, license_doc_url')
-      .eq('contact_email', email)
+      .select('*')
+      .eq('contact_email', targetEmail)
       .single()
       .then(({ data }) => {
-        if (data) {
-          setContractorId(data.id)
-          setDocs({ insurance_doc_url: data.insurance_doc_url, license_doc_url: data.license_doc_url })
+        if (!data) {
+          if (!isImpersonating) navigate('/contractor/checkout')
+          return
         }
+        setContractorId(data.id)
+        setContractorStatus(data.status)
+        setDocs({ insurance_doc_url: data.insurance_doc_url, license_doc_url: data.license_doc_url })
+        setProfile(p => ({
+          ...p,
+          name: data.name || p.name,
+          trade: data.trade || p.trade,
+          trades: data.trades?.length ? data.trades : [data.trade].filter(Boolean),
+          bio: data.bio || p.bio,
+        }))
       })
-  }, [user])
+  }, [user, isImpersonating])
 
   const handleOnboardingComplete = async (data) => {
+    const primaryTrade = data.trades[0] || ''
     await supabase.from('contractors').insert({
       name: data.title,
-      trade: data.trade,
+      trade: primaryTrade,
+      trades: data.trades,
       bio: data.description,
       service_area: JSON.stringify(data.serviceArea),
       contact_name: user?.fullName || user?.firstName || '',
       contact_email: user?.primaryEmailAddress?.emailAddress || '',
       status: 'pending',
     })
-    setProfile(p => ({ ...p, name: data.title, trade: data.trade, bio: data.description, serviceArea: data.serviceArea }))
+    setProfile(p => ({ ...p, name: data.title, trade: primaryTrade, trades: data.trades, bio: data.description, serviceArea: data.serviceArea }))
     setShowOnboarding(false)
   }
 
@@ -686,6 +713,57 @@ export default function ContractorDashboard() {
     return <Onboarding onComplete={handleOnboardingComplete} />
   }
 
+  if (contractorStatus === 'pending') {
+    return (
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between' }}>
+          <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
+          <button onClick={() => signOut().then(() => navigate('/contractor/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
+        </nav>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ textAlign: 'center', maxWidth: 480 }}>
+            <div style={{ fontSize: 48, marginBottom: 20 }}>⏳</div>
+            <div style={{ fontFamily: C.display, fontSize: 32, color: S.offwhite, marginBottom: 12 }}>Application received.</div>
+            <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.7, marginBottom: 32 }}>
+              Your application for <strong style={{ color: S.offwhite }}>{profile.name}</strong> is under review. We verify every partner before going live. You'll hear back within 1–2 business days.
+            </p>
+            <div style={{ background: S.card, border: `1px solid ${S.amber}44`, borderRadius: 12, padding: '20px 24px', textAlign: 'left' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: S.amber, marginBottom: 8 }}>What happens next</div>
+              {['We verify your license and insurance', 'Our team reviews your application', 'You\'ll receive an email when approved', 'Start receiving pre-qualified leads immediately'].map((step, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: S.amber, background: S.amber + '22', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
+                  <span style={{ fontSize: 13, color: S.muted }}>{step}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: 13, color: S.muted, marginTop: 20 }}>Questions? <a href="mailto:partners@subs.app" style={{ color: S.green, textDecoration: 'none' }}>partners@subs.app</a></p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (contractorStatus === 'rejected') {
+    return (
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between' }}>
+          <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
+          <button onClick={() => signOut().then(() => navigate('/contractor/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
+        </nav>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ textAlign: 'center', maxWidth: 420 }}>
+            <div style={{ fontSize: 48, marginBottom: 20 }}>❌</div>
+            <div style={{ fontFamily: C.display, fontSize: 32, color: S.offwhite, marginBottom: 12 }}>Application not approved.</div>
+            <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.7, marginBottom: 24 }}>
+              Unfortunately we weren't able to approve your application at this time. Contact us if you believe this is an error or would like more information.
+            </p>
+            <a href="mailto:partners@subs.app" style={{ color: S.green, textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>partners@subs.app</a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
@@ -698,6 +776,13 @@ export default function ContractorDashboard() {
         </div>
       </nav>
 
+      {isImpersonating && (
+        <ImpersonationBanner
+          name={impersonating.name}
+          role="contractor"
+          onExit={() => { localStorage.removeItem('subs_impersonating'); navigate('/admin/dashboard') }}
+        />
+      )}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ marginBottom: 8 }}>
           <div style={{ fontFamily: C.display, fontSize: 26, color: S.offwhite }}>Good morning, {profile.name} 👋</div>
@@ -821,9 +906,18 @@ export default function ContractorDashboard() {
               ))}
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Trade</label>
-              <select value={profile.trade} onChange={e => setProfile(p => ({ ...p, trade: e.target.value }))} style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}>
-                {TRADES_LIST.map(t => <option key={t} value={t}>{t}</option>)}
+              <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Trades</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                {(profile.trades?.length ? profile.trades : [profile.trade]).filter(Boolean).map(t => (
+                  <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: S.green + '22', border: `1px solid ${S.green}44`, color: S.green, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 100 }}>
+                    {t}
+                    <button onClick={() => setProfile(p => ({ ...p, trades: (p.trades || [p.trade]).filter(x => x !== t), trade: (p.trades || [p.trade]).filter(x => x !== t)[0] || '' }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: S.green, fontSize: 14, lineHeight: 1, padding: 0, marginLeft: 2 }}>×</button>
+                  </span>
+                ))}
+              </div>
+              <select value="" onChange={e => { if (e.target.value) setProfile(p => ({ ...p, trades: [...(p.trades || [p.trade].filter(Boolean)), e.target.value], trade: p.trade || e.target.value })) }} style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.muted, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}>
+                <option value="">+ Add another trade</option>
+                {TRADES_LIST.filter(t => !(profile.trades?.length ? profile.trades : [profile.trade]).includes(t)).map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div style={{ marginBottom: 24 }}>

@@ -37,6 +37,13 @@ export default function ProtectedRoute({ children, role }) {
   }
 
   const userRole = user?.publicMetadata?.role
+
+  // Allow admin to navigate into member/contractor dashboards when impersonating
+  const impersonating = (() => { try { return JSON.parse(localStorage.getItem('subs_impersonating') || 'null') } catch { return null } })()
+  if (role && userRole === 'admin' && impersonating?.role === role) {
+    return children
+  }
+
   if (role && userRole && userRole !== role) {
     return <Navigate to={DASHBOARD_PATHS[userRole] || '/dashboard'} replace />
   }
