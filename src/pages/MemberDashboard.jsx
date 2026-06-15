@@ -122,7 +122,7 @@ export default function MemberDashboard() {
 
       // Upsert member via service role (bypasses RLS, preserves Stripe/tier fields on update)
       const { data: upsertData } = await supabase.functions.invoke('upsert-member', {
-        body: { clerk_user_id: user.id, email, name, phone },
+        body: { clerk_user_id: user.id, email, name, ...(phone ? { phone } : {}) },
       })
       let memberRow = upsertData?.member
 
@@ -275,16 +275,26 @@ export default function MemberDashboard() {
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
+      <style>{`
+        .md-nav-meta { display: flex; align-items: center; gap: 8px; }
+        .md-nav-email, .md-nav-tier { display: inline; }
+        @media (max-width: 600px) {
+          .md-nav-email, .md-nav-tier { display: none; }
+          .dashboard-grid { grid-template-columns: 1fr !important; }
+          .form-grid-2 { grid-template-columns: 1fr !important; }
+          .tabs-bar button { font-size: 11px !important; padding: 9px 4px !important; }
+        }
+      `}</style>
       {/* Top nav */}
-      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
+      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 16px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
         <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <a href="tel:18884543019" style={{ fontSize: 12, fontWeight: 600, color: S.green, textDecoration: 'none' }}>1-888-454-3019</a>
-          <span style={{ fontSize: 12, color: S.muted }}>{displayEmail}</span>
+        <div className="md-nav-meta">
+          <a href="tel:18884543019" className="md-nav-email" style={{ fontSize: 12, fontWeight: 600, color: S.green, textDecoration: 'none' }}>1-888-454-3019</a>
+          <span className="md-nav-email" style={{ fontSize: 12, color: S.muted }}>{displayEmail}</span>
           {member?.tier && (
-            <span style={{ fontSize: 11, fontWeight: 700, color: TIER_COLORS[member.tier] || S.blue, background: (TIER_COLORS[member.tier] || S.blue) + '22', padding: '3px 10px', borderRadius: 100 }}>{member.tier}</span>
+            <span className="md-nav-tier" style={{ fontSize: 11, fontWeight: 700, color: TIER_COLORS[member.tier] || S.blue, background: (TIER_COLORS[member.tier] || S.blue) + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>{member.tier}</span>
           )}
-          <button onClick={() => signOut().then(() => navigate('/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
+          <button onClick={() => signOut().then(() => navigate('/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer', whiteSpace: 'nowrap' }}>Sign out</button>
         </div>
       </nav>
 
@@ -295,7 +305,7 @@ export default function MemberDashboard() {
           onExit={() => { localStorage.removeItem('subs_impersonating'); navigate('/admin/dashboard') }}
         />
       )}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
         <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -328,7 +338,7 @@ export default function MemberDashboard() {
             {/* Tabs */}
             <div className="tabs-bar" style={{ display: 'flex', gap: 2, background: S.surface, borderRadius: 10, padding: 4, border: `1px solid ${S.border}`, marginBottom: 24 }}>
               {tabs.map(([id, label]) => (
-                <button key={id} onClick={() => setTab(id)} style={{ flex: 1, background: tab === id ? S.card : 'transparent', border: tab === id ? `1px solid ${S.border}` : '1px solid transparent', borderRadius: 8, padding: '10px 0', fontSize: 13, fontWeight: 600, color: tab === id ? S.offwhite : S.muted, cursor: 'pointer' }}>
+                <button key={id} onClick={() => setTab(id)} style={{ flex: 1, background: tab === id ? S.card : 'transparent', border: tab === id ? `1px solid ${S.border}` : '1px solid transparent', borderRadius: 8, padding: '10px 2px', fontSize: 13, fontWeight: 600, color: tab === id ? S.offwhite : S.muted, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   {label}
                 </button>
               ))}
