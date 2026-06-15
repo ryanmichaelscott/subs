@@ -5,7 +5,15 @@ import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
 import ImpersonationBanner from '../components/ImpersonationBanner'
 
-const TRADES = ['HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors', 'Concrete Work', 'Interior Painting', 'Exterior Painting', 'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Handyman', 'Pool Service', 'Flooring', 'Fencing', 'Decks & Patios', 'House Cleaning']
+const TRADES = [
+  'HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors',
+  'Concrete Work', 'Driveway Paving', 'Interior Painting', 'Exterior Painting',
+  'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Mold Detection',
+  'Water Filtration', 'Handyman', 'Pool Service', 'Fireplace & Chimney',
+  'Bathroom Remodel', 'Kitchen Remodel', 'Siding & Stucco', 'Smart Home / AV',
+  'Additions & ADUs', 'Flooring', 'Insulation', 'Waterproofing', 'Fencing',
+  'Decks & Patios', 'Framing', 'House Cleaning', 'Gutters', 'Carpet Cleaning',
+]
 
 const US_STATES = [
   ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
@@ -487,7 +495,27 @@ export default function MemberDashboard() {
                         <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Trade / Service</label>
                         <select value={jobForm.trade} onChange={e => setJobForm(f => ({ ...f, trade: e.target.value }))} style={inp}>
                           <option value="">Select a trade...</option>
-                          {TRADES.map(t => <option key={t} value={t}>{t}</option>)}
+                          {(() => {
+                            const covered = new Set(
+                              contractors.flatMap(c => c.trades?.length ? c.trades : [c.trade].filter(Boolean))
+                            )
+                            const available = TRADES.filter(t => covered.has(t))
+                            const other = TRADES.filter(t => !covered.has(t))
+                            return (
+                              <>
+                                {available.length > 0 && (
+                                  <optgroup label="Available now">
+                                    {available.map(t => <option key={t} value={t}>{t}</option>)}
+                                  </optgroup>
+                                )}
+                                {other.length > 0 && (
+                                  <optgroup label="All trades">
+                                    {other.map(t => <option key={t} value={t}>{t}</option>)}
+                                  </optgroup>
+                                )}
+                              </>
+                            )
+                          })()}
                         </select>
                       </div>
                       <div>
