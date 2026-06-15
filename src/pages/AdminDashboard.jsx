@@ -42,8 +42,8 @@ export default function AdminDashboard() {
     supabase.from('contractors').select('*').order('submitted_at', { ascending: false })
       .then(({ data }) => setContractors(data || []))
 
-    supabase.from('members').select('*').order('id', { ascending: false })
-      .then(({ data }) => setMembers(data || []))
+    supabase.functions.invoke('admin-list-members')
+      .then(({ data }) => setMembers(data?.members || []))
 
     // Build activity feed from lead_notifications + job_requests
     Promise.all([
