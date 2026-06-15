@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom'
-import { SignIn } from '@clerk/clerk-react'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { SignIn, useAuth } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 
 const appearance = {
@@ -66,6 +67,24 @@ const appearance = {
 }
 
 export default function ContractorLogin() {
+  const { isSignedIn, isLoaded } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      navigate('/contractor/dashboard', { replace: true })
+    }
+  }, [isLoaded, isSignedIn])
+
+  if (!isLoaded || isSignedIn) {
+    return (
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        <div style={{ width: 32, height: 32, border: `3px solid ${S.border}`, borderTopColor: S.green, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    )
+  }
+
   return (
     <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', width: '100%' }}>

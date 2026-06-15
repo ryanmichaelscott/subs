@@ -1,3 +1,4 @@
+import { Component } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Marketing from './pages/Marketing'
 import MemberLogin from './pages/MemberLogin'
@@ -11,6 +12,33 @@ import ContractorDashboard from './pages/ContractorDashboard'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
+
+class DashboardErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ background: '#0C0F0A', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, padding: 24 }}>
+          <div style={{ fontSize: 32 }}>⚠️</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#F0EEE8' }}>Something went wrong</div>
+          <div style={{ fontSize: 13, color: '#8A9088', maxWidth: 400, textAlign: 'center', lineHeight: 1.6 }}>
+            {this.state.error.message || 'An unexpected error occurred. Please refresh the page or contact support.'}
+          </div>
+          <button onClick={() => window.location.reload()} style={{ marginTop: 8, background: '#5DFF8A', border: 'none', color: '#0C0F0A', fontSize: 14, fontWeight: 700, padding: '10px 20px', borderRadius: 9, cursor: 'pointer' }}>
+            Refresh page
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 export default function App() {
   return (
@@ -31,10 +59,14 @@ export default function App() {
         <Route path="/contractor/payment-success" element={<ContractorPaymentSuccess />} />
         <Route path="/contractor/apply" element={<ContractorApply />} />
         <Route path="/contractor/dashboard" element={
-          <ProtectedRoute role="contractor"><ContractorDashboard /></ProtectedRoute>
+          <DashboardErrorBoundary>
+            <ProtectedRoute role="contractor"><ContractorDashboard /></ProtectedRoute>
+          </DashboardErrorBoundary>
         } />
         <Route path="/contractor/*" element={
-          <ProtectedRoute role="contractor"><ContractorDashboard /></ProtectedRoute>
+          <DashboardErrorBoundary>
+            <ProtectedRoute role="contractor"><ContractorDashboard /></ProtectedRoute>
+          </DashboardErrorBoundary>
         } />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={
