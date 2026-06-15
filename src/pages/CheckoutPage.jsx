@@ -98,8 +98,14 @@ export default function CheckoutPage() {
     if (data?.url) {
       window.location.href = data.url
     } else {
-      console.error('Checkout error:', fnError)
-      setError('Could not start checkout. Please try again.')
+      let msg = 'Could not start checkout. Please try again.'
+      if (fnError?.context) {
+        try { const b = await fnError.context.json(); msg = b.error || msg } catch {}
+      } else if (fnError?.message) {
+        msg = fnError.message
+      }
+      console.error('Checkout error:', fnError, data)
+      setError(msg)
       setLoadingId(null)
     }
   }
