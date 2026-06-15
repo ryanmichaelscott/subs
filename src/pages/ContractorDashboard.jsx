@@ -600,6 +600,7 @@ export default function ContractorDashboard() {
   })
   const [zipReady, setZipReady] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
   const [contractorStatus, setContractorStatus] = useState(null)
   const [contractorId, setContractorId] = useState(null)
   const [docs, setDocs] = useState({ insurance_doc_url: null, license_doc_url: null })
@@ -619,6 +620,9 @@ export default function ContractorDashboard() {
       setProfile(p => ({
         ...p,
         name: data.name || p.name,
+        contact: data.contact_name || p.contact,
+        email: data.contact_email || p.email,
+        phone: data.phone || p.phone,
         trade: data.trade || p.trade,
         trades: data.trades?.length ? data.trades : [data.trade].filter(Boolean),
         bio: data.bio || p.bio,
@@ -649,6 +653,9 @@ export default function ContractorDashboard() {
         setProfile(p => ({
           ...p,
           name: data.name || p.name,
+          contact: data.contact_name || p.contact,
+          email: data.contact_email || p.email,
+          phone: data.phone || p.phone,
           trade: data.trade || p.trade,
           trades: data.trades?.length ? data.trades : [data.trade].filter(Boolean),
           bio: data.bio || p.bio,
@@ -983,7 +990,13 @@ export default function ContractorDashboard() {
               {[['Company name', 'name'], ['Primary contact', 'contact'], ['Email', 'email'], ['Phone', 'phone']].map(([label, key]) => (
                 <div key={key}>
                   <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>{label}</label>
-                  <input value={profile[key]} onChange={e => setProfile(p => ({ ...p, [key]: e.target.value }))} style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+                  <input
+                    value={profile[key]}
+                    onChange={e => setProfile(p => ({ ...p, [key]: e.target.value }))}
+                    disabled={key === 'email'}
+                    style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: key === 'email' ? S.muted : S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box', opacity: key === 'email' ? 0.6 : 1, cursor: key === 'email' ? 'not-allowed' : 'text' }}
+                  />
+                  {key === 'email' && <div style={{ fontSize: 11, color: S.muted, marginTop: 4 }}>Email is tied to your login — contact support to change.</div>}
                 </div>
               ))}
             </div>
@@ -1051,8 +1064,33 @@ export default function ContractorDashboard() {
                 </div>
               </div>
             )}
-            <button onClick={() => { setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000) }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '12px 24px', borderRadius: 10, cursor: 'pointer' }}>
-              Save Profile
+            <button
+              disabled={profileSaving || !contractorId || isImpersonating}
+              onClick={async () => {
+                if (!contractorId || isImpersonating) return
+                setProfileSaving(true)
+                const primaryTrade = profile.trades?.[0] || profile.trade || ''
+                const allTrades = profile.trades?.length ? profile.trades : [primaryTrade].filter(Boolean)
+                const { error } = await supabase
+                  .from('contractors')
+                  .update({
+                    name: profile.name,
+                    contact_name: profile.contact,
+                    phone: profile.phone,
+                    trade: primaryTrade,
+                    trades: allTrades,
+                    bio: profile.bio,
+                  })
+                  .eq('id', contractorId)
+                setProfileSaving(false)
+                if (!error) {
+                  setProfileSaved(true)
+                  setTimeout(() => setProfileSaved(false), 3000)
+                }
+              }}
+              style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '12px 24px', borderRadius: 10, cursor: profileSaving ? 'not-allowed' : 'pointer', opacity: profileSaving ? 0.7 : 1 }}
+            >
+              {profileSaving ? 'Saving…' : 'Save Profile'}
             </button>
           </Card>
         )}
