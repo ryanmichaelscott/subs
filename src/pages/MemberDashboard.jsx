@@ -92,6 +92,7 @@ export default function MemberDashboard() {
         .eq('clerk_user_id', user.id)
         .single()
 
+      let memberRow = existing
       if (existing) {
         // Update profile fields only — preserve tier/status set by Stripe webhook
         await supabase
@@ -110,7 +111,7 @@ export default function MemberDashboard() {
         })
       } else {
         // New member — insert with defaults
-        const { data } = await supabase
+        const { data: inserted } = await supabase
           .from('members')
           .insert({
             clerk_user_id: user.id,
@@ -122,8 +123,9 @@ export default function MemberDashboard() {
           })
           .select()
           .single()
-        if (data) {
-          setMember(data)
+        if (inserted) {
+          memberRow = inserted
+          setMember(inserted)
           // Send welcome email for fresh signups
           const createdAt = user.createdAt ? new Date(user.createdAt).getTime() : 0
           const isNewUser = Date.now() - createdAt < 5 * 60 * 1000
@@ -150,7 +152,7 @@ export default function MemberDashboard() {
             clerk_user_id: user.id,
             email: user.primaryEmailAddress?.emailAddress,
             success_url: `${window.location.origin}/dashboard`,
-            cancel_url: `${window.location.origin}/signup`,
+            cancel_url: `${window.location.origin}/checkout`,
           },
         })
         if (data?.url) {
@@ -159,6 +161,12 @@ export default function MemberDashboard() {
           setCheckoutLoading(false)
           console.error('Checkout session error:', error)
         }
+        return
+      }
+
+      // Subscription gate: redirect to /checkout if no active Stripe subscription
+      if (!memberRow?.stripe_subscription_id) {
+        navigate('/checkout')
         return
       }
 

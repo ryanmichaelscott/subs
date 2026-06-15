@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Marketing from './pages/Marketing'
 import MemberLogin from './pages/MemberLogin'
+import CheckoutPage from './pages/CheckoutPage'
 import MemberDashboard from './pages/MemberDashboard'
 import ContractorLogin from './pages/ContractorLogin'
 import ContractorDashboard from './pages/ContractorDashboard'
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/" element={<Marketing />} />
         <Route path="/signup" element={<Marketing />} />
         <Route path="/login" element={<MemberLogin />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/dashboard" element={
           <ProtectedRoute role="member"><MemberDashboard /></ProtectedRoute>
         } />
