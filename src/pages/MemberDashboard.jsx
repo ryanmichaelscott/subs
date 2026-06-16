@@ -34,6 +34,7 @@ const STATUS_CONFIG = {
   accepted:  { label: 'Contractor assigned',       color: S.blue },
   Scheduled: { label: 'Scheduled',                 color: S.blue },
   Complete:  { label: 'Completed',                 color: S.green },
+  completed: { label: 'Completed',                 color: S.green },
   Cancelled: { label: 'Cancelled',                 color: '#FF5A5A' },
 }
 
@@ -107,6 +108,9 @@ export default function MemberDashboard() {
   const [profileSaved, setProfileSaved] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
   const [accountError, setAccountError] = useState(null)
+  const [reviewingJobId, setReviewingJobId] = useState(null)
+  const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' })
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
 
   const PLAN_PRICE_IDS = {
     member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
@@ -271,7 +275,25 @@ export default function MemberDashboard() {
       (!zipFilter || (c.service_area || '').toLowerCase().includes(zipFilter.toLowerCase()))
   })
 
-  const jobsDone = jobRequests.filter(j => ['Complete', 'Scheduled', 'accepted'].includes(j.status)).length
+  const handleSubmitReview = async (job) => {
+    if (!reviewForm.rating) return
+    setReviewSubmitting(true)
+    await supabase.functions.invoke('submit-review', {
+      body: {
+        job_request_id: job.id,
+        contractor_id: job.accepted_contractor_id || job.contractor_id,
+        clerk_user_id: user.id,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment || null,
+      },
+    })
+    setJobRequests(prev => prev.map(j => j.id === job.id ? { ...j, my_review: { rating: reviewForm.rating, comment: reviewForm.comment } } : j))
+    setReviewingJobId(null)
+    setReviewForm({ rating: 0, comment: '' })
+    setReviewSubmitting(false)
+  }
+
+  const jobsDone = jobRequests.filter(j => ['Complete', 'Scheduled', 'accepted', 'completed'].includes(j.status)).length
   const tradesUsed = new Set(jobRequests.map(j => j.trade).filter(Boolean)).size
 
   const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }
@@ -614,6 +636,56 @@ export default function MemberDashboard() {
                       )}
                       {isAssigned && !c && (
                         <div style={{ marginTop: 12, fontSize: 12, color: S.muted }}>Contractor details will appear here once confirmed.</div>
+                      )}
+                      {job.status === 'completed' && (
+                        <div style={{ marginTop: 12 }}>
+                          {job.my_review ? (
+                            <div style={{ padding: '10px 14px', background: S.amber + '10', border: `1px solid ${S.amber}33`, borderRadius: 8 }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: S.amber, marginBottom: 4 }}>YOUR REVIEW</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: job.my_review.comment ? 4 : 0 }}>
+                                <span>{'⭐'.repeat(job.my_review.rating)}</span>
+                                <span style={{ fontSize: 12, color: S.muted }}>{job.my_review.rating}/5</span>
+                              </div>
+                              {job.my_review.comment && <div style={{ fontSize: 13, color: S.offwhite }}>{job.my_review.comment}</div>}
+                            </div>
+                          ) : reviewingJobId === job.id ? (
+                            <div style={{ padding: '14px', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10 }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: S.offwhite, marginBottom: 10 }}>Rate your experience</div>
+                              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                                {[1,2,3,4,5].map(n => (
+                                  <button key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))}
+                                    style={{ fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', opacity: reviewForm.rating >= n ? 1 : 0.3, padding: 0 }}>
+                                    ⭐
+                                  </button>
+                                ))}
+                              </div>
+                              <textarea
+                                value={reviewForm.comment}
+                                onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))}
+                                placeholder="Optional — what went well?"
+                                rows={2}
+                                style={{ width: '100%', background: S.card, border: `1px solid ${S.border}`, color: S.offwhite, borderRadius: 8, padding: '8px 10px', fontSize: 13, resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                              />
+                              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                                <button
+                                  onClick={() => handleSubmitReview(job)}
+                                  disabled={!reviewForm.rating || reviewSubmitting}
+                                  style={{ flex: 1, background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '9px 0', borderRadius: 8, cursor: 'pointer', opacity: !reviewForm.rating ? 0.5 : 1 }}>
+                                  {reviewSubmitting ? 'Submitting…' : 'Submit Review'}
+                                </button>
+                                <button onClick={() => setReviewingJobId(null)}
+                                  style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 13, fontWeight: 600, padding: '9px 16px', borderRadius: 8, cursor: 'pointer' }}>
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button onClick={() => { setReviewingJobId(job.id); setReviewForm({ rating: 0, comment: '' }) }}
+                              style={{ width: '100%', background: 'transparent', border: `1px solid ${S.amber}55`, color: S.amber, fontSize: 13, fontWeight: 600, padding: '9px 0', borderRadius: 8, cursor: 'pointer', marginTop: 2 }}>
+                              ⭐ Leave a Review
+                            </button>
+                          )}
+                        </div>
                       )}
                     </Card>
                   )

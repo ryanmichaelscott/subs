@@ -182,3 +182,17 @@ create index if not exists waitlist_created_at_idx on waitlist (created_at desc)
 -- alter table waitlist disable row level security;
 -- Option B: add a permissive read policy if you prefer RLS enabled
 -- create policy "admin_read_waitlist" on waitlist for select using (true);
+
+-- Reviews: member ratings of completed jobs
+-- Run this in the Supabase SQL Editor: https://supabase.com/dashboard/project/ypgpvrzgujjstkgqqsxq/sql
+create table if not exists reviews (
+  id bigserial primary key,
+  job_request_id bigint not null references job_requests(id) on delete cascade,
+  contractor_id uuid not null references contractors(id) on delete cascade,
+  clerk_user_id text not null,
+  rating smallint not null check (rating between 1 and 5),
+  comment text,
+  created_at timestamptz not null default now(),
+  unique (job_request_id, clerk_user_id)
+);
+create index if not exists reviews_contractor_id_idx on reviews (contractor_id);

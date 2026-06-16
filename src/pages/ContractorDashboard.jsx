@@ -622,6 +622,7 @@ export default function ContractorDashboard() {
   const [showOnboarding, setShowOnboarding] = useState(location.state?.firstTime ?? false)
   const [tab, setTab] = useState('leads')
   const [leads, setLeads] = useState(INITIAL_LEADS)
+  const [completingId, setCompletingId] = useState(null)
   const [profile, setProfile] = useState({
     name: '',
     trade: '',
@@ -757,6 +758,17 @@ export default function ContractorDashboard() {
     const interval = setInterval(() => fetchLeads(contractorId), 30000)
     return () => clearInterval(interval)
   }, [contractorId, isActive])
+
+  const handleComplete = async (lead) => {
+    setCompletingId(lead.id)
+    const { data, error } = await supabase.functions.invoke('complete-job', {
+      body: { lead_notification_id: lead.id, job_request_id: lead.job_request_id, contractor_id: lead.contractor_id },
+    })
+    if (!error && data?.success) {
+      setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, notification_status: 'completed' } : l))
+    }
+    setCompletingId(null)
+  }
 
   const handleLead = async (lead, action) => {
     setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, notification_status: action } : l))
@@ -963,7 +975,9 @@ export default function ContractorDashboard() {
 
         {tab === 'leads' && isActive && (() => {
           const pending = leads.filter(l => l.notification_status === 'pending')
-          const responded = leads.filter(l => l.notification_status !== 'pending')
+          const active = leads.filter(l => l.notification_status === 'accepted')
+          const completed = leads.filter(l => l.notification_status === 'completed')
+          const other = leads.filter(l => !['pending', 'accepted', 'completed'].includes(l.notification_status))
           return (
             <div>
               {pending.length > 0 && (
@@ -1000,10 +1014,95 @@ export default function ContractorDashboard() {
                   </div>
                 </div>
               )}
-              {responded.length > 0 && (
+              {active.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Responded</div>
-                  {responded.map(lead => (
+                  <div style={{ fontSize: 11, fontWeight: 700, color: S.green, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>✓ Active Jobs</div>
+                  {active.map(lead => (
+                    <Card key={lead.id} style={{ padding: '16px 20px', marginBottom: 8, border: `1px solid ${S.green}33` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{lead.service}</div>
+                          <div style={{ fontSize: 12, color: S.muted }}>Zip {lead.zip}{lead.state ? ` · ${lead.state}` : ''}</div>
+                          {lead.preferred_date && (
+                            <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>
+                              {new Date(lead.preferred_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
+                          )}
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 100, flexShrink: 0, background: S.green + '22', color: S.green }}>
+                          ✓ Accepted
+                        </span>
+                      </div>
+                      <div style={{ marginTop: 12, padding: '14px 16px', background: S.green + '15', border: `1px solid ${S.green}44`, borderRadius: 10 }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: S.green, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Member Contact</div>
+                        {lead.member && lead.member !== 'SUBS Member' && (
+                          <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite, marginBottom: 8 }}>{lead.member}</div>
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {lead.member_phone ? (
+                            <a href={`tel:${lead.member_phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.green, textDecoration: 'none', fontWeight: 600 }}>
+                              <span style={{ fontSize: 12 }}>📞</span> {lead.member_phone}
+                            </a>
+                          ) : null}
+                          {lead.member_email ? (
+                            <a href={`mailto:${lead.member_email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.blue, textDecoration: 'none' }}>
+                              <span style={{ fontSize: 12 }}>✉️</span> {lead.member_email}
+                            </a>
+                          ) : null}
+                          {!lead.member_phone && !lead.member_email && (
+                            <div style={{ fontSize: 13, color: S.muted }}>Contact details pending — check back shortly.</div>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleComplete(lead)}
+                        disabled={completingId === lead.id}
+                        style={{ marginTop: 12, width: '100%', background: 'transparent', border: `1px solid ${S.green}66`, color: S.green, fontSize: 13, fontWeight: 700, padding: '10px 0', borderRadius: 9, cursor: 'pointer', opacity: completingId === lead.id ? 0.6 : 1 }}
+                      >
+                        {completingId === lead.id ? 'Marking complete…' : '✓ Mark Job Complete'}
+                      </button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+              {completed.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Completed Jobs</div>
+                  {completed.map(lead => (
+                    <Card key={lead.id} style={{ padding: '16px 20px', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{lead.service}</div>
+                          <div style={{ fontSize: 12, color: S.muted }}>
+                            Zip {lead.zip}{lead.state ? ` · ${lead.state}` : ''}
+                            {lead.member && lead.member !== 'SUBS Member' ? ` · ${lead.member}` : ''}
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 100, flexShrink: 0, background: '#2A2A2A', color: S.muted }}>
+                          Completed
+                        </span>
+                      </div>
+                      {lead.review ? (
+                        <div style={{ marginTop: 12, padding: '12px 14px', background: S.amber + '10', border: `1px solid ${S.amber}33`, borderRadius: 10 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: lead.review.comment ? 6 : 0 }}>
+                            <span style={{ fontSize: 16 }}>{'⭐'.repeat(lead.review.rating)}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: S.amber }}>{lead.review.rating}/5</span>
+                          </div>
+                          {lead.review.comment && (
+                            <div style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.5 }}>{lead.review.comment}</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: 10, fontSize: 12, color: S.muted }}>Awaiting member review</div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
+              {other.length > 0 && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Other</div>
+                  {other.map(lead => (
                     <Card key={lead.id} style={{ padding: '16px 20px', marginBottom: 8 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                         <div>
@@ -1011,40 +1110,17 @@ export default function ContractorDashboard() {
                           <div style={{ fontSize: 12, color: S.muted }}>Zip {lead.zip}</div>
                         </div>
                         <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 100, flexShrink: 0,
-                          background: lead.notification_status === 'accepted' ? S.green + '22' : lead.notification_status === 'expired' ? S.border : S.danger + '22',
-                          color: lead.notification_status === 'accepted' ? S.green : lead.notification_status === 'expired' ? S.muted : S.danger,
+                          background: lead.notification_status === 'expired' ? S.border : S.danger + '22',
+                          color: lead.notification_status === 'expired' ? S.muted : S.danger,
                         }}>
-                          {lead.notification_status === 'accepted' ? '✓ Accepted' : lead.notification_status === 'expired' ? 'Expired' : '✗ Declined'}
+                          {lead.notification_status === 'expired' ? 'Expired' : '✗ Declined'}
                         </span>
                       </div>
-                      {lead.notification_status === 'accepted' && (
-                        <div style={{ marginTop: 12, padding: '14px 16px', background: S.green + '15', border: `1px solid ${S.green}44`, borderRadius: 10 }}>
-                          <div style={{ fontSize: 10, fontWeight: 800, color: S.green, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Member Contact</div>
-                          {lead.member && lead.member !== 'SUBS Member' && (
-                            <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite, marginBottom: 8 }}>{lead.member}</div>
-                          )}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            {lead.member_phone ? (
-                              <a href={`tel:${lead.member_phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.green, textDecoration: 'none', fontWeight: 600 }}>
-                                <span style={{ fontSize: 12 }}>📞</span> {lead.member_phone}
-                              </a>
-                            ) : null}
-                            {lead.member_email ? (
-                              <a href={`mailto:${lead.member_email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.blue, textDecoration: 'none' }}>
-                                <span style={{ fontSize: 12 }}>✉️</span> {lead.member_email}
-                              </a>
-                            ) : null}
-                            {!lead.member_phone && !lead.member_email && (
-                              <div style={{ fontSize: 13, color: S.muted }}>Contact details pending — check back shortly.</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </Card>
                   ))}
                 </div>
               )}
-              {pending.length === 0 && responded.length === 0 && (
+              {pending.length === 0 && active.length === 0 && completed.length === 0 && other.length === 0 && (
                 <Card style={{ padding: '52px 24px', textAlign: 'center' }}>
                   <div style={{ fontSize: 40, marginBottom: 16 }}>📥</div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite, marginBottom: 8 }}>No leads yet</div>

@@ -117,6 +117,26 @@ serve(async (req) => {
       }
     }
 
+    // For completed leads, fetch reviews
+    const completedLeads = leads.filter(l => l.notification_status === 'completed')
+    if (completedLeads.length > 0) {
+      const jobIds = completedLeads.map(l => l.job_request_id).filter(Boolean)
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('job_request_id, rating, comment, created_at')
+        .in('job_request_id', jobIds)
+
+      if (reviews && reviews.length > 0) {
+        const reviewMap: Record<string, any> = {}
+        for (const r of reviews) reviewMap[r.job_request_id] = r
+        leads = leads.map(l =>
+          l.notification_status === 'completed' && l.job_request_id && reviewMap[l.job_request_id]
+            ? { ...l, review: reviewMap[l.job_request_id] }
+            : l
+        )
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, leads }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

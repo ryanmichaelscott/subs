@@ -48,11 +48,29 @@ serve(async (req) => {
       }
     }
 
+    // Fetch reviews for completed jobs
+    const completedJobIds = (jobs || [])
+      .filter((j: any) => j.status === 'completed')
+      .map((j: any) => j.id)
+
+    let reviewMap: Record<string, any> = {}
+    if (completedJobIds.length > 0) {
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('job_request_id, rating, comment, created_at')
+        .in('job_request_id', completedJobIds)
+        .eq('clerk_user_id', clerk_user_id)
+      if (reviews) {
+        for (const r of reviews) reviewMap[r.job_request_id] = r
+      }
+    }
+
     const enriched = (jobs || []).map((j: any) => {
       const cid = j.accepted_contractor_id || j.contractor_id
       return {
         ...j,
         contractor: cid ? contractorMap[cid] ?? null : null,
+        my_review: reviewMap[j.id] ?? null,
       }
     })
 
