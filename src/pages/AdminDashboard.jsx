@@ -37,6 +37,9 @@ export default function AdminDashboard() {
   const [expandedContractor, setExpandedContractor] = useState(null)
   const [adminDocUploading, setAdminDocUploading] = useState(null)
   const [adminDocError, setAdminDocError] = useState(null)
+  const [waitlistEntries, setWaitlistEntries] = useState([])
+  const [launchingMarket, setLaunchingMarket] = useState(null)
+  const [launchResult, setLaunchResult] = useState({})
 
   useEffect(() => {
     supabase.from('contractors').select('*').order('submitted_at', { ascending: false })
@@ -44,6 +47,9 @@ export default function AdminDashboard() {
 
     supabase.functions.invoke('admin-list-members')
       .then(({ data }) => setMembers(data?.members || []))
+
+    supabase.from('waitlist').select('*').order('created_at', { ascending: false })
+      .then(({ data }) => setWaitlistEntries(data || []))
 
     // Build activity feed from lead_notifications + job_requests
     Promise.all([
@@ -163,6 +169,23 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleLaunchMarket = async (state) => {
+    setLaunchingMarket(state)
+    try {
+      const { data, error } = await supabase.functions.invoke('launch-market', { body: { state } })
+      if (error || data?.error) {
+        setLaunchResult(r => ({ ...r, [state]: { error: error?.message || data?.error } }))
+        return
+      }
+      setLaunchResult(r => ({ ...r, [state]: { sent: data.sent, total: data.total } }))
+      setWaitlistEntries(es => es.map(e => e.state === state && !e.notified_at ? { ...e, notified_at: new Date().toISOString() } : e))
+    } catch (e) {
+      setLaunchResult(r => ({ ...r, [state]: { error: e.message } }))
+    } finally {
+      setLaunchingMarket(null)
+    }
+  }
+
   const handleImpersonate = (name, email, role, contractorData) => {
     localStorage.setItem('subs_impersonating', JSON.stringify({ name, email, role, contractorData: contractorData || null }))
     navigate(role === 'member' ? '/dashboard' : '/contractor/dashboard')
@@ -201,7 +224,7 @@ export default function AdminDashboard() {
   const churnCount = members.filter(m => m.status === 'Churned').length
   const churnRate = members.length ? ((churnCount / members.length) * 100).toFixed(1) : '0.0'
 
-  const tabs = [['stats', '📊 Revenue Stats'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity']]
+  const tabs = [['stats', '📊 Revenue Stats'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist']]
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
@@ -230,6 +253,11 @@ export default function AdminDashboard() {
               {id === 'approvals' && contractors.filter(c => c.status === 'pending').length > 0 && (
                 <span style={{ position: 'absolute', top: 4, right: 8, background: S.amber, color: S.black, borderRadius: '50%', width: 16, height: 16, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {contractors.filter(c => c.status === 'pending').length}
+                </span>
+              )}
+              {id === 'waitlist' && waitlistEntries.filter(e => !e.notified_at).length > 0 && (
+                <span style={{ position: 'absolute', top: 4, right: 8, background: S.blue, color: S.black, borderRadius: '50%', width: 16, height: 16, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {waitlistEntries.filter(e => !e.notified_at).length}
                 </span>
               )}
             </button>
@@ -569,6 +597,100 @@ export default function AdminDashboard() {
             )}
           </div>
         )}
+
+        {/* Waitlist */}
+        {tab === 'waitlist' && (() => {
+          const STATE_NAMES = {
+            AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',
+            CT:'Connecticut',DE:'Delaware',DC:'DC',FL:'Florida',GA:'Georgia',HI:'Hawaii',
+            ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',
+            LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',
+            MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',
+            NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',
+            NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',
+            PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',
+            TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',
+            WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',
+          }
+          const grouped = waitlistEntries.reduce((acc, e) => {
+            const key = e.state || 'Unknown'
+            if (!acc[key]) acc[key] = []
+            acc[key].push(e)
+            return acc
+          }, {})
+          const sortedStates = Object.keys(grouped).sort((a, b) => grouped[b].length - grouped[a].length)
+
+          return (
+            <div>
+              {waitlistEntries.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '60px 0', color: S.muted, fontSize: 14 }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>📍</div>
+                  No waitlist entries yet. Members from unserved zip codes will appear here.
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {sortedStates.map(state => {
+                  const entries = grouped[state]
+                  const unnotified = entries.filter(e => !e.notified_at)
+                  const result = launchResult[state]
+                  const isLaunching = launchingMarket === state
+                  return (
+                    <Card key={state} style={{ padding: 0, overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', borderBottom: `1px solid ${S.border}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite }}>{STATE_NAMES[state] || state}</div>
+                            <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>
+                              {entries.length} total · <span style={{ color: unnotified.length > 0 ? S.amber : S.green }}>{unnotified.length} awaiting launch</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          {result && (
+                            <span style={{ fontSize: 12, color: result.error ? S.danger : S.green }}>
+                              {result.error ? `Error: ${result.error}` : `✓ ${result.sent}/${result.total} emailed`}
+                            </span>
+                          )}
+                          {unnotified.length > 0 && (
+                            <button
+                              onClick={() => handleLaunchMarket(state)}
+                              disabled={isLaunching}
+                              style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '8px 18px', borderRadius: 8, cursor: isLaunching ? 'not-allowed' : 'pointer', opacity: isLaunching ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: 6 }}
+                            >
+                              {isLaunching ? '…' : `🚀 Launch ${STATE_NAMES[state] || state}`}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ padding: '8px 0' }}>
+                        {entries.map((e, i) => (
+                          <div key={e.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 24px', borderBottom: i < entries.length - 1 ? `1px solid ${S.border}` : 'none' }}>
+                            <div>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>{e.name || '—'}</span>
+                              <span style={{ fontSize: 13, color: S.muted, marginLeft: 12 }}>{e.email}</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <span style={{ fontSize: 12, color: S.muted }}>zip {e.zip}</span>
+                              {e.notified_at ? (
+                                <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '3px 8px', borderRadius: 100 }}>
+                                  Notified {new Date(e.notified_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: 11, fontWeight: 700, color: S.amber, background: S.amber + '22', padding: '3px 8px', borderRadius: 100 }}>
+                                  Waiting
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Lead Activity */}
         {tab === 'activity' && (() => {

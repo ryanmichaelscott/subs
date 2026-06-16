@@ -300,6 +300,54 @@ function HowItWorks() {
   )
 }
 
+function ContractorQuality() {
+  const pillars = [
+    { icon: '🔍', title: 'Background Checked', desc: 'Every contractor passes a background check before their first job. No exceptions, no shortcuts.' },
+    { icon: '📋', title: 'Licensed & Insured', desc: "We verify every license and insurance certificate before approval. If they're not covered, they're not in the network." },
+    { icon: '⭐', title: 'Top-Rated Only', desc: 'We monitor ratings after every job. Partners who fall below 4.5 are removed. We keep only the best.' },
+    { icon: '💰', title: 'Member Pricing Guaranteed', desc: 'Every partner has agreed by contract to honor your member rate on every job. The discount is baked in — no negotiating.' },
+  ]
+  return (
+    <section style={{ background: S.black, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 12 }}>The SUBS Standard</div>
+          <h2 style={{ fontFamily: C.display, fontSize: 'clamp(32px, 5vw, 52px)', color: S.offwhite, fontWeight: 400, margin: '0 0 16px', lineHeight: 1.1 }}>
+            You're not rolling the dice.<br />You're getting the best.
+          </h2>
+          <p style={{ fontSize: 15, color: S.muted, maxWidth: 580, margin: '0 auto', lineHeight: 1.65 }}>
+            Every contractor in our network is vetted, licensed, insured, and background checked. We don't list anyone — we approve them.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 2, marginBottom: 28 }}>
+          {pillars.map((p, i) => (
+            <div key={i} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, padding: 28 }}>
+              <div style={{ fontSize: 28, marginBottom: 16 }}>{p.icon}</div>
+              <div style={{ fontFamily: C.display, fontSize: 20, color: S.offwhite, marginBottom: 10 }}>{p.title}</div>
+              <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6, margin: 0 }}>{p.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 12, padding: '28px 32px', display: 'flex', flexWrap: 'wrap', gap: 40, justifyContent: 'center', alignItems: 'center' }}>
+          {[
+            ['100%', 'License verified'],
+            ['100%', 'Insurance verified'],
+            ['100%', 'Background checked'],
+            ['4.8★', 'Avg. partner rating'],
+          ].map(([val, label]) => (
+            <div key={label} style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: C.display, fontSize: 30, color: S.green }}>{val}</div>
+              <div style={{ fontSize: 12, color: S.muted, marginTop: 4 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function Membership() {
   const { user } = useUser()
   const navigate = useNavigate()
@@ -740,6 +788,7 @@ export default function Marketing() {
       <Nav setSection={scrollTo} />
       <div id="section-home"><Hero /></div>
       <div id="section-how"><HowItWorks /></div>
+      <ContractorQuality />
       <div id="section-membership"><Membership /></div>
       <div id="section-network"><Network /></div>
       <Testimonials />

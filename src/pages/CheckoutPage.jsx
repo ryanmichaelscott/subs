@@ -59,6 +59,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState(null)
   const [preselected] = useState(() => localStorage.getItem('subs_pending_plan'))
   const [phone, setPhone] = useState('')
+  const [zip, setZip] = useState('')
 
   useEffect(() => {
     if (!isLoaded) return
@@ -76,6 +77,7 @@ export default function CheckoutPage() {
         return
       }
       if (data?.member?.phone) setPhone(data.member.phone)
+      if (data?.member?.zip) setZip(data.member.zip)
       setChecking(false)
     }
     check()
@@ -83,8 +85,24 @@ export default function CheckoutPage() {
 
   const handleSelect = async (tier) => {
     if (loadingId) return
+    const cleanZip = zip.replace(/\D/g, '').slice(0, 5)
+    if (!cleanZip || cleanZip.length < 5) {
+      setError('Please enter your zip code so we can confirm service availability in your area.')
+      return
+    }
     setError(null)
     setLoadingId(tier.id)
+
+    // Check if zip has ≥3 active contractors before sending to Stripe
+    const { data: coverageData } = await supabase.functions.invoke('check-zip-coverage', {
+      body: { zip: cleanZip },
+    })
+    if (!coverageData?.covered) {
+      navigate(`/waitlist?zip=${cleanZip}`)
+      setLoadingId(null)
+      return
+    }
+
     localStorage.removeItem('subs_pending_plan')
     if (phone.trim()) {
       await supabase.from('members').update({ phone: phone.trim() }).eq('clerk_user_id', user.id)
@@ -142,28 +160,54 @@ export default function CheckoutPage() {
           </p>
         </div>
 
-        <div style={{ width: '100%', maxWidth: 400, marginBottom: 36 }}>
-          <label style={{ display: 'block', fontSize: 13, color: S.muted, marginBottom: 6 }}>
-            Mobile number <span style={{ fontWeight: 400 }}>(for SMS job updates)</span>
-          </label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={e => setPhone(e.target.value)}
-            placeholder="(801) 555-0100"
-            style={{
-              width: '100%',
-              background: S.surface,
-              border: `1px solid ${S.border}`,
-              borderRadius: 10,
-              color: S.offwhite,
-              fontSize: 15,
-              padding: '11px 14px',
-              outline: 'none',
-              boxSizing: 'border-box',
-              fontFamily: C.body,
-            }}
-          />
+        <div style={{ width: '100%', maxWidth: 400, marginBottom: 36, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 13, color: S.muted, marginBottom: 6 }}>
+              Zip code <span style={{ fontWeight: 400 }}>(required — confirms service availability)</span>
+            </label>
+            <input
+              type="text"
+              value={zip}
+              onChange={e => { setZip(e.target.value.replace(/\D/g, '').slice(0, 5)); setError(null) }}
+              placeholder="84101"
+              maxLength={5}
+              style={{
+                width: '100%',
+                background: S.surface,
+                border: `1px solid ${S.border}`,
+                borderRadius: 10,
+                color: S.offwhite,
+                fontSize: 15,
+                padding: '11px 14px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                fontFamily: C.body,
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 13, color: S.muted, marginBottom: 6 }}>
+              Mobile number <span style={{ fontWeight: 400 }}>(for SMS job updates)</span>
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="(801) 555-0100"
+              style={{
+                width: '100%',
+                background: S.surface,
+                border: `1px solid ${S.border}`,
+                borderRadius: 10,
+                color: S.offwhite,
+                fontSize: 15,
+                padding: '11px 14px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                fontFamily: C.body,
+              }}
+            />
+          </div>
         </div>
 
         {error && (

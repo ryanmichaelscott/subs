@@ -161,3 +161,24 @@ create table if not exists sms_logs (
 
 create index if not exists sms_logs_message_sid_idx on sms_logs (message_sid);
 create index if not exists sms_logs_created_at_idx on sms_logs (created_at desc);
+
+-- Member waitlist for zip codes without sufficient contractor coverage (< 3 active contractors)
+-- Run this in the Supabase SQL Editor: https://supabase.com/dashboard/project/ypgpvrzgujjstkgqqsxq/sql
+create table if not exists waitlist (
+  id bigserial primary key,
+  name text,
+  email text not null,
+  zip text not null,
+  state text,
+  notified_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (email)
+);
+create index if not exists waitlist_state_idx on waitlist (state);
+create index if not exists waitlist_created_at_idx on waitlist (created_at desc);
+
+-- Allow admin dashboard to read waitlist directly (no RLS, or add permissive policy)
+-- Option A: disable RLS on waitlist (simplest for internal admin use)
+-- alter table waitlist disable row level security;
+-- Option B: add a permissive read policy if you prefer RLS enabled
+-- create policy "admin_read_waitlist" on waitlist for select using (true);

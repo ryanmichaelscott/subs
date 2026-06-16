@@ -10,7 +10,8 @@
       "Bash(curl -s http://localhost:5173/contractor/dashboard)",
       "Bash(curl -s http://localhost:5173/admin/dashboard)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(npx supabase *)"
     ]
   }
 }

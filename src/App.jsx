@@ -11,6 +11,7 @@ import ContractorApply from './pages/ContractorApply'
 import ContractorDashboard from './pages/ContractorDashboard'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
+import WaitlistPage from './pages/WaitlistPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 class DashboardErrorBoundary extends Component {
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/signup" element={<Marketing />} />
         <Route path="/login" element={<MemberLogin />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/waitlist" element={<WaitlistPage />} />
         <Route path="/dashboard" element={
           <ProtectedRoute role="member"><MemberDashboard /></ProtectedRoute>
         } />
