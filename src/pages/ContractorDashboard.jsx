@@ -649,7 +649,7 @@ export default function ContractorDashboard() {
   const [saRadius, setSaRadius] = useState('25')
 
   const isActive = contractorStatus === 'active'
-  const tabs = [['leads', '📥 Lead Inbox'], ['rates', '💲 Rate Card'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
+  const tabs = [['leads', '📥 Leads'], ['rates', '💲 Rates'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
 
   useEffect(() => { loadZipData().then(() => setZipReady(true)) }, [])
 
@@ -855,6 +855,8 @@ export default function ContractorDashboard() {
         .cd-nav-email, .cd-nav-name { display: inline; }
         @media (max-width: 600px) {
           .cd-nav-email, .cd-nav-name { display: none; }
+          .tabs-bar button { font-size: 11px !important; padding: 9px 3px !important; }
+          .cd-content { padding: 16px 12px !important; }
         }
       `}</style>
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 16px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
@@ -879,7 +881,7 @@ export default function ContractorDashboard() {
           onExit={() => { localStorage.removeItem('subs_impersonating'); navigate('/admin/dashboard') }}
         />
       )}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
+      <div className="cd-content" style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
 
         {contractorStatus === 'pending' && (
           <div style={{ background: S.amber + '15', border: `1px solid ${S.amber}44`, borderRadius: 10, padding: '14px 20px', marginBottom: 24, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
