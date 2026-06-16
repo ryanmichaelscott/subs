@@ -235,7 +235,7 @@ function Hero() {
 
           {/* CTAs */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Link to="/signup">
+            <Link to="/login?mode=signup">
               <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
                 Sign Up Today
               </button>
@@ -358,7 +358,7 @@ function Membership() {
     setJoinError(null)
     if (!user) {
       localStorage.setItem('subs_pending_plan', tier.id)
-      navigate(`/login?plan=${tier.id}`)
+      navigate(`/login?mode=signup&plan=${tier.id}`)
       return
     }
     setJoiningId(tier.id)
@@ -734,7 +734,7 @@ function BottomCTA() {
         <p style={{ fontSize: 15, color: '#A8C4A0', lineHeight: 1.7, marginBottom: 36 }}>
           One roof. One HVAC system. One plumbing job. At member discount rates, any single job saves more than a decade of membership fees.
         </p>
-        <Link to="/login">
+        <Link to="/login?mode=signup">
           <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 16, fontWeight: 700, padding: '16px 32px', borderRadius: 12, cursor: 'pointer' }}>
             See all plans →
           </button>
