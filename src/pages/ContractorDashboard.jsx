@@ -1017,22 +1017,28 @@ export default function ContractorDashboard() {
                           {lead.notification_status === 'accepted' ? '✓ Accepted' : lead.notification_status === 'expired' ? 'Expired' : '✗ Declined'}
                         </span>
                       </div>
-                      {lead.notification_status === 'accepted' && (lead.member_phone || lead.member_email || lead.member) && (
-                        <div style={{ marginTop: 12, padding: '12px 14px', background: S.green + '11', border: `1px solid ${S.green}33`, borderRadius: 8 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: S.green, letterSpacing: '0.08em', marginBottom: 8 }}>MEMBER CONTACT</div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite, marginBottom: 4 }}>{lead.member}</div>
-                          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                            {lead.member_phone && (
-                              <a href={`tel:${lead.member_phone}`} style={{ fontSize: 13, color: S.green, textDecoration: 'none', fontWeight: 600 }}>
-                                {lead.member_phone}
-                              </a>
-                            )}
-                            {lead.member_email && (
-                              <a href={`mailto:${lead.member_email}`} style={{ fontSize: 13, color: S.blue, textDecoration: 'none' }}>
-                                {lead.member_email}
-                              </a>
-                            )}
-                          </div>
+                      {lead.notification_status === 'accepted' && (
+                        <div style={{ marginTop: 12, padding: '14px 16px', background: S.green + '15', border: `1px solid ${S.green}44`, borderRadius: 10 }}>
+                          <div style={{ fontSize: 10, fontWeight: 800, color: S.green, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Member Contact</div>
+                          {lead.member && lead.member !== 'SUBS Member' && (
+                            <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite, marginBottom: 8 }}>{lead.member}</div>
+                          )}
+                          {(lead.member_phone || lead.member_email) ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {lead.member_phone && (
+                                <a href={`tel:${lead.member_phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.green, textDecoration: 'none', fontWeight: 600 }}>
+                                  <span style={{ fontSize: 12 }}>📞</span> {lead.member_phone}
+                                </a>
+                              )}
+                              {lead.member_email && (
+                                <a href={`mailto:${lead.member_email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.blue, textDecoration: 'none' }}>
+                                  <span style={{ fontSize: 12 }}>✉️</span> {lead.member_email}
+                                </a>
+                              )}
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: 13, color: S.muted }}>Contact info not on file — SUBS will coordinate scheduling.</div>
+                          )}
                         </div>
                       )}
                     </Card>

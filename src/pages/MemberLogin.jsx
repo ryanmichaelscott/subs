@@ -30,8 +30,8 @@ const appearance = {
       borderRadius: '10px',
     },
     otpCodeFieldInput: {
-      background: '#141814',
-      border: '1px solid #5A6358',
+      background: '#2E3828',
+      border: '1px solid #6A7A68',
       color: '#F0EEE8',
       borderRadius: '8px',
     },
