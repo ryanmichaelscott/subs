@@ -288,6 +288,13 @@ export default function MemberDashboard() {
       },
     })
     setJobRequests(prev => prev.map(j => j.id === job.id ? { ...j, my_review: { rating: reviewForm.rating, comment: reviewForm.comment } } : j))
+    // Refresh contractor list so updated rating/review count is visible in the directory
+    const { data: refreshed } = await supabase
+      .from('contractors')
+      .select('*, contractor_rates(*)')
+      .eq('status', 'active')
+      .order('rating', { ascending: false })
+    if (refreshed) setContractors(refreshed)
     setReviewingJobId(null)
     setReviewForm({ rating: 0, comment: '' })
     setReviewSubmitting(false)
@@ -405,7 +412,7 @@ export default function MemberDashboard() {
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           {c.discount_description && <div style={{ fontSize: 13, fontWeight: 700, color: S.green }}>{c.discount_description}</div>}
-                          <div style={{ fontSize: 12, color: S.muted }}>⭐ {c.rating ?? '—'} · {c.jobs_count ?? 0} jobs</div>
+                          <div style={{ fontSize: 12, color: S.muted }}>⭐ {c.rating > 0 ? c.rating : '—'} · {c.jobs_count ?? 0} {c.jobs_count === 1 ? 'review' : 'reviews'}</div>
                         </div>
                       </div>
                       {selectedContractor === c.id && (
@@ -428,7 +435,7 @@ export default function MemberDashboard() {
                               {c.jobs_count > 0 && (
                                 <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '8px 14px', textAlign: 'center', minWidth: 64 }}>
                                   <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite }}>{c.jobs_count}</div>
-                                  <div style={{ fontSize: 10, color: S.muted, marginTop: 2 }}>Jobs done</div>
+                                  <div style={{ fontSize: 10, color: S.muted, marginTop: 2 }}>{c.jobs_count === 1 ? 'Review' : 'Reviews'}</div>
                                 </div>
                               )}
                               {c.years_experience > 0 && (
