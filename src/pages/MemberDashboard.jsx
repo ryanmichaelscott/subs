@@ -344,7 +344,7 @@ export default function MemberDashboard() {
         <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <MemberCard name={displayName} member={member} />
+            <MemberCard name={member?.name || displayName} member={member} />
             <Card style={{ padding: 20 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Stats</div>
               {[[String(jobsDone), 'Jobs completed'], [String(tradesUsed), 'Trades used'], [String(jobRequests.length), 'Total requests']].map(([val, label]) => (

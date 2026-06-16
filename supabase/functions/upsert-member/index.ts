@@ -57,7 +57,7 @@ serve(async (req) => {
         phone: phone || null,
         zip: zip || null,
         tier: 'Member',
-        status: 'Active',
+        status: 'Trial',
       })
       .select()
       .single()
