@@ -607,7 +607,7 @@ export default function MemberDashboard() {
                 {jobRequests.map((job) => {
                   const sc = STATUS_CONFIG[job.status] || { label: job.status, color: S.muted }
                   const c = job.contractor
-                  const isAssigned = ['accepted', 'Scheduled', 'Complete'].includes(job.status)
+                  const isAssigned = ['accepted', 'Scheduled', 'Complete', 'completed'].includes(job.status)
                   return (
                     <Card key={job.id} style={{ padding: '18px 20px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
@@ -637,7 +637,7 @@ export default function MemberDashboard() {
                       {isAssigned && !c && (
                         <div style={{ marginTop: 12, fontSize: 12, color: S.muted }}>Contractor details will appear here once confirmed.</div>
                       )}
-                      {job.status === 'completed' && (
+                      {(job.status === 'completed' || job.status === 'Complete') && (
                         <div style={{ marginTop: 12 }}>
                           {job.my_review ? (
                             <div style={{ padding: '10px 14px', background: S.amber + '10', border: `1px solid ${S.amber}33`, borderRadius: 8 }}>
