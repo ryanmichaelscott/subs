@@ -1023,22 +1023,21 @@ export default function ContractorDashboard() {
                           {lead.member && lead.member !== 'SUBS Member' && (
                             <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite, marginBottom: 8 }}>{lead.member}</div>
                           )}
-                          {(lead.member_phone || lead.member_email) ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                              {lead.member_phone && (
-                                <a href={`tel:${lead.member_phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.green, textDecoration: 'none', fontWeight: 600 }}>
-                                  <span style={{ fontSize: 12 }}>📞</span> {lead.member_phone}
-                                </a>
-                              )}
-                              {lead.member_email && (
-                                <a href={`mailto:${lead.member_email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.blue, textDecoration: 'none' }}>
-                                  <span style={{ fontSize: 12 }}>✉️</span> {lead.member_email}
-                                </a>
-                              )}
-                            </div>
-                          ) : (
-                            <div style={{ fontSize: 13, color: S.muted }}>Contact info not on file — SUBS will coordinate scheduling.</div>
-                          )}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {lead.member_phone ? (
+                              <a href={`tel:${lead.member_phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.green, textDecoration: 'none', fontWeight: 600 }}>
+                                <span style={{ fontSize: 12 }}>📞</span> {lead.member_phone}
+                              </a>
+                            ) : null}
+                            {lead.member_email ? (
+                              <a href={`mailto:${lead.member_email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: S.blue, textDecoration: 'none' }}>
+                                <span style={{ fontSize: 12 }}>✉️</span> {lead.member_email}
+                              </a>
+                            ) : null}
+                            {!lead.member_phone && !lead.member_email && (
+                              <div style={{ fontSize: 13, color: S.muted }}>Contact details pending — check back shortly.</div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </Card>

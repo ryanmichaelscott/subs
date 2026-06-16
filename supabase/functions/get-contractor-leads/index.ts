@@ -89,25 +89,31 @@ serve(async (req) => {
         }
       })
 
-    // For accepted leads, fetch member phone numbers
+    // For accepted leads, fetch member phone + email from members table as fallback
     const acceptedLeads = leads.filter(l => l.notification_status === 'accepted' && l.clerk_user_id)
     if (acceptedLeads.length > 0) {
       const clerkIds = [...new Set(acceptedLeads.map(l => l.clerk_user_id as string))]
       const { data: members } = await supabase
         .from('members')
-        .select('clerk_user_id, phone')
+        .select('clerk_user_id, phone, email, name')
         .in('clerk_user_id', clerkIds)
 
       if (members && members.length > 0) {
-        const phoneMap: Record<string, string> = {}
+        const memberMap: Record<string, { phone?: string; email?: string; name?: string }> = {}
         for (const m of members) {
-          if (m.clerk_user_id && m.phone) phoneMap[m.clerk_user_id] = m.phone
+          if (m.clerk_user_id) memberMap[m.clerk_user_id] = { phone: m.phone, email: m.email, name: m.name }
         }
-        leads = leads.map(l =>
-          l.notification_status === 'accepted' && l.clerk_user_id && phoneMap[l.clerk_user_id]
-            ? { ...l, member_phone: phoneMap[l.clerk_user_id] }
-            : l
-        )
+        leads = leads.map(l => {
+          if (l.notification_status !== 'accepted' || !l.clerk_user_id) return l
+          const m = memberMap[l.clerk_user_id]
+          if (!m) return l
+          return {
+            ...l,
+            member_phone: l.member_phone || m.phone || null,
+            member_email: l.member_email || m.email || null,
+            member: l.member && l.member !== 'SUBS Member' ? l.member : (m.name || l.member),
+          }
+        })
       }
     }
 
