@@ -62,7 +62,7 @@ serve(async (req) => {
                 <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:24px;letter-spacing:0.06em;">SUBS</div>
                 <h2 style="font-size:24px;color:#F0EEE8;margin-bottom:12px;font-weight:400;">Your area is live.</h2>
                 <p style="color:#8A9088;line-height:1.7;margin-bottom:20px;">
-                  Hey ${entry.name || 'there'} — SUBS just launched in ${stateName} (your zip: <strong style="color:#F0EEE8;">${entry.zip}</strong>).
+                  Hey ${entry.name || 'there'} — SUBS just launched in <strong style="color:#F0EEE8;">${stateName}</strong>.
                 </p>
                 <p style="color:#8A9088;line-height:1.7;margin-bottom:28px;">
                   Vetted, licensed, insured contractors. Contractor-rate pricing on every home service. One membership pays for itself the first job you book.

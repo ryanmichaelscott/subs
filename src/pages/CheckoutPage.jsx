@@ -4,6 +4,19 @@ import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
 
+const US_STATES = [
+  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
+  ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],
+  ['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
+  ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],
+  ['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],
+  ['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],
+  ['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
+  ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],
+  ['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],
+  ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
+]
+
 const TIERS = [
   {
     id: 'member',
@@ -59,7 +72,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState(null)
   const [preselected] = useState(() => localStorage.getItem('subs_pending_plan'))
   const [phone, setPhone] = useState('')
-  const [zip, setZip] = useState('')
+  const [memberState, setMemberState] = useState('')
 
   useEffect(() => {
     if (!isLoaded) return
@@ -77,7 +90,6 @@ export default function CheckoutPage() {
         return
       }
       if (data?.member?.phone) setPhone(data.member.phone)
-      if (data?.member?.zip) setZip(data.member.zip)
       setChecking(false)
     }
     check()
@@ -85,20 +97,19 @@ export default function CheckoutPage() {
 
   const handleSelect = async (tier) => {
     if (loadingId) return
-    const cleanZip = zip.replace(/\D/g, '').slice(0, 5)
-    if (!cleanZip || cleanZip.length < 5) {
-      setError('Please enter your zip code so we can confirm service availability in your area.')
+    if (!memberState) {
+      setError('Please select your state so we can confirm service availability in your area.')
       return
     }
     setError(null)
     setLoadingId(tier.id)
 
-    // Check if zip has ≥3 active contractors before sending to Stripe
-    const { data: coverageData } = await supabase.functions.invoke('check-zip-coverage', {
-      body: { zip: cleanZip },
+    // Check if this state has ≥3 active contractors before sending to Stripe
+    const { data: coverageData } = await supabase.functions.invoke('check-state-coverage', {
+      body: { state: memberState },
     })
     if (!coverageData?.covered) {
-      navigate(`/waitlist?zip=${cleanZip}`)
+      navigate(`/waitlist?state=${memberState}`)
       setLoadingId(null)
       return
     }
@@ -131,6 +142,12 @@ export default function CheckoutPage() {
     }
   }
 
+  const inp = {
+    width: '100%', background: S.surface, border: `1px solid ${S.border}`,
+    borderRadius: 10, color: S.offwhite, fontSize: 15, padding: '11px 14px',
+    outline: 'none', boxSizing: 'border-box', fontFamily: C.body,
+  }
+
   if (!isLoaded || checking) {
     return (
       <div style={{ background: S.black, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -153,7 +170,7 @@ export default function CheckoutPage() {
       </nav>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{ fontFamily: C.display, fontSize: 38, color: S.offwhite, marginBottom: 12 }}>Choose your plan.</div>
           <p style={{ fontSize: 15, color: S.muted, margin: 0 }}>
             Unlock contractor pricing on every trade in your area.
@@ -163,27 +180,20 @@ export default function CheckoutPage() {
         <div style={{ width: '100%', maxWidth: 400, marginBottom: 36, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label style={{ display: 'block', fontSize: 13, color: S.muted, marginBottom: 6 }}>
-              Zip code <span style={{ fontWeight: 400 }}>(required — confirms service availability)</span>
+              Your state <span style={{ fontWeight: 400 }}>(confirms service availability)</span>
             </label>
-            <input
-              type="text"
-              value={zip}
-              onChange={e => { setZip(e.target.value.replace(/\D/g, '').slice(0, 5)); setError(null) }}
-              placeholder="84101"
-              maxLength={5}
-              style={{
-                width: '100%',
-                background: S.surface,
-                border: `1px solid ${S.border}`,
-                borderRadius: 10,
-                color: S.offwhite,
-                fontSize: 15,
-                padding: '11px 14px',
-                outline: 'none',
-                boxSizing: 'border-box',
-                fontFamily: C.body,
-              }}
-            />
+            <select
+              value={memberState}
+              onChange={e => { setMemberState(e.target.value); setError(null) }}
+              style={{ ...inp, color: memberState ? S.offwhite : S.muted, appearance: 'none', cursor: 'pointer' }}
+            >
+              <option value="" style={{ color: S.muted }}>Select your state...</option>
+              {US_STATES.map(([code, name]) => (
+                <option key={code} value={code} style={{ background: S.surface, color: S.offwhite }}>
+                  {name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label style={{ display: 'block', fontSize: 13, color: S.muted, marginBottom: 6 }}>
@@ -194,18 +204,7 @@ export default function CheckoutPage() {
               value={phone}
               onChange={e => setPhone(e.target.value)}
               placeholder="(801) 555-0100"
-              style={{
-                width: '100%',
-                background: S.surface,
-                border: `1px solid ${S.border}`,
-                borderRadius: 10,
-                color: S.offwhite,
-                fontSize: 15,
-                padding: '11px 14px',
-                outline: 'none',
-                boxSizing: 'border-box',
-                fontFamily: C.body,
-              }}
+              style={inp}
             />
           </div>
         </div>
@@ -278,7 +277,7 @@ export default function CheckoutPage() {
                   {isLoading ? (
                     <>
                       <div style={{ width: 14, height: 14, border: `2px solid ${isPre ? S.black : tier.color}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                      Redirecting...
+                      Checking your area...
                     </>
                   ) : (
                     `Start ${tier.name}`
