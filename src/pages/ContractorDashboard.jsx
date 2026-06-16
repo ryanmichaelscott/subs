@@ -680,11 +680,11 @@ export default function ContractorDashboard() {
       return
     }
 
+    // Clerk's user object can be null briefly even after isLoaded — wait for it
     const targetEmail = isImpersonating ? impersonating.email : user?.primaryEmailAddress?.emailAddress
-    if (!targetEmail) {
-      setDataLoading(false)
-      return
-    }
+    if (!targetEmail) return  // effect will re-run once user hydrates
+
+    setDataLoading(true)
     supabase
       .from('contractors')
       .select('*')
@@ -692,8 +692,9 @@ export default function ContractorDashboard() {
       .single()
       .then(({ data }) => {
         if (!data) {
+          // Only redirect to checkout for the approved-but-not-subscribed flow.
+          // Avoid creating a redirect loop for any other case.
           setDataLoading(false)
-          if (!isImpersonating) navigate('/contractor/checkout')
           return
         }
         setContractorId(data.id)
@@ -715,6 +716,11 @@ export default function ContractorDashboard() {
           setSaState(sa.state || 'UT')
           if (sa.type === 'radius') { setSaZip(sa.zip || ''); setSaRadius(String(sa.radius || '25')) }
           else setSaCounties(Array.isArray(sa.counties) ? sa.counties.join(', ') : (sa.counties || ''))
+        }
+        // Redirect approved-but-not-subscribed contractors to checkout
+        if (data.status === 'approved') {
+          navigate('/contractor/checkout')
+          return
         }
         setDataLoading(false)
       })

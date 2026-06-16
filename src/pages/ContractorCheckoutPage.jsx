@@ -27,6 +27,14 @@ export default function ContractorCheckoutPage() {
         .eq('contact_email', email)
         .single()
 
+      // Active contractors already have a subscription — send them to the dashboard
+      if (data?.status === 'active') {
+        navigate('/contractor/dashboard')
+        return
+      }
+
+      // Approved contractors proceed to checkout; anything else (pending, rejected, not found)
+      // goes to the dashboard — do NOT redirect back here to avoid a loop
       if (!data || data.status !== 'approved') {
         navigate('/contractor/dashboard')
         return
