@@ -18,12 +18,11 @@ export default function ContractorPaymentSuccess() {
     supabase.functions.invoke('confirm-contractor-subscription', {
       body: { session_id: sessionId, email },
     }).then(({ data, error }) => {
-      if (data?.success || error === null) {
+      if (data?.success) {
         setStatus('success')
       } else {
-        // Even if confirmation fails, payment went through — show success
-        console.error('confirm-contractor-subscription error:', error)
-        setStatus('success')
+        console.error('confirm-contractor-subscription error:', error || data?.error)
+        setStatus('error')
       }
     })
   }, [isLoaded, user, sessionId])
@@ -35,6 +34,21 @@ export default function ContractorPaymentSuccess() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 32, height: 32, border: `3px solid ${S.border}`, borderTopColor: S.green, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
           <p style={{ color: S.muted, fontSize: 14 }}>Activating your account…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (status === 'error') {
+    return (
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ maxWidth: 420, textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
+          <div style={{ fontFamily: C.display, fontSize: 28, color: S.offwhite, marginBottom: 12 }}>Payment received</div>
+          <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.7, marginBottom: 28 }}>
+            Your payment went through but we had trouble activating your account automatically. Contact us at{' '}
+            <a href="mailto:hello@subsapp.com" style={{ color: S.green }}>hello@subsapp.com</a> and we'll get you set up right away.
+          </p>
         </div>
       </div>
     )

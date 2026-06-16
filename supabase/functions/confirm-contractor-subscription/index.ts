@@ -33,7 +33,7 @@ serve(async (req) => {
       })
     }
 
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from('contractors')
       .update({
         status: 'active',
@@ -41,8 +41,10 @@ serve(async (req) => {
         stripe_subscription_id: session.subscription as string | null,
       })
       .eq('contact_email', email.toLowerCase().trim())
+      .select('id', { count: 'exact', head: true })
 
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(`DB update failed: ${error.message}`)
+    if (!count || count === 0) throw new Error(`No contractor found for email: ${email}`)
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
