@@ -38,7 +38,7 @@ serve(async (req) => {
       if (sa.state === state) count++
     }
 
-    return new Response(JSON.stringify({ covered: count >= 3, count, state }), {
+    return new Response(JSON.stringify({ covered: count >= 1, count, state }), {
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   } catch (err) {
