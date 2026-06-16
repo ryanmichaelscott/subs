@@ -20,7 +20,7 @@ async function sendSms(to: string, body: string) {
       'Authorization': `Basic ${btoa(`${sid}:${auth}`)}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({ From: from, To: toFormatted, Body: body }).toString(),
+    body: new URLSearchParams({ From: from, To: toFormatted, Body: body, StatusCallback: 'https://getsubs.co/api/twilio/status' }).toString(),
   })
 }
 

@@ -145,3 +145,19 @@ alter table contractors add column if not exists license_doc_url text;
 -- Add 'active' status for paid/live contractors
 alter table contractors drop constraint if exists contractors_status_check;
 alter table contractors add constraint contractors_status_check check (status in ('pending', 'approved', 'active', 'rejected'));
+
+-- SMS delivery log (populated by Twilio status callbacks via /api/twilio/status)
+create table if not exists sms_logs (
+  id bigserial primary key,
+  message_sid text not null,
+  status text not null,
+  to_phone text,
+  from_phone text,
+  error_code text,
+  error_message text,
+  account_sid text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists sms_logs_message_sid_idx on sms_logs (message_sid);
+create index if not exists sms_logs_created_at_idx on sms_logs (created_at desc);
