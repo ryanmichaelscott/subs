@@ -28,7 +28,14 @@ const US_STATES = [
   ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
 ]
 
-const STATUS_COLORS = { Complete: S.green, Scheduled: S.blue, pending: S.amber }
+const STATUS_CONFIG = {
+  open:      { label: 'Searching for contractor',  color: S.amber },
+  pending:   { label: 'Searching for contractor',  color: S.amber },
+  accepted:  { label: 'Contractor assigned',       color: S.blue },
+  Scheduled: { label: 'Scheduled',                 color: S.blue },
+  Complete:  { label: 'Completed',                 color: S.green },
+  Cancelled: { label: 'Cancelled',                 color: '#FF5A5A' },
+}
 
 function Card({ children, style, ...props }) {
   return <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, ...style }} {...props}>{children}</div>
@@ -116,8 +123,8 @@ export default function MemberDashboard() {
         if (adminData?.member) {
           setMember(adminData.member)
           setProfileForm({ name: adminData.member.name || '', phone: adminData.member.phone || '', zip: adminData.member.zip || '' })
-          const { data: jobRows } = await supabase.from('job_requests').select('*').eq('clerk_user_id', adminData.member.clerk_user_id).order('submitted_at', { ascending: false })
-          if (jobRows) setJobRequests(jobRows)
+          const { data: jobData } = await supabase.functions.invoke('get-member-jobs', { body: { clerk_user_id: adminData.member.clerk_user_id } })
+          if (jobData?.jobs) setJobRequests(jobData.jobs)
         }
         const { data: contractorRows } = await supabase.from('contractors').select('*, contractor_rates(*)').eq('status', 'active').order('rating', { ascending: false })
         if (contractorRows) setContractors(contractorRows)
@@ -206,21 +213,18 @@ export default function MemberDashboard() {
         return
       }
 
-      // Fetch real data
-      const [{ data: contractorRows }, { data: jobRows }] = await Promise.all([
+      // Fetch real data — job_requests has RLS that requires a Clerk JWT the
+      // anon client doesn't send, so we use an edge function with service role
+      const [{ data: contractorRows }, { data: jobData }] = await Promise.all([
         supabase
           .from('contractors')
           .select('*, contractor_rates(*)')
           .eq('status', 'active')
           .order('rating', { ascending: false }),
-        supabase
-          .from('job_requests')
-          .select('*')
-          .eq('clerk_user_id', user.id)
-          .order('submitted_at', { ascending: false }),
+        supabase.functions.invoke('get-member-jobs', { body: { clerk_user_id: user.id } }),
       ])
       if (contractorRows) setContractors(contractorRows)
-      if (jobRows) setJobRequests(jobRows)
+      if (jobData?.jobs) setJobRequests(jobData.jobs)
     }
     init()
   }, [user])
@@ -267,7 +271,7 @@ export default function MemberDashboard() {
       (!zipFilter || (c.service_area || '').toLowerCase().includes(zipFilter.toLowerCase()))
   })
 
-  const jobsDone = jobRequests.filter(j => j.status === 'Complete').length
+  const jobsDone = jobRequests.filter(j => ['Complete', 'Scheduled', 'accepted'].includes(j.status)).length
   const tradesUsed = new Set(jobRequests.map(j => j.trade).filter(Boolean)).size
 
   const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }
@@ -549,9 +553,9 @@ export default function MemberDashboard() {
                           zip: jobForm.zip,
                           state: jobForm.state,
                           preferred_date: jobForm.date || null,
-                          member_email: user?.primaryEmailAddress?.emailAddress || '',
-                          member_name: user?.fullName || user?.firstName || '',
-                          clerk_user_id: user?.id || '',
+                          member_email: isImpersonating ? impersonating.email : (user?.primaryEmailAddress?.emailAddress || ''),
+                          member_name: isImpersonating ? impersonating.name : (user?.fullName || user?.firstName || ''),
+                          clerk_user_id: isImpersonating ? (member?.clerk_user_id || '') : (user?.id || ''),
                         },
                       })
                       setTimeout(() => { setSearching(false); setJobSubmitted(true) }, 1800)
@@ -570,7 +574,7 @@ export default function MemberDashboard() {
 
             {/* History tab */}
             {tab === 'history' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {jobRequests.length === 0 && (
                   <div style={{ textAlign: 'center', padding: '60px 0', color: S.muted }}>
                     <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
@@ -578,30 +582,42 @@ export default function MemberDashboard() {
                     <div style={{ fontSize: 13 }}>Submit a request to get started.</div>
                   </div>
                 )}
-                {jobRequests.map((job) => (
-                  <Card key={job.id} style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                      <div style={{ fontSize: 11, color: S.muted, fontFamily: 'monospace' }}>{job.display_id || job.id.slice(0, 8).toUpperCase()}</div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{job.trade}</div>
-                        <div style={{ fontSize: 12, color: S.muted }}>
-                          {job.service || job.description?.slice(0, 40) || '—'} · {new Date(job.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {jobRequests.map((job) => {
+                  const sc = STATUS_CONFIG[job.status] || { label: job.status, color: S.muted }
+                  const c = job.contractor
+                  const isAssigned = ['accepted', 'Scheduled', 'Complete'].includes(job.status)
+                  return (
+                    <Card key={job.id} style={{ padding: '18px 20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite, marginBottom: 2 }}>{job.trade}</div>
+                          <div style={{ fontSize: 12, color: S.muted }}>
+                            Zip {job.zip}{job.state ? ` · ${job.state}` : ''} · {new Date(job.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
+                          {job.description && (
+                            <div style={{ fontSize: 12, color: S.muted, marginTop: 4, maxWidth: 380 }}>{job.description.slice(0, 80)}{job.description.length > 80 ? '…' : ''}</div>
+                          )}
                         </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 100, background: sc.color + '22', color: sc.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          {sc.label}
+                        </span>
                       </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                      {job.rate && (
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{job.rate}</div>
-                          <div style={{ fontSize: 11, color: S.green }}>member rate</div>
+                      {isAssigned && c && (
+                        <div style={{ marginTop: 14, padding: '12px 14px', background: S.green + '0D', border: `1px solid ${S.green}33`, borderRadius: 8 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: S.green, letterSpacing: '0.08em', marginBottom: 6 }}>YOUR CONTRACTOR</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite, marginBottom: 4 }}>{c.name || c.contact_name}</div>
+                          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                            {c.phone && <a href={`tel:${c.phone}`} style={{ fontSize: 13, color: S.green, textDecoration: 'none', fontWeight: 600 }}>{c.phone}</a>}
+                            {c.contact_email && <a href={`mailto:${c.contact_email}`} style={{ fontSize: 13, color: S.blue, textDecoration: 'none' }}>{c.contact_email}</a>}
+                          </div>
                         </div>
                       )}
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100, background: (STATUS_COLORS[job.status] || S.muted) + '22', color: STATUS_COLORS[job.status] || S.muted }}>
-                        {job.status}
-                      </span>
-                    </div>
-                  </Card>
-                ))}
+                      {isAssigned && !c && (
+                        <div style={{ marginTop: 12, fontSize: 12, color: S.muted }}>Contractor details will appear here once confirmed.</div>
+                      )}
+                    </Card>
+                  )
+                })}
               </div>
             )}
 
