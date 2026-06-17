@@ -134,7 +134,7 @@ export default function ContractorCheckoutPage() {
                 type="text"
                 value={promoCode}
                 onChange={e => { setPromoCode(e.target.value.toUpperCase()); setError(null) }}
-                placeholder="Enter code if you have one"
+                placeholder="Enter Code"
                 style={{ ...inp, letterSpacing: '0.05em' }}
               />
             </div>
