@@ -41,6 +41,7 @@ export default function AdminDashboard() {
   const [launchingMarket, setLaunchingMarket] = useState(null)
   const [launchResult, setLaunchResult] = useState({})
   const [refreshing, setRefreshing] = useState(false)
+  const [stripeRevenue, setStripeRevenue] = useState(null)
 
   const loadData = async () => {
     setRefreshing(true)
@@ -50,6 +51,9 @@ export default function AdminDashboard() {
 
       supabase.functions.invoke('admin-list-members')
         .then(({ data }) => setMembers(data?.members || [])),
+
+      supabase.functions.invoke('get-stripe-revenue')
+        .then(({ data }) => { if (data?.arr !== undefined) setStripeRevenue(data) }),
 
       supabase.from('waitlist').select('*').order('created_at', { ascending: false })
         .then(({ data }) => setWaitlistEntries(data || [])),
@@ -225,8 +229,9 @@ export default function AdminDashboard() {
   )
 
   const activeMembers = members.filter(m => m.status === 'Active').length
-  const arr = members.filter(m => m.status === 'Active').reduce((sum, m) => sum + (TIER_PRICE[m.tier] || 99), 0)
-  const mrr = arr / 12
+  // Use Stripe-sourced ARR/MRR (full plan prices, coupons excluded) when available
+  const arr = stripeRevenue?.arr ?? null
+  const mrr = stripeRevenue?.mrr ?? null
   const churnCount = members.filter(m => m.status === 'Churned').length
   const churnRate = members.length ? ((churnCount / members.length) * 100).toFixed(1) : '0.0'
 
@@ -278,8 +283,8 @@ export default function AdminDashboard() {
           <div>
             <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
               {[
-                ['MRR', `$${Math.round(mrr).toLocaleString()}`, S.green, 'Monthly recurring revenue'],
-                ['ARR', `$${Math.round(arr).toLocaleString()}`, S.blue, 'Annual recurring revenue'],
+                ['MRR', mrr !== null ? `$${Math.round(mrr).toLocaleString()}` : '—', S.green, `Monthly recurring revenue · ${stripeRevenue?.subscription_count ?? '…'} active subs`],
+                ['ARR', arr !== null ? `$${Math.round(arr).toLocaleString()}` : '—', S.blue, 'Full plan prices · coupons excluded'],
                 ['Active', activeMembers, S.green, 'Active members'],
                 ['Churn', `${churnRate}%`, churnRate > 5 ? S.danger : S.amber, 'Churn rate'],
               ].map(([label, val, color, sub]) => (
