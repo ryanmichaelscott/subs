@@ -40,47 +40,53 @@ export default function AdminDashboard() {
   const [waitlistEntries, setWaitlistEntries] = useState([])
   const [launchingMarket, setLaunchingMarket] = useState(null)
   const [launchResult, setLaunchResult] = useState({})
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    supabase.from('contractors').select('*').order('submitted_at', { ascending: false })
-      .then(({ data }) => setContractors(data || []))
+  const loadData = async () => {
+    setRefreshing(true)
+    await Promise.all([
+      supabase.from('contractors').select('*').order('submitted_at', { ascending: false })
+        .then(({ data }) => setContractors(data || [])),
 
-    supabase.functions.invoke('admin-list-members')
-      .then(({ data }) => setMembers(data?.members || []))
+      supabase.functions.invoke('admin-list-members')
+        .then(({ data }) => setMembers(data?.members || [])),
 
-    supabase.from('waitlist').select('*').order('created_at', { ascending: false })
-      .then(({ data }) => setWaitlistEntries(data || []))
+      supabase.from('waitlist').select('*').order('created_at', { ascending: false })
+        .then(({ data }) => setWaitlistEntries(data || [])),
 
-    // Build activity feed from lead_notifications + job_requests
-    Promise.all([
-      supabase.from('lead_notifications')
-        .select('id, status, notified_at, responded_at, job_requests(trade, zip, member_name), contractors(name)')
-        .order('notified_at', { ascending: false })
-        .limit(30),
-      supabase.from('job_requests')
-        .select('id, trade, zip, member_name, status, submitted_at')
-        .order('submitted_at', { ascending: false })
-        .limit(20),
-    ]).then(([{ data: notifs }, { data: reqs }]) => {
-      const events = []
-      for (const n of notifs || []) {
-        const lead = n.job_requests
-        const contractor = n.contractors
-        if (n.status === 'accepted' && n.responded_at) {
-          events.push({ time: n.responded_at, type: 'accept', event: 'Lead accepted', detail: `${contractor?.name || 'Contractor'} accepted ${lead?.trade || 'job'} · Zip ${lead?.zip || '—'} · ${lead?.member_name || 'Member'}` })
-        } else if (n.status === 'declined' && n.responded_at) {
-          events.push({ time: n.responded_at, type: 'decline', event: 'Lead declined', detail: `${contractor?.name || 'Contractor'} declined ${lead?.trade || 'job'} · Zip ${lead?.zip || '—'}` })
-        } else if (n.status === 'pending') {
-          events.push({ time: n.notified_at, type: 'dispatch', event: 'Lead dispatched', detail: `${lead?.trade || 'Job'} sent to ${contractor?.name || 'contractor'} · Zip ${lead?.zip || '—'}` })
+      Promise.all([
+        supabase.from('lead_notifications')
+          .select('id, status, notified_at, responded_at, job_requests(trade, zip, member_name), contractors(name)')
+          .order('notified_at', { ascending: false })
+          .limit(30),
+        supabase.from('job_requests')
+          .select('id, trade, zip, member_name, status, submitted_at')
+          .order('submitted_at', { ascending: false })
+          .limit(20),
+      ]).then(([{ data: notifs }, { data: reqs }]) => {
+        const events = []
+        for (const n of notifs || []) {
+          const lead = n.job_requests
+          const contractor = n.contractors
+          if (n.status === 'accepted' && n.responded_at) {
+            events.push({ time: n.responded_at, type: 'accept', event: 'Lead accepted', detail: `${contractor?.name || 'Contractor'} accepted ${lead?.trade || 'job'} · Zip ${lead?.zip || '—'} · ${lead?.member_name || 'Member'}` })
+          } else if (n.status === 'declined' && n.responded_at) {
+            events.push({ time: n.responded_at, type: 'decline', event: 'Lead declined', detail: `${contractor?.name || 'Contractor'} declined ${lead?.trade || 'job'} · Zip ${lead?.zip || '—'}` })
+          } else if (n.status === 'pending') {
+            events.push({ time: n.notified_at, type: 'dispatch', event: 'Lead dispatched', detail: `${lead?.trade || 'Job'} sent to ${contractor?.name || 'contractor'} · Zip ${lead?.zip || '—'}` })
+          }
         }
-      }
-      for (const r of reqs || []) {
-        events.push({ time: r.submitted_at, type: 'request', event: 'Job requested', detail: `${r.member_name || 'Member'} requested ${r.trade || '—'} · Zip ${r.zip || '—'}` })
-      }
-      events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-      setActivity(events.slice(0, 30))
-    })
-  }, [])
+        for (const r of reqs || []) {
+          events.push({ time: r.submitted_at, type: 'request', event: 'Job requested', detail: `${r.member_name || 'Member'} requested ${r.trade || '—'} · Zip ${r.zip || '—'}` })
+        }
+        events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        setActivity(events.slice(0, 30))
+      }),
+    ])
+    setRefreshing(false)
+  }
+
+  useEffect(() => { loadData() }, [])
 
   const handleContractor = async (id, action) => {
     setActionError(null)
@@ -235,6 +241,9 @@ export default function AdminDashboard() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || 'admin@subs.co'}</span>
+          <button onClick={loadData} disabled={refreshing} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: refreshing ? S.muted : S.green, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: refreshing ? 'not-allowed' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
+            {refreshing ? '↻ Refreshing…' : '↻ Refresh'}
+          </button>
           <button onClick={() => signOut().then(() => navigate('/admin/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
       </nav>
