@@ -29,6 +29,29 @@ const US_STATES = [
   ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
 ]
 
+// Zip code coordinate cache — persists for the session
+const _zipCache = {}
+async function fetchZipCoords(zip) {
+  if (_zipCache[zip] !== undefined) return _zipCache[zip]
+  try {
+    const r = await fetch(`https://api.zippopotam.us/us/${zip}`)
+    if (!r.ok) { _zipCache[zip] = null; return null }
+    const d = await r.json()
+    const p = d.places?.[0]
+    const result = p ? { lat: parseFloat(p.latitude), lon: parseFloat(p.longitude), state: p['state abbreviation'] } : null
+    _zipCache[zip] = result
+    return result
+  } catch { _zipCache[zip] = null; return null }
+}
+
+function haversineMiles(lat1, lon1, lat2, lon2) {
+  const R = 3958.8
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.asin(Math.sqrt(a))
+}
+
 const STATUS_CONFIG = {
   open:      { label: 'Searching for contractor',  color: S.amber },
   pending:   { label: 'Searching for contractor',  color: S.amber },
@@ -135,6 +158,7 @@ export default function MemberDashboard() {
   const [phoneBannerDismissed, setPhoneBannerDismissed] = useState(
     () => sessionStorage.getItem('subs_phone_prompt_dismissed') === '1'
   )
+  const [filtered, setFiltered] = useState([])
 
   const PLAN_PRICE_IDS = {
     member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
@@ -308,11 +332,44 @@ export default function MemberDashboard() {
     window.location.href = data.url
   }
 
-  const filtered = contractors.filter(c => {
-    const allTrades = c.trades?.length ? c.trades : [c.trade].filter(Boolean)
-    return (!tradeFilter || allTrades.includes(tradeFilter)) &&
-      (!zipFilter || (c.service_area || '').toLowerCase().includes(zipFilter.toLowerCase()))
-  })
+  useEffect(() => {
+    let cancelled = false
+    async function compute() {
+      const byTrade = contractors.filter(c => {
+        const allTrades = c.trades?.length ? c.trades : [c.trade].filter(Boolean)
+        return !tradeFilter || allTrades.includes(tradeFilter)
+      })
+      if (!zipFilter || !/^\d{5}$/.test(zipFilter)) {
+        if (!cancelled) setFiltered(byTrade)
+        return
+      }
+      const memberCoords = await fetchZipCoords(zipFilter)
+      if (cancelled) return
+      if (!memberCoords) { setFiltered(byTrade); return }
+      const result = []
+      for (const c of byTrade) {
+        let sa = null
+        try { sa = JSON.parse(c.service_area || 'null') } catch {}
+        if (!sa) { result.push(c); continue }
+        if (sa.type === 'statewide') {
+          if (!sa.state || sa.state === memberCoords.state) result.push(c)
+        } else if (sa.type === 'county') {
+          if (!sa.state || sa.state === memberCoords.state) result.push(c)
+        } else if (sa.type === 'zip' && sa.zip) {
+          const radius = parseInt(sa.radius) || 50
+          if (sa.zip === zipFilter) { result.push(c); continue }
+          const cCoords = await fetchZipCoords(sa.zip)
+          if (cancelled) return
+          if (cCoords && haversineMiles(memberCoords.lat, memberCoords.lon, cCoords.lat, cCoords.lon) <= radius) result.push(c)
+        } else {
+          if ((c.service_area || '').toLowerCase().includes(zipFilter)) result.push(c)
+        }
+      }
+      if (!cancelled) setFiltered(result)
+    }
+    compute()
+    return () => { cancelled = true }
+  }, [contractors, tradeFilter, zipFilter])
 
   const handleSubmitReview = async (job) => {
     if (!reviewForm.rating) return
