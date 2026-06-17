@@ -129,6 +129,11 @@ export default function MemberDashboard() {
   const [reviewSubmitting, setReviewSubmitting] = useState(false)
   const [referralStats, setReferralStats] = useState(null)
   const [refLinkCopied, setRefLinkCopied] = useState(false)
+  const [phoneInput, setPhoneInput] = useState('')
+  const [phoneSaving, setPhoneSaving] = useState(false)
+  const [phoneBannerDismissed, setPhoneBannerDismissed] = useState(
+    () => sessionStorage.getItem('subs_phone_prompt_dismissed') === '1'
+  )
 
   const PLAN_PRICE_IDS = {
     member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
@@ -255,6 +260,17 @@ export default function MemberDashboard() {
     init()
   }, [user])
 
+  const handleSavePhone = async () => {
+    if (!phoneInput.trim()) return
+    setPhoneSaving(true)
+    await supabase.functions.invoke('upsert-member', {
+      body: { clerk_user_id: user.id, phone: phoneInput.trim() },
+    })
+    setMember(m => ({ ...m, phone: phoneInput.trim() }))
+    setProfileForm(f => ({ ...f, phone: phoneInput.trim() }))
+    setPhoneSaving(false)
+  }
+
   const handleSaveProfile = async () => {
     setProfileSaving(true)
     setAccountError(null)
@@ -374,7 +390,39 @@ export default function MemberDashboard() {
           onExit={() => { localStorage.removeItem('subs_impersonating'); navigate('/admin/dashboard') }}
         />
       )}
-      <div className="md-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px', boxSizing: 'border-box', overflowX: 'hidden' }}>
+
+      {member && !member.phone && !phoneBannerDismissed && (
+        <div style={{ background: S.amber + '12', borderBottom: `1px solid ${S.amber}30`, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, color: S.offwhite, flex: '1 1 180px' }}>
+            📱 Add your phone number to get SMS alerts when a contractor accepts your job request.
+          </span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+            <input
+              type="tel"
+              placeholder="(555) 000-0000"
+              value={phoneInput}
+              onChange={e => setPhoneInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSavePhone()}
+              style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 7, padding: '7px 12px', color: S.offwhite, fontSize: 13, outline: 'none', width: 150, boxSizing: 'border-box' }}
+            />
+            <button
+              onClick={handleSavePhone}
+              disabled={phoneSaving || !phoneInput.trim()}
+              style={{ background: S.green, color: S.black, border: 'none', borderRadius: 7, padding: '7px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: phoneSaving || !phoneInput.trim() ? 0.6 : 1, whiteSpace: 'nowrap' }}
+            >
+              {phoneSaving ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              onClick={() => { sessionStorage.setItem('subs_phone_prompt_dismissed', '1'); setPhoneBannerDismissed(true) }}
+              style={{ background: 'transparent', border: 'none', color: S.muted, fontSize: 20, cursor: 'pointer', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="md-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px', boxSizing: 'border-box' }}>
         <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
