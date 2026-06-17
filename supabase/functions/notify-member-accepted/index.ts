@@ -104,7 +104,7 @@ serve(async (req) => {
   const rateClause = rate ? ` at ${rate}` : ''
   await sendSms(
     memberPhone,
-    `SUBS: ${contractorName} accepted your ${service} request${rateClause}. They'll be in touch to schedule. Questions? Reply to this message.`,
+    `SUBS: ${contractorName} accepted your ${service} request${rateClause}. They'll be in touch to schedule.\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app`,
   )
 
   return new Response(JSON.stringify({ success: true }), {

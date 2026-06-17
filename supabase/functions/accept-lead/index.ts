@@ -213,13 +213,13 @@ serve(async (req) => {
 
     // SMS the member
     if (memberPhone) {
-      const msg = `Your SUBS contractor is confirmed — ${contractorName} accepted your ${trade} request.${contractorPhone ? ` Their number: ${contractorPhone}` : ''} They'll be in touch shortly.`
+      const msg = `Your SUBS contractor is confirmed — ${contractorName} accepted your ${trade} request.${contractorPhone ? ` Their number: ${contractorPhone}` : ''} They'll be in touch shortly.\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app`
       await sendSms(memberPhone, msg)
     }
 
     // SMS the contractor
     if (contractorPhone) {
-      const msg = `SUBS: You accepted the ${trade} lead.${memberPhone ? ` Member contact: ${memberName}, ${memberPhone}` : ` Member: ${memberName}`}. Check your email for full details.`
+      const msg = `SUBS: You accepted the ${trade} lead.${memberPhone ? ` Member contact: ${memberName}, ${memberPhone}` : ` Member: ${memberName}`}. Check your email for full details.\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app`
       await sendSms(contractorPhone, msg)
     }
 
