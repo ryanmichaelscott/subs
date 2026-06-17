@@ -6,6 +6,13 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Known member price IDs → tier label
+const MEMBER_PRICE_TIERS: Record<string, string> = {
+  'price_1TiRPcAYDs9oVarWLWpp0wLZ': 'Member',
+  'price_1TiRQBAYDs9oVarW14DBq2HL': 'Member+',
+  'price_1TiRQZAYDs9oVarWcZ10xjDG': 'Elite',
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
@@ -13,12 +20,11 @@ serve(async (req) => {
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' })
 
     let arrCents = 0
-    let mrrCents = 0
     let totalCount = 0
+    const mrrByTierCents: Record<string, number> = { Member: 0, 'Member+': 0, Elite: 0, Contractor: 0 }
     let hasMore = true
     let startingAfter: string | undefined
 
-    // Paginate through all active subscriptions
     while (hasMore) {
       const page = await stripe.subscriptions.list({
         status: 'active',
@@ -31,22 +37,29 @@ serve(async (req) => {
         for (const item of sub.items.data) {
           const price = item.price as Stripe.Price
           const unitAmount = price.unit_amount ?? 0
+          const quantity = item.quantity ?? 1
           const interval = price.recurring?.interval
           const intervalCount = price.recurring?.interval_count ?? 1
 
-          // Annualize — use plan price (unit_amount), NOT what's actually charged
-          // This means coupons/discounts do NOT affect ARR
+          // Annualize at full plan price — quantity * unit_amount, no coupon impact
           let annualCents = 0
           if (interval === 'month') {
-            annualCents = (unitAmount / intervalCount) * 12
+            annualCents = (unitAmount * quantity / intervalCount) * 12
           } else if (interval === 'year') {
-            annualCents = unitAmount / intervalCount
+            annualCents = (unitAmount * quantity) / intervalCount
           } else {
-            // Unknown interval — skip
             continue
           }
 
           arrCents += annualCents
+
+          // Bucket by tier or contractor
+          const tier = MEMBER_PRICE_TIERS[price.id]
+          if (tier) {
+            mrrByTierCents[tier] += annualCents / 12
+          } else {
+            mrrByTierCents['Contractor'] += annualCents / 12
+          }
         }
         totalCount++
       }
@@ -57,15 +70,17 @@ serve(async (req) => {
       }
     }
 
-    mrrCents = Math.round(arrCents / 12)
-    arrCents = Math.round(arrCents)
+    const mrrCents = Math.round(arrCents / 12)
+    const mrrByTier: Record<string, number> = {}
+    for (const [k, v] of Object.entries(mrrByTierCents)) {
+      mrrByTier[k] = Math.round(v) / 100  // dollars, rounded to cent
+    }
 
     return new Response(JSON.stringify({
-      arr: arrCents / 100,
+      arr: Math.round(arrCents) / 100,
       mrr: mrrCents / 100,
-      arr_cents: arrCents,
-      mrr_cents: mrrCents,
       subscription_count: totalCount,
+      mrr_by_tier: mrrByTier,
     }), { headers: { ...cors, 'Content-Type': 'application/json' } })
   } catch (err) {
     console.error('get-stripe-revenue error:', err)

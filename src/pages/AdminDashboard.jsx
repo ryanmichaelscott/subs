@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase'
 
 const TIER_COLORS = { Member: S.green, 'Member+': S.blue, Elite: S.purple }
 const STATUS_COLORS = { Active: S.green, Churned: S.danger, Trial: S.amber }
-const TIER_PRICE = { Member: 99, 'Member+': 199, Elite: 399 }
 
 function timeAgo(ts) {
   if (!ts) return '—'
@@ -300,17 +299,20 @@ export default function AdminDashboard() {
               <Card style={{ padding: 24 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 16 }}>Members by Tier</div>
                 {[
-                  { tier: 'Member', price: 99, color: S.green },
-                  { tier: 'Member+', price: 199, color: S.blue },
-                  { tier: 'Elite', price: 399, color: S.purple },
-                ].map(({ tier, price, color }) => {
+                  { tier: 'Member', color: S.green },
+                  { tier: 'Member+', color: S.blue },
+                  { tier: 'Elite', color: S.purple },
+                ].map(({ tier, color }) => {
                   const count = members.filter(m => m.tier === tier && m.status === 'Active').length
                   const pct = activeMembers ? (count / activeMembers) * 100 : 0
+                  const tierMrr = stripeRevenue?.mrr_by_tier?.[tier]
                   return (
                     <div key={tier} style={{ marginBottom: 14 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
                         <span style={{ color: S.offwhite }}>{tier}</span>
-                        <span style={{ color: S.muted }}>{count} members · ${(count * price / 12).toFixed(0)}/mo</span>
+                        <span style={{ color: S.muted }}>
+                          {count} members{tierMrr !== undefined ? ` · $${Math.round(tierMrr).toLocaleString()}/mo` : ''}
+                        </span>
                       </div>
                       <div style={{ height: 6, background: S.surface, borderRadius: 3, overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 3 }} />
