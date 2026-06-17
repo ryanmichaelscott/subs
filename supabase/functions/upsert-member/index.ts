@@ -55,33 +55,26 @@ serve(async (req) => {
       })
     }
 
-    // Generate unique referral code for new member
-    let memberCode = generateCode()
-    for (let i = 0; i < 5; i++) {
-      const { data: collision } = await supabase
+    // Create new member — retry on the rare chance of a referral_code collision
+    let newMember = null
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data, error } = await supabase
         .from('members')
-        .select('id')
-        .eq('referral_code', memberCode)
+        .insert({
+          clerk_user_id,
+          email: email || '',
+          name: name || '',
+          phone: phone || null,
+          zip: zip || null,
+          tier: 'Member',
+          status: 'Trial',
+          referral_code: generateCode(),
+        })
+        .select()
         .single()
-      if (!collision) break
-      memberCode = generateCode()
+      if (!error) { newMember = data; break }
+      if (error.code !== '23505') throw new Error(error.message) // only retry on unique violation
     }
-
-    // Create new member
-    const { data: newMember } = await supabase
-      .from('members')
-      .insert({
-        clerk_user_id,
-        email: email || '',
-        name: name || '',
-        phone: phone || null,
-        zip: zip || null,
-        tier: 'Member',
-        status: 'Trial',
-        referral_code: memberCode,
-      })
-      .select()
-      .single()
 
     // Track referral if a code was provided at signup
     if (referral_code && newMember) {
