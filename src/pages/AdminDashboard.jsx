@@ -39,11 +39,10 @@ export default function AdminDashboard() {
   const [waitlistEntries, setWaitlistEntries] = useState([])
   const [launchingMarket, setLaunchingMarket] = useState(null)
   const [launchResult, setLaunchResult] = useState({})
-  const [refreshing, setRefreshing] = useState(false)
+
   const [stripeRevenue, setStripeRevenue] = useState(null)
 
   const loadData = async () => {
-    setRefreshing(true)
     await Promise.all([
       supabase.from('contractors').select('*').order('submitted_at', { ascending: false })
         .then(({ data }) => setContractors(data || [])),
@@ -86,7 +85,6 @@ export default function AdminDashboard() {
         setActivity(events.slice(0, 30))
       }),
     ])
-    setRefreshing(false)
   }
 
   useEffect(() => { loadData() }, [])
@@ -245,10 +243,7 @@ export default function AdminDashboard() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || 'admin@subs.co'}</span>
-          <button onClick={loadData} disabled={refreshing} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: refreshing ? S.muted : S.green, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: refreshing ? 'not-allowed' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
-            {refreshing ? '↻ Refreshing…' : '↻ Refresh'}
-          </button>
-          <button onClick={() => signOut().then(() => navigate('/admin/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
+<button onClick={() => signOut().then(() => navigate('/admin/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
       </nav>
 
