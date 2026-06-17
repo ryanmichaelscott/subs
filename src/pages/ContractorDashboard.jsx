@@ -7,14 +7,14 @@ import { supabase } from '../lib/supabase'
 import ImpersonationBanner from '../components/ImpersonationBanner'
 
 const TRADES_LIST = [
-  'HVAC', 'Plumbing', 'Roofing', 'Electrical', 'Windows & Doors',
-  'Concrete Work', 'Driveway Paving', 'Interior Painting', 'Exterior Painting',
-  'Lawn Care', 'Tree Service', 'Landscaping', 'Pest Control', 'Mold Detection',
-  'Water Filtration', 'Handyman', 'Pool Service', 'Fireplace & Chimney',
-  'Bathroom Remodel', 'Kitchen Remodel', 'Siding & Stucco', 'Smart Home / AV',
-  'Additions & ADUs', 'Flooring', 'Insulation', 'Waterproofing', 'Fencing',
-  'Decks & Patios', 'Framing', 'House Cleaning', 'Gutters', 'Carpet Cleaning',
-  'Solar', 'Finish Carpentry',
+  'Additions & ADUs', 'Bathroom Remodel', 'Carpet Cleaning', 'Concrete Work', 'Countertops',
+  'Decks & Patios', 'Driveway Paving', 'Electrical', 'Excavation', 'Exterior Painting',
+  'Fencing', 'Finish Carpentry', 'Fireplace & Chimney', 'Flooring', 'Framing',
+  'Garage Doors', 'Gutters', 'Handyman', 'House Cleaning', 'HVAC',
+  'Insulation', 'Interior Painting', 'Kitchen Remodel', 'Landscaping', 'Lawn Care',
+  'Mold Detection', 'Pest Control', 'Plumbing', 'Pool Service', 'Roofing',
+  'Siding & Stucco', 'Smart Home / AV', 'Solar', 'Tree Service', 'Water Filtration',
+  'Waterproofing', 'Window Install', 'Windows & Doors',
 ]
 
 const PRICING_TYPES = ['per job', 'per hour', 'per sq ft', 'per unit', 'per visit', 'custom']
