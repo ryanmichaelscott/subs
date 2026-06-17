@@ -38,11 +38,27 @@ const STATUS_CONFIG = {
   Cancelled: { label: 'Cancelled',                 color: '#FF5A5A' },
 }
 
-function Card({ children, style, ...props }) {
-  return <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, ...style }} {...props}>{children}</div>
+function Card({ children, style, className = '', ...props }) {
+  return <div className={`md-card ${className}`} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, boxSizing: 'border-box', ...style }} {...props}>{children}</div>
 }
 
-const TIER_COLORS = { Member: S.green, 'Member+': S.blue, Elite: S.purple }
+const TIER_COLORS = { Member: S.green, 'Member+': S.green, Elite: S.green }
+
+function parseServiceArea(raw) {
+  if (!raw) return null
+  try {
+    const obj = typeof raw === 'string' ? JSON.parse(raw) : raw
+    if (obj.type === 'county' && obj.counties) {
+      const counties = obj.counties.split(',').map(c => c.trim().replace(/\s*county$/i, '').trim()).filter(Boolean)
+      return `Serving ${counties.join(', ')} ${counties.length === 1 ? 'County' : 'Counties'}${obj.state ? ` · ${obj.state}` : ''}`
+    }
+    if (obj.type === 'zip' && obj.zip) return `Zip ${obj.zip}${obj.radius ? ` +${obj.radius}mi` : ''}`
+    if (obj.type === 'statewide' && obj.state) return `Statewide · ${obj.state}`
+    return Object.values(obj).filter(v => v && typeof v === 'string').join(' · ')
+  } catch {
+    return raw
+  }
+}
 const TIER_PRICES = { Member: '$99/yr', 'Member+': '$199/yr', Elite: '$399/yr' }
 
 function MemberCard({ name, member }) {
@@ -325,6 +341,11 @@ export default function MemberDashboard() {
           .dashboard-grid { grid-template-columns: 1fr !important; }
           .form-grid-2 { grid-template-columns: 1fr !important; }
           .tabs-bar button { font-size: 11px !important; padding: 9px 4px !important; }
+          .md-outer { padding: 16px 12px !important; }
+          .md-card { padding: 16px !important; }
+          .md-card-inner { padding: 14px 16px !important; }
+          * { max-width: 100%; box-sizing: border-box; }
+          input, select, textarea { max-width: 100% !important; }
         }
       `}</style>
       {/* Top nav */}
@@ -347,7 +368,7 @@ export default function MemberDashboard() {
           onExit={() => { localStorage.removeItem('subs_impersonating'); navigate('/admin/dashboard') }}
         />
       )}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
+      <div className="md-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px', boxSizing: 'border-box', overflowX: 'hidden' }}>
         <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -407,7 +428,7 @@ export default function MemberDashboard() {
                             {(c.trades?.length ? c.trades : [c.trade]).filter(Boolean).map(t => (
                               <span key={t} style={{ fontSize: 11, fontWeight: 600, color: S.blue, background: S.blue + '18', padding: '1px 7px', borderRadius: 100 }}>{t}</span>
                             ))}
-                            {c.service_area && <span style={{ fontSize: 11, color: S.muted }}>· {c.service_area}</span>}
+                            {c.service_area && <span style={{ fontSize: 11, color: S.muted }}>· {parseServiceArea(c.service_area)}</span>}
                           </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
