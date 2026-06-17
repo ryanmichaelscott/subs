@@ -14,6 +14,7 @@ const TRADES_LIST = [
   'Bathroom Remodel', 'Kitchen Remodel', 'Siding & Stucco', 'Smart Home / AV',
   'Additions & ADUs', 'Flooring', 'Insulation', 'Waterproofing', 'Fencing',
   'Decks & Patios', 'Framing', 'House Cleaning', 'Gutters', 'Carpet Cleaning',
+  'Solar', 'Finish Carpentry',
 ]
 
 const PRICING_TYPES = ['per job', 'per hour', 'per sq ft', 'per unit', 'per visit', 'custom']

@@ -11,6 +11,7 @@ const TRADES_LIST = [
   'Bathroom Remodel', 'Kitchen Remodel', 'Siding & Stucco', 'Smart Home / AV',
   'Additions & ADUs', 'Flooring', 'Insulation', 'Waterproofing', 'Fencing',
   'Decks & Patios', 'Framing', 'House Cleaning', 'Gutters', 'Carpet Cleaning',
+  'Solar', 'Finish Carpentry',
 ]
 
 const US_STATES = [

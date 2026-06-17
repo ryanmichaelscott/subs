@@ -22,6 +22,7 @@ serve(async (req) => {
     let arrCents = 0
     let totalCount = 0
     const mrrByTierCents: Record<string, number> = { Member: 0, 'Member+': 0, Elite: 0, Contractor: 0 }
+    const lines: { customer: string; label: string; price_id: string; unit_amount: number; interval: string; annual: number }[] = []
     let hasMore = true
     let startingAfter: string | undefined
 
@@ -29,11 +30,15 @@ serve(async (req) => {
       const page = await stripe.subscriptions.list({
         status: 'active',
         limit: 100,
-        expand: ['data.items.data.price'],
+        expand: ['data.items.data.price', 'data.customer'],
         ...(startingAfter ? { starting_after: startingAfter } : {}),
       })
 
       for (const sub of page.data) {
+        const customerEmail = typeof sub.customer === 'object' && sub.customer !== null
+          ? (sub.customer as Stripe.Customer).email ?? sub.customer.id
+          : String(sub.customer)
+
         for (const item of sub.items.data) {
           const price = item.price as Stripe.Price
           const unitAmount = price.unit_amount ?? 0
@@ -41,7 +46,6 @@ serve(async (req) => {
           const interval = price.recurring?.interval
           const intervalCount = price.recurring?.interval_count ?? 1
 
-          // Annualize at full plan price — quantity * unit_amount, no coupon impact
           let annualCents = 0
           if (interval === 'month') {
             annualCents = (unitAmount * quantity / intervalCount) * 12
@@ -53,13 +57,21 @@ serve(async (req) => {
 
           arrCents += annualCents
 
-          // Bucket by tier or contractor
           const tier = MEMBER_PRICE_TIERS[price.id]
           if (tier) {
             mrrByTierCents[tier] += annualCents / 12
           } else {
             mrrByTierCents['Contractor'] += annualCents / 12
           }
+
+          lines.push({
+            customer: customerEmail,
+            label: tier ?? 'Contractor',
+            price_id: price.id,
+            unit_amount: unitAmount,
+            interval: interval ? `${intervalCount > 1 ? intervalCount + 'x' : ''}${interval}` : '?',
+            annual: Math.round(annualCents) / 100,
+          })
         }
         totalCount++
       }
@@ -73,7 +85,7 @@ serve(async (req) => {
     const mrrCents = Math.round(arrCents / 12)
     const mrrByTier: Record<string, number> = {}
     for (const [k, v] of Object.entries(mrrByTierCents)) {
-      mrrByTier[k] = Math.round(v) / 100  // dollars, rounded to cent
+      mrrByTier[k] = Math.round(v) / 100
     }
 
     return new Response(JSON.stringify({
@@ -81,6 +93,7 @@ serve(async (req) => {
       mrr: mrrCents / 100,
       subscription_count: totalCount,
       mrr_by_tier: mrrByTier,
+      lines,
     }), { headers: { ...cors, 'Content-Type': 'application/json' } })
   } catch (err) {
     console.error('get-stripe-revenue error:', err)
