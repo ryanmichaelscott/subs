@@ -49,7 +49,7 @@ serve(async (req) => {
     const { data: referrals } = await supabase
       .from('referrals')
       .select('referred_email, status, reward_applied, created_at, converted_at')
-      .eq('referrer_id', member.id)
+      .eq('referrer_member_id', member.id)
       .order('created_at', { ascending: false })
 
     const total = referrals?.length ?? 0

@@ -80,7 +80,7 @@ serve(async (req) => {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'SUBS <noreply@subsapp.com>',
+          from: 'SUBS <noreply@subs.app>',
           to: memberEmail,
           subject: `How did your ${trade || 'job'} go? Leave a review`,
           html: `
@@ -91,7 +91,7 @@ serve(async (req) => {
                 ${contractorName} has marked your ${trade ? trade.toLowerCase() : 'job'} as complete. How did it go?
                 ${memberName ? `Hi ${memberName.split(' ')[0]}, ` : ''}leaving a quick review helps other SUBS members and rewards great contractors.
               </p>
-              <a href="https://www.subsapp.com/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none">
+              <a href="https://subs.app/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none">
                 Leave a Review →
               </a>
               <p style="color:#8A9088;font-size:12px;margin-top:32px">

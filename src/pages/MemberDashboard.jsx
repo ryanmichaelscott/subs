@@ -158,11 +158,11 @@ export default function MemberDashboard() {
       const phone = user.phoneNumbers?.[0]?.phoneNumber || null
 
       // Upsert member via service role (bypasses RLS, preserves Stripe/tier fields on update)
-      const pendingRef = localStorage.getItem('subs_ref')
+      const pendingRef = localStorage.getItem('subs_referral_code')
       const { data: upsertData } = await supabase.functions.invoke('upsert-member', {
         body: { clerk_user_id: user.id, email, name, ...(phone ? { phone } : {}), ...(pendingRef ? { referral_code: pendingRef } : {}) },
       })
-      if (pendingRef && upsertData?.created) localStorage.removeItem('subs_ref')
+      if (pendingRef && upsertData?.created) localStorage.removeItem('subs_referral_code')
       let memberRow = upsertData?.member
 
       if (memberRow) {
@@ -739,7 +739,7 @@ export default function MemberDashboard() {
                 {/* Referral Program */}
                 {referralStats && (() => {
                   const { referral_code, converted, total, referrals } = referralStats
-                  const refLink = `https://www.subsapp.com/?ref=${referral_code}`
+                  const refLink = `https://subs.app/?ref=${referral_code}`
                   const nextMilestone = converted >= 3 ? null : converted >= 1 ? 3 : 1
                   const reward = converted >= 3 ? 'free year' : converted >= 1 ? '$20 off' : null
                   const progressMsg = converted >= 3

@@ -47,7 +47,7 @@ export default function ContractorPaymentSuccess() {
           <div style={{ fontFamily: C.display, fontSize: 28, color: S.offwhite, marginBottom: 12 }}>Payment received</div>
           <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.7, marginBottom: 28 }}>
             Your payment went through but we had trouble activating your account automatically. Contact us at{' '}
-            <a href="mailto:hello@subsapp.com" style={{ color: S.green }}>hello@subsapp.com</a> and we'll get you set up right away.
+            <a href="mailto:hello@subs.app" style={{ color: S.green }}>hello@subs.app</a> and we'll get you set up right away.
           </p>
         </div>
       </div>

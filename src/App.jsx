@@ -1,5 +1,5 @@
-import { Component, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
+import { Component } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Marketing from './pages/Marketing'
 import MemberLogin from './pages/MemberLogin'
 import CheckoutPage from './pages/CheckoutPage'
@@ -41,20 +41,10 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
-function RefCapture() {
-  const [searchParams] = useSearchParams()
-  useEffect(() => {
-    const ref = searchParams.get('ref')
-    if (ref) localStorage.setItem('subs_ref', ref)
-  }, [])
-  return null
-}
-
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/*" element={<RefCapture />} />
         <Route path="/" element={<Marketing />} />
         <Route path="/signup" element={<Marketing />} />
         <Route path="/login" element={<MemberLogin />} />
