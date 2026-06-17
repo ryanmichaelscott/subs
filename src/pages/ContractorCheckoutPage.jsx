@@ -10,7 +10,6 @@ export default function ContractorCheckoutPage() {
   const [checking, setChecking] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [promoCode, setPromoCode] = useState('')
   const [contractor, setContractor] = useState(null)
   const [price, setPrice] = useState(null)
 
@@ -57,7 +56,6 @@ export default function ContractorCheckoutPage() {
     const { data, error: fnError } = await supabase.functions.invoke('create-contractor-checkout-session', {
       body: {
         email,
-        promo_code: promoCode.trim() || undefined,
         success_url: `${window.location.origin}/contractor/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/contractor/checkout`,
       },
@@ -125,18 +123,6 @@ export default function ContractorCheckoutPage() {
               </div>
             </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                Promo Code <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
-              </label>
-              <input
-                type="text"
-                value={promoCode}
-                onChange={e => { setPromoCode(e.target.value.toUpperCase()); setError(null) }}
-                placeholder="PARTNER20"
-                style={{ ...inp, letterSpacing: '0.05em' }}
-              />
-            </div>
 
             {error && (
               <div style={{ background: '#2D1010', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: S.danger, fontSize: 13 }}>
