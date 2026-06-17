@@ -42,7 +42,7 @@ function Card({ children, style, className = '', ...props }) {
   return <div className={`md-card ${className}`} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, boxSizing: 'border-box', ...style }} {...props}>{children}</div>
 }
 
-const TIER_COLORS = { Member: S.green, 'Member+': S.green, Elite: S.green }
+const TIER_COLORS = { Member: S.green, 'Member+': S.blue, Elite: S.purple }
 
 function parseServiceArea(raw) {
   if (!raw) return null
