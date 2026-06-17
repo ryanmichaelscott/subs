@@ -60,7 +60,7 @@ function parseServiceArea(raw) {
     return raw
   }
 }
-const TIER_PRICES = { Member: '$99/yr', 'Member+': '$199/yr', Elite: '$399/yr' }
+const TIER_PRICES = { Member: '$99/yr', 'Member+': '$179/yr', Elite: '$349/yr' }
 
 function MemberCard({ name, member }) {
   const tier = member?.tier || 'Member'
@@ -138,8 +138,8 @@ export default function MemberDashboard() {
 
   const PLAN_PRICE_IDS = {
     member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
-    plus: 'price_1TiRQBAYDs9oVarW14DBq2HL',
-    elite: 'price_1TiRQZAYDs9oVarWcZ10xjDG',
+    plus: 'price_1TjQ8TAYDs9oVarWqCQyxLM5',
+    elite: 'price_1TjQ7DAYDs9oVarWbJONkQ1P',
   }
 
   useEffect(() => {
@@ -941,7 +941,7 @@ export default function MemberDashboard() {
                     <div>
                       <p style={{ fontSize: 13, color: S.muted, marginBottom: 14 }}>No active subscription found. Choose a plan to get started.</p>
                       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                        {[['member', 'Member', '$99/yr', 'price_1TiRPcAYDs9oVarWLWpp0wLZ'], ['plus', 'Member+', '$199/yr', 'price_1TiRQBAYDs9oVarW14DBq2HL'], ['elite', 'Elite', '$399/yr', 'price_1TiRQZAYDs9oVarWcZ10xjDG']].map(([id, name, price, priceId]) => (
+                        {[['member', 'Member', '$99/yr', 'price_1TiRPcAYDs9oVarWLWpp0wLZ'], ['plus', 'Member+', '$179/yr', 'price_1TjQ8TAYDs9oVarWqCQyxLM5'], ['elite', 'Elite', '$349/yr', 'price_1TjQ7DAYDs9oVarWbJONkQ1P']].map(([id, name, price, priceId]) => (
                           <button
                             key={id}
                             onClick={async () => {

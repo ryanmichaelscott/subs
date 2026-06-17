@@ -35,8 +35,8 @@ const TIERS = [
   {
     id: 'plus',
     name: 'Member+',
-    price: 199,
-    priceId: 'price_1TiRQBAYDs9oVarW14DBq2HL',
+    price: 179,
+    priceId: 'price_1TjQ8TAYDs9oVarWqCQyxLM5',
     color: S.blue,
     tagline: 'Deeper discounts + job coordination.',
     perks: [
@@ -50,8 +50,8 @@ const TIERS = [
   {
     id: 'elite',
     name: 'Elite',
-    price: 399,
-    priceId: 'price_1TiRQZAYDs9oVarWcZ10xjDG',
+    price: 349,
+    priceId: 'price_1TjQ7DAYDs9oVarWbJONkQ1P',
     color: S.purple,
     tagline: 'White-glove. One call does it all.',
     perks: [

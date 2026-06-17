@@ -3,8 +3,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const PRICE_TO_TIER: Record<string, string> = {
   'price_1TiRPcAYDs9oVarWLWpp0wLZ': 'Member',
-  'price_1TiRQBAYDs9oVarW14DBq2HL': 'Member+',
-  'price_1TiRQZAYDs9oVarWcZ10xjDG': 'Elite',
+  'price_1TjQ8TAYDs9oVarWqCQyxLM5': 'Member+',
+  'price_1TjQ7DAYDs9oVarWbJONkQ1P': 'Elite',
 }
 
 async function verifyStripeSignature(payload: string, sigHeader: string, secret: string): Promise<boolean> {

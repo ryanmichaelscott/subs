@@ -56,8 +56,8 @@ const TIERS = [
   {
     id: 'plus',
     name: 'Member+',
-    priceId: 'price_1TiRQBAYDs9oVarW14DBq2HL',
-    price: 199,
+    priceId: 'price_1TjQ8TAYDs9oVarWqCQyxLM5',
+    price: 179,
     color: S.blue,
     tagline: 'Deeper discounts + concierge coordination.',
     popular: true,
@@ -73,8 +73,8 @@ const TIERS = [
   {
     id: 'elite',
     name: 'Elite',
-    priceId: 'price_1TiRQZAYDs9oVarWcZ10xjDG',
-    price: 399,
+    priceId: 'price_1TjQ7DAYDs9oVarWbJONkQ1P',
+    price: 349,
     color: S.purple,
     tagline: 'Maximum savings. One call does it all.',
     perks: [
