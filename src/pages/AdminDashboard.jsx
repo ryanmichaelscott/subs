@@ -166,8 +166,10 @@ export default function AdminDashboard() {
   const handleStatusUpdate = async (id, newStatus) => {
     setActionLoading(id)
     try {
-      const { error } = await supabase.from('contractors').update({ status: newStatus }).eq('id', id)
-      if (error) { setActionError(`Update failed: ${error.message}`); return }
+      const { data, error } = await supabase.functions.invoke('admin-set-contractor-status', {
+        body: { contractor_id: id, status: newStatus },
+      })
+      if (error || data?.error) { setActionError(`Update failed: ${error?.message || data?.error}`); return }
       setContractors(cs => cs.map(c => c.id === id ? { ...c, status: newStatus } : c))
     } catch (e) {
       setActionError(`Unexpected error: ${e.message}`)
