@@ -7,6 +7,14 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Safe wrappers — never throw, always return a usable value
+async function safeCount(query: any): Promise<number> {
+  try { const r = await query; return r.count ?? 0 } catch { return 0 }
+}
+async function safeData(query: any): Promise<any[]> {
+  try { const r = await query; return r.data ?? [] } catch { return [] }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
@@ -20,93 +28,79 @@ serve(async (req) => {
     const now = new Date()
     const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
-    const endOfLastMonth = startOfThisMonth
     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()).toISOString()
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString()
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
     const startOfMonthTs = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000)
 
     const [
-      activeMembersRes,
-      newThisMonthRes,
-      newLastMonthRes,
-      activeContractorsRes,
-      allContractors6moRes,
-      jobsThisMonthRes,
-      jobsLastMonthRes,
-      jobsLast30Res,
-      leadsAcceptedRes,
-      leadsTotalRes,
-      referralsRes,
-      referralSignupsThisMonthRes,
-      newMembersThisMonthCountRes,
-      waitlistRes,
-      npsRes,
+      totalActive,
+      newThisMonth,
+      newLastMonth,
+      activeContractors,
+      oldContractors,
+      jobsThisMonth,
+      jobsLastMonth,
+      jobsLast30,
+      leadsAccepted,
+      leadsTotal,
+      referrals,
+      referralSignupsThisMonth,
+      newMembersThisMonth,
+      waitlistData,
+      npsData,
     ] = await Promise.all([
-      supabase.from('members').select('id', { count: 'exact', head: true }).eq('status', 'Active'),
-      supabase.from('members').select('id', { count: 'exact', head: true }).eq('status', 'Active').gte('joined_at', startOfThisMonth),
-      supabase.from('members').select('id', { count: 'exact', head: true }).gte('joined_at', startOfLastMonth).lt('joined_at', endOfLastMonth),
-      supabase.from('contractors').select('id, service_area').eq('status', 'active'),
-      supabase.from('contractors').select('id, status').lt('submitted_at', sixMonthsAgo),
-      supabase.from('job_requests').select('id', { count: 'exact', head: true }).gte('submitted_at', startOfThisMonth),
-      supabase.from('job_requests').select('id', { count: 'exact', head: true }).gte('submitted_at', startOfLastMonth).lt('submitted_at', endOfLastMonth),
-      supabase.from('job_requests').select('id', { count: 'exact', head: true }).gte('submitted_at', thirtyDaysAgo),
-      supabase.from('lead_notifications').select('id', { count: 'exact', head: true }).in('status', ['accepted', 'completed']),
-      supabase.from('lead_notifications').select('id', { count: 'exact', head: true }).in('status', ['accepted', 'declined', 'expired', 'completed']),
-      supabase.from('referrals').select('status, referred_member_id, created_at'),
-      supabase.from('referrals').select('id', { count: 'exact', head: true }).not('referred_member_id', 'is', null).gte('created_at', startOfThisMonth),
-      supabase.from('members').select('id', { count: 'exact', head: true }).gte('joined_at', startOfThisMonth),
-      supabase.from('waitlist').select('state'),
-      supabase.from('nps_responses').select('score').gte('survey_date', ninetyDaysAgo).catch(() => ({ data: [] })),
+      safeCount(supabase.from('members').select('id', { count: 'exact', head: true }).eq('status', 'Active')),
+      safeCount(supabase.from('members').select('id', { count: 'exact', head: true }).eq('status', 'Active').gte('joined_at', startOfThisMonth)),
+      safeCount(supabase.from('members').select('id', { count: 'exact', head: true }).gte('joined_at', startOfLastMonth).lt('joined_at', startOfThisMonth)),
+      safeData(supabase.from('contractors').select('id, service_area').eq('status', 'active')),
+      safeData(supabase.from('contractors').select('id, status').lt('submitted_at', sixMonthsAgo)),
+      safeCount(supabase.from('job_requests').select('id', { count: 'exact', head: true }).gte('submitted_at', startOfThisMonth)),
+      safeCount(supabase.from('job_requests').select('id', { count: 'exact', head: true }).gte('submitted_at', startOfLastMonth).lt('submitted_at', startOfThisMonth)),
+      safeCount(supabase.from('job_requests').select('id', { count: 'exact', head: true }).gte('submitted_at', thirtyDaysAgo)),
+      safeCount(supabase.from('lead_notifications').select('id', { count: 'exact', head: true }).in('status', ['accepted', 'completed'])),
+      safeCount(supabase.from('lead_notifications').select('id', { count: 'exact', head: true }).in('status', ['accepted', 'declined', 'expired', 'completed'])),
+      safeData(supabase.from('referrals').select('status, referred_member_id, created_at')),
+      safeCount(supabase.from('referrals').select('id', { count: 'exact', head: true }).not('referred_member_id', 'is', null).gte('created_at', startOfThisMonth)),
+      safeCount(supabase.from('members').select('id', { count: 'exact', head: true }).gte('joined_at', startOfThisMonth)),
+      safeData(supabase.from('waitlist').select('state')),
+      safeData(supabase.from('nps_responses').select('score').gte('survey_date', ninetyDaysAgo)),
     ])
 
     // Members
-    const totalActive = activeMembersRes.count ?? 0
-    const newThisMonth = newThisMonthRes.count ?? 0
-    const newLastMonth = newLastMonthRes.count ?? 0
     const momGrowthPct = newLastMonth > 0
       ? Math.round(((newThisMonth - newLastMonth) / newLastMonth) * 100)
       : newThisMonth > 0 ? 100 : 0
 
     // Contractors
-    const activeContractors = activeContractorsRes.data ?? []
     const totalActiveContractors = activeContractors.length
-    const old = allContractors6moRes.data ?? []
-    const retention6mo = old.length > 0
-      ? Math.round((old.filter(c => c.status === 'active').length / old.length) * 100)
+    const retention6mo = oldContractors.length > 0
+      ? Math.round((oldContractors.filter((c: any) => c.status === 'active').length / oldContractors.length) * 100)
       : null
 
-    // Active markets (distinct states from active contractor service areas)
-    const activeStates = [...new Set(activeContractors.map(c => {
+    // Active markets
+    const activeStates = [...new Set(activeContractors.map((c: any) => {
       try { return JSON.parse(c.service_area || '{}')?.state } catch { return null }
     }).filter(Boolean))].sort()
 
     // Waitlist by state
     const waitlistByState: Record<string, number> = {}
-    for (const w of (waitlistRes.data ?? [])) {
+    for (const w of waitlistData) {
       if (w.state) waitlistByState[w.state] = (waitlistByState[w.state] || 0) + 1
     }
 
     // Jobs
-    const jobsThisMonth = jobsThisMonthRes.count ?? 0
-    const jobsLastMonth = jobsLastMonthRes.count ?? 0
-    const jobsLast30 = jobsLast30Res.count ?? 0
     const avgJobsPerMember = totalActive > 0 ? Math.round((jobsLast30 / totalActive) * 10) / 10 : 0
-    const leadsAccepted = leadsAcceptedRes.count ?? 0
-    const leadsTotal = leadsTotalRes.count ?? 0
     const acceptanceRate = leadsTotal > 0 ? Math.round((leadsAccepted / leadsTotal) * 100) : 0
 
     // Referrals
-    const referrals = referralsRes.data ?? []
     const totalReferrals = referrals.length
-    const convertedReferrals = referrals.filter(r => r.status === 'converted').length
+    const convertedReferrals = referrals.filter((r: any) => r.status === 'converted').length
     const conversionRate = totalReferrals > 0 ? Math.round((convertedReferrals / totalReferrals) * 100) : 0
-    const referralSignupsThisMonth = referralSignupsThisMonthRes.count ?? 0
-    const newMembersThisMonth = newMembersThisMonthCountRes.count ?? 0
     const pctFromReferral = newMembersThisMonth > 0 ? Math.round((referralSignupsThisMonth / newMembersThisMonth) * 100) : 0
 
     // NPS (rolling 90 days)
-    const npsScores = ((npsRes as any).data ?? []).map((r: any) => r.score)
+    const npsScores = npsData.map((r: any) => r.score)
     let npsScore: number | null = null
     if (npsScores.length > 0) {
       const promoters = npsScores.filter((s: number) => s >= 9).length
@@ -117,15 +111,9 @@ serve(async (req) => {
     // Cancellations this month from Stripe
     let cancellationsThisMonth = 0
     try {
-      const canceled = await stripe.subscriptions.list({
-        status: 'canceled',
-        limit: 100,
-        created: { gte: startOfMonthTs },
-      })
+      const canceled = await stripe.subscriptions.list({ status: 'canceled', limit: 100, created: { gte: startOfMonthTs } })
       cancellationsThisMonth = canceled.data.length
-    } catch (_e) {
-      // Non-critical
-    }
+    } catch (_e) { /* non-critical */ }
 
     return new Response(JSON.stringify({
       members: { total_active: totalActive, new_this_month: newThisMonth, new_last_month: newLastMonth, mom_growth_pct: momGrowthPct },
