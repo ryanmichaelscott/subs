@@ -33,17 +33,36 @@ serve(async (req) => {
       })
     }
 
-    const { error, count } = await supabase
+    const updatePayload = {
+      status: 'active',
+      stripe_customer_id: session.customer as string | null,
+      stripe_subscription_id: session.subscription as string | null,
+    }
+
+    // Try matching by email first
+    let { error, count } = await supabase
       .from('contractors')
-      .update({
-        status: 'active',
-        stripe_customer_id: session.customer as string | null,
-        stripe_subscription_id: session.subscription as string | null,
-      })
+      .update(updatePayload)
       .eq('contact_email', email.toLowerCase().trim())
       .select('id', { count: 'exact', head: true })
 
     if (error) throw new Error(`DB update failed: ${error.message}`)
+
+    // Fall back: match by company name in Stripe metadata (handles email mismatch)
+    if (!count || count === 0) {
+      const companyName = (session.metadata as Record<string, string> | null)?.company_name
+      if (companyName) {
+        const fallback = await supabase
+          .from('contractors')
+          .update(updatePayload)
+          .ilike('name', companyName.trim())
+          .select('id', { count: 'exact', head: true })
+        error = fallback.error
+        count = fallback.count
+        if (error) throw new Error(`DB update failed (fallback): ${error.message}`)
+      }
+    }
+
     if (!count || count === 0) throw new Error(`No contractor found for email: ${email}`)
 
     return new Response(JSON.stringify({ success: true }), {

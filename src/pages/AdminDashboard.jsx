@@ -466,13 +466,22 @@ export default function AdminDashboard() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {c.status === 'approved' && (
-                      <button
-                        onClick={() => handleResendInvitation(c.id)}
-                        disabled={actionLoading === c.id}
-                        style={{ background: 'transparent', border: `1px solid ${S.blue}66`, color: S.blue, fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
-                      >
-                        {actionLoading === c.id ? '…' : 'Resend Invite'}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleResendInvitation(c.id)}
+                          disabled={actionLoading === c.id}
+                          style={{ background: 'transparent', border: `1px solid ${S.blue}66`, color: S.blue, fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                        >
+                          {actionLoading === c.id ? '…' : 'Resend Invite'}
+                        </button>
+                        <button
+                          onClick={() => handleStatusUpdate(c.id, 'active')}
+                          disabled={actionLoading === c.id}
+                          style={{ background: 'transparent', border: `1px solid ${S.green}66`, color: S.green, fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                        >
+                          {actionLoading === c.id ? '…' : 'Mark Active'}
+                        </button>
+                      </>
                     )}
                     <button
                       onClick={() => handleDeleteContractor(c.id, c.name)}
