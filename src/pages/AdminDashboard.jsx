@@ -41,6 +41,8 @@ export default function AdminDashboard() {
   const [launchResult, setLaunchResult] = useState({})
 
   const [stripeRevenue, setStripeRevenue] = useState(null)
+  const [kpiData, setKpiData] = useState(null)
+  const [kpiLoading, setKpiLoading] = useState(false)
 
   const loadData = async () => {
     await Promise.all([
@@ -234,7 +236,15 @@ export default function AdminDashboard() {
   const churnCount = members.filter(m => m.status === 'Churned').length
   const churnRate = members.length ? ((churnCount / members.length) * 100).toFixed(1) : '0.0'
 
-  const tabs = [['stats', '📊 Revenue Stats'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist']]
+  useEffect(() => {
+    if (tab !== 'kpis' || kpiData || kpiLoading) return
+    setKpiLoading(true)
+    supabase.functions.invoke('get-kpi-data')
+      .then(({ data }) => { if (data && !data.error) setKpiData(data) })
+      .finally(() => setKpiLoading(false))
+  }, [tab])
+
+  const tabs = [['stats', '📊 Revenue'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist'], ['kpis', '📈 KPIs']]
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
@@ -762,6 +772,118 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
+            </div>
+          )
+        })()}
+
+        {/* KPIs */}
+        {tab === 'kpis' && (() => {
+          const k = kpiData
+          const mrr = stripeRevenue?.mrr ?? null
+
+          function KpiCard({ label, value, sub, color }) {
+            return (
+              <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, padding: '20px 22px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{label}</div>
+                <div style={{ fontFamily: C.display, fontSize: 32, color: color || S.offwhite, lineHeight: 1 }}>{value ?? '—'}</div>
+                {sub && <div style={{ fontSize: 12, color: S.muted, marginTop: 6 }}>{sub}</div>}
+              </div>
+            )
+          }
+
+          function Section({ title, children }) {
+            return (
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14 }}>{title}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>{children}</div>
+              </div>
+            )
+          }
+
+          if (kpiLoading) return (
+            <div style={{ textAlign: 'center', padding: '80px 0', color: S.muted }}>
+              <div style={{ fontSize: 28, marginBottom: 12 }}>📈</div>
+              Loading KPI data…
+            </div>
+          )
+          if (!k) return (
+            <div style={{ textAlign: 'center', padding: '80px 0', color: S.muted, fontSize: 14 }}>
+              Failed to load KPI data. Check edge function logs.
+            </div>
+          )
+
+          const momColor = k.members.mom_growth_pct > 0 ? S.green : k.members.mom_growth_pct < 0 ? S.danger : S.muted
+          const npsColor = k.nps.score === null ? S.muted : k.nps.score >= 50 ? S.green : k.nps.score >= 0 ? S.amber : S.danger
+
+          return (
+            <div>
+              <Section title="Top Metrics">
+                <KpiCard label="Paying Members" value={k.members.total_active}
+                  sub={`${k.members.new_this_month} joined this month`} />
+                <KpiCard label="MoM Member Growth" value={`${k.members.mom_growth_pct > 0 ? '+' : ''}${k.members.mom_growth_pct}%`}
+                  color={momColor} sub={`${k.members.new_last_month} joined last month`} />
+                <KpiCard label="Active Contractors" value={k.contractors.total_active} />
+                <KpiCard label="MRR" value={mrr !== null ? `$${Math.round(mrr).toLocaleString()}` : '—'}
+                  color={S.green} sub="From live Stripe data" />
+                <KpiCard label="Active Markets" value={k.markets.active_count}
+                  sub={k.markets.active_states.join(', ') || 'None yet'} />
+              </Section>
+
+              <Section title="Engagement">
+                <KpiCard label="Jobs This Month" value={k.jobs.total_this_month}
+                  sub={`${k.jobs.total_last_month} last month`} />
+                <KpiCard label="Avg Jobs / Member" value={k.jobs.avg_per_member}
+                  sub="Per member, last 30 days" />
+                <KpiCard label="Lead Acceptance Rate" value={`${k.jobs.acceptance_rate}%`}
+                  color={k.jobs.acceptance_rate >= 50 ? S.green : S.amber}
+                  sub="Contractor accepted ÷ total leads sent" />
+              </Section>
+
+              <Section title="Health">
+                <KpiCard label="NPS Score (90-day)" value={k.nps.score !== null ? k.nps.score : 'No data'}
+                  color={npsColor} sub={`${k.nps.response_count} responses`} />
+                <KpiCard label="Cancellations This Month" value={k.cancellations_this_month}
+                  color={k.cancellations_this_month > 0 ? S.danger : S.green} />
+                <KpiCard label="Contractor Retention (6mo)" value={k.contractors.retention_6mo !== null ? `${k.contractors.retention_6mo}%` : 'Not enough data'}
+                  color={k.contractors.retention_6mo !== null ? (k.contractors.retention_6mo >= 75 ? S.green : S.amber) : S.muted}
+                  sub="Still active of those 6mo+ on platform" />
+                <KpiCard label="Referral Conversion" value={`${k.referrals.conversion_rate}%`}
+                  color={k.referrals.conversion_rate >= 20 ? S.green : S.amber}
+                  sub={`${k.referrals.converted} of ${k.referrals.total} referrals converted`} />
+              </Section>
+
+              <Section title="Growth">
+                <KpiCard label="Total Waitlist" value={Object.values(k.markets.waitlist_by_state).reduce((a, b) => a + b, 0)}
+                  sub="Across all states" />
+                <KpiCard label="Referral Signups This Month" value={`${k.referrals.pct_signups_from_referral}%`}
+                  color={S.blue} sub="New members from referral links" />
+              </Section>
+
+              {/* Waitlist by state table */}
+              {Object.keys(k.markets.waitlist_by_state).length > 0 && (
+                <div style={{ marginBottom: 32 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 14 }}>Waitlist by State</div>
+                  <Card style={{ padding: 0, overflow: 'hidden' }}>
+                    {Object.entries(k.markets.waitlist_by_state)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([state, count], i, arr) => (
+                        <div key={state} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderBottom: i < arr.length - 1 ? `1px solid ${S.border}` : 'none' }}>
+                          <span style={{ fontSize: 14, color: S.offwhite, fontWeight: 600 }}>{state}</span>
+                          <span style={{ fontSize: 13, color: S.muted }}>{count} {count === 1 ? 'person' : 'people'}</span>
+                        </div>
+                      ))}
+                  </Card>
+                </div>
+              )}
+
+              {/* NPS note */}
+              {k.nps.response_count === 0 && (
+                <Card style={{ padding: '20px 24px', background: S.surface }}>
+                  <div style={{ fontSize: 13, color: S.muted, lineHeight: 1.7 }}>
+                    <span style={{ color: S.offwhite, fontWeight: 600 }}>NPS surveys are active.</span> Members receive an automated email at day 45 and day 180 after signup with a 1–10 rating prompt. Responses will appear here once the first surveys go out.
+                  </div>
+                </Card>
+              )}
             </div>
           )
         })()}
