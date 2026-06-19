@@ -85,6 +85,32 @@ function parseServiceArea(raw) {
 }
 const TIER_PRICES = { Member: '$99/yr', 'Member+': '$179/yr', Elite: '$349/yr' }
 
+const TIER_PERKS = {
+  Member: [
+    'Access to the vetted SUBS contractor network',
+    'Member discounts on every service',
+    'Up to 5 service requests per year',
+    'Digital membership card',
+    'Concierge line — call us to book the right contractor',
+    '30-day money back guarantee',
+  ],
+  'Member+': [
+    'Unlimited service requests',
+    'Better rates + priority access',
+    'Priority concierge — skip the queue, faster response',
+    'Full job history and account management',
+    'Annual home maintenance checklist',
+    'Early access to new contractors and trades',
+  ],
+  Elite: [
+    'Best available rates + VIP priority scheduling',
+    'White glove concierge — we handle everything, you do nothing',
+    'Same-week scheduling guaranteed',
+    'Dedicated SUBS home advisor',
+    'First access to top-rated contractors in your area',
+  ],
+}
+
 function MemberCard({ name, member }) {
   const tier = member?.tier || 'Member'
   const joinedYear = member?.joined_at ? new Date(member.joined_at).getFullYear() : '—'
@@ -414,6 +440,10 @@ export default function MemberDashboard() {
 
   const jobsDone = jobRequests.filter(j => ['Complete', 'Scheduled', 'accepted', 'completed'].includes(j.status)).length
   const tradesUsed = new Set(jobRequests.map(j => j.trade).filter(Boolean)).size
+  const totalSaved = jobsDone * 75
+
+  const yearAgo = new Date(); yearAgo.setFullYear(yearAgo.getFullYear() - 1)
+  const requestsThisYear = jobRequests.filter(j => new Date(j.submitted_at) > yearAgo).length
 
   const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }
   const tabs = [['directory', '📋 Directory'], ['request', '➕ Request'], ['history', '🕐 History'], ['account', '⚙️ Account']]
@@ -473,24 +503,65 @@ export default function MemberDashboard() {
             <MemberCard name={member?.name || displayName} member={member} />
             <Card style={{ padding: 20 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Quick Stats</div>
-              {[[String(jobsDone), 'Jobs completed'], [String(tradesUsed), 'Trades used'], [String(jobRequests.length), 'Total requests']].map(([val, label]) => (
+              {[
+                [String(jobsDone), 'Jobs completed'],
+                [String(tradesUsed), 'Trades used'],
+                [String(jobRequests.length), 'Total requests'],
+              ].map(([val, label]) => (
                 <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <span style={{ fontSize: 13, color: S.muted }}>{label}</span>
                   <span style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{val}</span>
                 </div>
               ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2, paddingTop: 10, borderTop: `1px solid ${S.border}` }}>
+                <span style={{ fontSize: 13, color: S.muted }}>Total saved</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: S.green }}>${totalSaved > 0 ? totalSaved.toLocaleString() + '+' : '0'}</span>
+              </div>
             </Card>
+
+            {/* Member-tier: service request usage tracker */}
+            {member?.tier === 'Member' && (
+              <Card style={{ padding: 20 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Service Requests</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                  <span style={{ fontSize: 13, color: S.offwhite, fontWeight: 600 }}>{requestsThisYear} of 5 used this year</span>
+                  <span style={{ fontSize: 11, color: requestsThisYear >= 5 ? S.danger : S.muted }}>
+                    {requestsThisYear >= 5 ? 'Limit reached' : `${5 - requestsThisYear} left`}
+                  </span>
+                </div>
+                <div style={{ height: 6, background: S.surface, borderRadius: 3, overflow: 'hidden', marginBottom: requestsThisYear >= 5 ? 14 : 0 }}>
+                  <div style={{ height: '100%', width: `${Math.min((requestsThisYear / 5) * 100, 100)}%`, background: requestsThisYear >= 5 ? S.danger : S.green, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                </div>
+                {requestsThisYear >= 5 && (
+                  <button
+                    onClick={async () => {
+                      setUpgradeLoading(true)
+                      const { data } = await supabase.functions.invoke('create-checkout-session', {
+                        body: { price_id: PLAN_PRICE_IDS.plus, clerk_user_id: user?.id, email: user?.primaryEmailAddress?.emailAddress, success_url: `${window.location.origin}/dashboard`, cancel_url: `${window.location.origin}/dashboard` },
+                      })
+                      setUpgradeLoading(false)
+                      if (data?.url) window.location.href = data.url
+                    }}
+                    style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '9px 0', borderRadius: 8, cursor: upgradeLoading ? 'not-allowed' : 'pointer', opacity: upgradeLoading ? 0.7 : 1 }}
+                  >
+                    {upgradeLoading ? 'Loading…' : 'Upgrade to Member+ →'}
+                  </button>
+                )}
+              </Card>
+            )}
+
+            {/* Your Benefits */}
             <Card style={{ padding: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>Your Rate Card</div>
-              {[['HVAC', '15–20% off'], ['Plumbing', '38–40% off'], ['Lawn Care', 'Contractor rate'], ['Windows', '38–45% off']].map(([trade, rate]) => (
-                <div key={trade} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 13, color: S.muted }}>{trade}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: S.green }}>{rate}</span>
+              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>
+                Your Benefits
+                {member?.tier && <span style={{ marginLeft: 8, color: TIER_COLORS[member.tier] || S.green, textTransform: 'none', fontSize: 10, fontWeight: 700 }}>· {member.tier}</span>}
+              </div>
+              {(TIER_PERKS[member?.tier] || TIER_PERKS.Member).map((perk, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 9 }}>
+                  <span style={{ color: S.green, fontSize: 11, flexShrink: 0, marginTop: 2, fontWeight: 700 }}>✓</span>
+                  <span style={{ fontSize: 12, color: S.muted, lineHeight: 1.45 }}>{perk}</span>
                 </div>
               ))}
-              <div style={{ fontSize: 11, color: S.muted, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${S.border}` }}>
-                + 26 more trades at member rates
-              </div>
             </Card>
           </div>
 
@@ -694,10 +765,8 @@ export default function MemberDashboard() {
                     <button onClick={async () => {
                       if (!jobForm.trade || !jobForm.zip) return
                       // Check 5-request annual limit for Member tier
-                      if (member?.tier === 'Member') {
-                        const yearAgo = new Date(); yearAgo.setFullYear(yearAgo.getFullYear() - 1)
-                        const requestsThisYear = jobRequests.filter(j => new Date(j.submitted_at) > yearAgo).length
-                        if (requestsThisYear >= 5) { setShowServiceLimitModal(true); return }
+                      if (member?.tier === 'Member' && requestsThisYear >= 5) {
+                        setShowServiceLimitModal(true); return
                       }
                       setSearching(true)
                       const { data } = await supabase.functions.invoke('create-lead', {
@@ -730,11 +799,19 @@ export default function MemberDashboard() {
             {tab === 'history' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {jobRequests.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '60px 0', color: S.muted }}>
-                    <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-                    <div style={{ fontSize: 15, marginBottom: 8 }}>No jobs yet.</div>
-                    <div style={{ fontSize: 13 }}>Submit a request to get started.</div>
-                  </div>
+                  <Card style={{ padding: '52px 28px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 38, marginBottom: 16 }}>🏠</div>
+                    <div style={{ fontFamily: C.display, fontSize: 22, color: S.offwhite, marginBottom: 10 }}>No service requests yet.</div>
+                    <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.7, maxWidth: 340, margin: '0 auto 24px' }}>
+                      Ready to save on your first home service? We'll match you with a vetted contractor at your member rate.
+                    </p>
+                    <button
+                      onClick={() => setTab('request')}
+                      style={{ background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: 'pointer' }}
+                    >
+                      Request a Service →
+                    </button>
+                  </Card>
                 )}
                 {jobRequests.map((job) => {
                   const sc = STATUS_CONFIG[job.status] || { label: job.status, color: S.muted }
