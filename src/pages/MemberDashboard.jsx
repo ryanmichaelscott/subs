@@ -602,7 +602,10 @@ export default function MemberDashboard() {
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           {c.discount_description && <div style={{ fontSize: 13, fontWeight: 700, color: S.green }}>{c.discount_description}</div>}
-                          <div style={{ fontSize: 12, color: S.muted }}>⭐ {c.rating > 0 ? c.rating : '—'} · {c.jobs_count ?? 0} {c.jobs_count === 1 ? 'review' : 'reviews'}</div>
+                          {c.google_rating > 0 && c.google_review_count > 0 && (
+                            <div style={{ fontSize: 12, fontWeight: 600, color: S.offwhite }}>⭐ {c.google_rating} · <span style={{ color: S.muted }}>{c.google_review_count} Google reviews</span></div>
+                          )}
+                          <div style={{ fontSize: 12, color: S.muted }}>SUBS: {c.rating > 0 ? `⭐ ${c.rating}` : '—'} · {c.jobs_count ?? 0} {c.jobs_count === 1 ? 'job review' : 'job reviews'}</div>
                         </div>
                       </div>
                       {selectedContractor === c.id && (

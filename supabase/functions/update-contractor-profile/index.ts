@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
-    const { contractor_id, name, contact_name, phone, trade, trades, bio, service_area } = await req.json()
+    const { contractor_id, name, contact_name, phone, trade, trades, bio, service_area, google_review_popup_dismissed } = await req.json()
 
     if (!contractor_id) {
       return new Response(JSON.stringify({ error: 'contractor_id required' }), {
@@ -25,6 +25,7 @@ serve(async (req) => {
 
     const updates: Record<string, any> = { name, contact_name, phone, trade, trades, bio }
     if (service_area !== undefined) updates.service_area = service_area
+    if (google_review_popup_dismissed !== undefined) updates.google_review_popup_dismissed = google_review_popup_dismissed
 
     const { data, error } = await supabase
       .from('contractors')
