@@ -1416,7 +1416,6 @@ export default function ContractorDashboard() {
           </div>
         )}
       </div>
-    </div>
 
       {/* Google Reviews popup */}
       {showGooglePopup && (
@@ -1486,7 +1485,6 @@ export default function ContractorDashboard() {
           </div>
         </div>
       )}
+    </div>
   )
 }
-
-export default ContractorDashboard
