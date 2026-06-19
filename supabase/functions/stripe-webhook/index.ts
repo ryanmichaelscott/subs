@@ -73,6 +73,9 @@ serve(async (req) => {
       tier = tierFromSubscription(sub) || 'Member'
     }
 
+    const sessionEmail = session.customer_details?.email || session.customer_email || ''
+    const sessionName = session.customer_details?.name || ''
+
     const { data: existingMember } = await supabase
       .from('members')
       .select('id')
@@ -85,11 +88,22 @@ serve(async (req) => {
         .update({ tier, status: 'Active', stripe_customer_id: customerId, stripe_subscription_id: subscriptionId })
         .eq('clerk_user_id', clerkUserId)
     } else {
-      const sessionEmail = session.customer_details?.email || session.customer_email || ''
       await supabase
         .from('members')
         .insert({ clerk_user_id: clerkUserId, email: sessionEmail, tier, status: 'Active', stripe_customer_id: customerId, stripe_subscription_id: subscriptionId })
     }
+
+    // Notify admin — non-critical
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/notify-admin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: 'member', name: sessionName, email: sessionEmail, tier }),
+      })
+    } catch (e) { console.error('Admin notify error:', e) }
   }
 
   else if (event.type === 'checkout.session.expired') {

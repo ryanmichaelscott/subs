@@ -52,6 +52,25 @@ serve(async (req) => {
 
     if (dbError) throw new Error(dbError.message)
 
+    // Notify admin — non-critical
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/notify-admin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'contractor',
+          name: contact_name?.trim() || '',
+          email: normalizedEmail,
+          phone: phone?.trim() || '',
+          trades,
+          company_name: company_name.trim(),
+        }),
+      })
+    } catch (e) { console.error('Admin notify error:', e) }
+
     // Create Clerk user account directly — enables OTP login immediately.
     // Invitations only create a pending state; the contractor can't sign in via OTP
     // until they have a real account. POST /v1/users creates it right away.
