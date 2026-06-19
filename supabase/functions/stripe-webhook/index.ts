@@ -104,6 +104,18 @@ serve(async (req) => {
         body: JSON.stringify({ type: 'member', name: sessionName, email: sessionEmail, tier }),
       })
     } catch (e) { console.error('Admin notify error:', e) }
+
+    // Generate PassKit digital card + send welcome email — non-critical
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/create-passkit-pass`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ clerk_user_id: clerkUserId, name: sessionName, email: sessionEmail, tier }),
+      })
+    } catch (e) { console.error('PassKit pass error:', e) }
   }
 
   else if (event.type === 'checkout.session.expired') {
