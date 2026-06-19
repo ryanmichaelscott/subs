@@ -39,7 +39,7 @@ serve(async (req) => {
 
     const { error } = await supabase
       .from('waitlist')
-      .upsert({ name: name || null, email, state, zip: null }, { onConflict: 'email' })
+      .upsert({ name: name || null, email, state }, { onConflict: 'email' })
 
     if (error) throw error
 
