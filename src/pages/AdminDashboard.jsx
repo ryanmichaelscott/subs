@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
+import RevenueChart from '../components/RevenueChart'
 
 const TIER_COLORS = { Member: S.green, 'Member+': S.blue, Elite: S.purple }
 const STATUS_COLORS = { Active: S.green, Churned: S.danger, Trial: S.amber }
@@ -330,19 +331,30 @@ export default function AdminDashboard() {
               </Card>
 
               <Card style={{ padding: 24 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 16 }}>Revenue (Last 4 months)</div>
-                {[['Mar', 1240], ['Apr', 1640], ['May', 1980], ['Jun', 2280]].map(([month, val]) => (
-                  <div key={month} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                    <span style={{ fontSize: 12, color: S.muted, width: 28 }}>{month}</span>
-                    <div style={{ flex: 1, height: 24, background: S.surface, borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${(val / 2280) * 100}%`, background: `linear-gradient(90deg, ${S.green}, ${S.blue})`, borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: S.black }}>${val}</span>
+                <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 16 }}>Revenue by Plan</div>
+                {[
+                  { tier: 'Member', color: S.green },
+                  { tier: 'Member+', color: S.blue },
+                  { tier: 'Elite', color: S.purple },
+                  { tier: 'Contractor', color: S.amber },
+                ].map(({ tier, color }) => {
+                  const mrr = stripeRevenue?.mrr_by_tier?.[tier] ?? 0
+                  return (
+                    <div key={tier} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 12px', background: S.surface, borderRadius: 8, marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                        <span style={{ fontSize: 13, color: S.offwhite }}>{tier}</span>
                       </div>
+                      <span style={{ fontSize: 13, color: mrr > 0 ? color : S.muted, fontWeight: 600 }}>
+                        ${Math.round(mrr).toLocaleString()}/mo
+                      </span>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </Card>
             </div>
+
+            <RevenueChart supabase={supabase} />
 
             {stripeRevenue?.lines?.length > 0 && (
               <Card style={{ padding: 24, marginBottom: 20 }}>
