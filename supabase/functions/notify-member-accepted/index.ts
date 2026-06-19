@@ -77,12 +77,12 @@ serve(async (req) => {
         if (jobRequest?.clerk_user_id) {
           const { data: member } = await supabase
             .from('members')
-            .select('phone, name')
+            .select('phone, name, sms_consent')
             .eq('clerk_user_id', jobRequest.clerk_user_id)
             .single()
 
           if (member) {
-            memberPhone = member.phone || null
+            memberPhone = (member.phone && member.sms_consent === true) ? member.phone : null
             memberName = member.name || 'Member'
           }
         }
@@ -104,7 +104,7 @@ serve(async (req) => {
   const rateClause = rate ? ` at ${rate}` : ''
   await sendSms(
     memberPhone,
-    `SUBS: ${contractorName} accepted your ${service} request${rateClause}. They'll be in touch to schedule.\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app`,
+    `SUBS: ${contractorName} accepted your ${service} request${rateClause}. They'll be in touch to schedule.\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app\n\nReply STOP to opt out.`,
   )
 
   return new Response(JSON.stringify({ success: true }), {

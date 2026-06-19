@@ -17,7 +17,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
-    const { clerk_user_id, email, name, phone, zip, referral_code } = await req.json()
+    const { clerk_user_id, email, name, phone, zip, referral_code, sms_consent, sms_consent_at, phone_popup_dismissed } = await req.json()
 
     if (!clerk_user_id) {
       return new Response(JSON.stringify({ error: 'clerk_user_id required' }), {
@@ -37,11 +37,14 @@ serve(async (req) => {
       .single()
 
     if (existing) {
-      const updates: Record<string, string> = {}
+      const updates: Record<string, any> = {}
       if (email) updates.email = email
       if (name) updates.name = name
       if (phone !== undefined) updates.phone = phone
       if (zip !== undefined) updates.zip = zip
+      if (sms_consent !== undefined) updates.sms_consent = sms_consent
+      if (sms_consent_at !== undefined) updates.sms_consent_at = sms_consent_at
+      if (phone_popup_dismissed !== undefined) updates.phone_popup_dismissed = phone_popup_dismissed
 
       const { data } = await supabase
         .from('members')

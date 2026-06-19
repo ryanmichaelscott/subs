@@ -155,11 +155,11 @@ export default function MemberDashboard() {
   const [reviewSubmitting, setReviewSubmitting] = useState(false)
   const [referralStats, setReferralStats] = useState(null)
   const [refLinkCopied, setRefLinkCopied] = useState(false)
-  const [phoneInput, setPhoneInput] = useState('')
-  const [phoneSaving, setPhoneSaving] = useState(false)
-  const [phoneBannerDismissed, setPhoneBannerDismissed] = useState(
-    () => sessionStorage.getItem('subs_phone_prompt_dismissed') === '1'
-  )
+  const [showPhonePopup, setShowPhonePopup] = useState(false)
+  const [popupPhone, setPopupPhone] = useState('')
+  const [popupConsent, setPopupConsent] = useState(false)
+  const [popupDontShow, setPopupDontShow] = useState(false)
+  const [popupSaving, setPopupSaving] = useState(false)
   const [filtered, setFiltered] = useState([])
 
   const PLAN_PRICE_IDS = {
@@ -287,15 +287,21 @@ export default function MemberDashboard() {
     init()
   }, [user])
 
-  const handleSavePhone = async () => {
-    if (!phoneInput.trim()) return
-    setPhoneSaving(true)
+  const handlePhonePopupSave = async () => {
+    if (!popupPhone.trim() || !popupConsent || popupSaving) return
+    setPopupSaving(true)
     await supabase.functions.invoke('upsert-member', {
-      body: { clerk_user_id: user.id, phone: phoneInput.trim() },
+      body: {
+        clerk_user_id: isImpersonating ? (member?.clerk_user_id || '') : user?.id,
+        phone: popupPhone.trim(),
+        sms_consent: true,
+        sms_consent_at: new Date().toISOString(),
+      },
     })
-    setMember(m => ({ ...m, phone: phoneInput.trim() }))
-    setProfileForm(f => ({ ...f, phone: phoneInput.trim() }))
-    setPhoneSaving(false)
+    setMember(m => ({ ...m, phone: popupPhone.trim(), sms_consent: true }))
+    setProfileForm(f => ({ ...f, phone: popupPhone.trim() }))
+    setPopupSaving(false)
+    setShowPhonePopup(false)
   }
 
   const handleSaveProfile = async () => {
@@ -372,6 +378,14 @@ export default function MemberDashboard() {
     compute()
     return () => { cancelled = true }
   }, [contractors, tradeFilter, zipFilter])
+
+  // Show phone popup once when member loads without a phone number
+  useEffect(() => {
+    if (!member?.clerk_user_id) return
+    if (member.phone || member.phone_popup_dismissed) return
+    if (sessionStorage.getItem('subs_phone_prompt_dismissed') === '1') return
+    setShowPhonePopup(true)
+  }, [member?.clerk_user_id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmitReview = async (job) => {
     if (!reviewForm.rating) return
@@ -451,36 +465,6 @@ export default function MemberDashboard() {
         />
       )}
 
-      {member && !member.phone && !phoneBannerDismissed && (
-        <div style={{ background: S.amber + '12', borderBottom: `1px solid ${S.amber}30`, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, color: S.offwhite, flex: '1 1 180px' }}>
-            📱 Add your phone number to get SMS alerts when a contractor accepts your job request.
-          </span>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-            <input
-              type="tel"
-              placeholder="(555) 000-0000"
-              value={phoneInput}
-              onChange={e => setPhoneInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSavePhone()}
-              style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 7, padding: '7px 12px', color: S.offwhite, fontSize: 13, outline: 'none', width: 150, boxSizing: 'border-box' }}
-            />
-            <button
-              onClick={handleSavePhone}
-              disabled={phoneSaving || !phoneInput.trim()}
-              style={{ background: S.green, color: S.black, border: 'none', borderRadius: 7, padding: '7px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: phoneSaving || !phoneInput.trim() ? 0.6 : 1, whiteSpace: 'nowrap' }}
-            >
-              {phoneSaving ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              onClick={() => { sessionStorage.setItem('subs_phone_prompt_dismissed', '1'); setPhoneBannerDismissed(true) }}
-              style={{ background: 'transparent', border: 'none', color: S.muted, fontSize: 20, cursor: 'pointer', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="md-outer" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px', boxSizing: 'border-box' }}>
         <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, alignItems: 'start' }}>
@@ -956,6 +940,7 @@ export default function MemberDashboard() {
                       <div>
                         <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Phone</label>
                         <input value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} placeholder="(801) 555-0100" style={inp} />
+                        <div style={{ fontSize: 11, color: S.muted, marginTop: 5, lineHeight: 1.5 }}>By adding your phone number, you agree to receive service updates and notifications from SUBS via SMS. Message &amp; data rates may apply. Reply STOP to opt out.</div>
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Zip code</label>
@@ -1050,6 +1035,102 @@ export default function MemberDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Phone number collection popup */}
+      {showPhonePopup && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 20 }}>
+          <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 18, padding: '32px 28px', maxWidth: 460, width: '100%' }}>
+            {/* Headline */}
+            <h2 style={{ fontFamily: C.display, fontSize: 32, fontWeight: 400, color: S.offwhite, margin: '0 0 10px', lineHeight: 1.1 }}>
+              Stay in the loop.
+            </h2>
+            <p style={{ fontSize: 14, color: S.muted, margin: '0 0 22px', lineHeight: 1.6 }}>
+              Add your phone number to receive real-time updates on your service requests.
+            </p>
+
+            {/* Why we collect it */}
+            <div style={{ background: S.surface, borderRadius: 12, padding: '14px 16px', marginBottom: 22 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>We use your number exclusively for:</div>
+              {[
+                'Booking confirmations when a contractor is assigned',
+                'Service reminders and scheduling updates',
+                'Support from our concierge team at 1-888-454-3019',
+                'Status updates when your job is accepted or completed',
+              ].map((item, i, arr) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < arr.length - 1 ? 7 : 0 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: S.green, flexShrink: 0, marginTop: 6 }} />
+                  <span style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.5 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Phone input */}
+            <input
+              type="tel"
+              placeholder="(801) 555-0100"
+              value={popupPhone}
+              onChange={e => setPopupPhone(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handlePhonePopupSave()}
+              style={{ width: '100%', boxSizing: 'border-box', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, padding: '13px 16px', color: S.offwhite, fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10 }}
+            />
+
+            {/* TCPA language */}
+            <p style={{ fontSize: 11, color: S.muted, lineHeight: 1.6, margin: '0 0 14px' }}>
+              By providing your phone number, you agree to receive SMS notifications from SUBS including service updates, booking confirmations, and support messages. Message &amp; data rates may apply. Reply STOP at any time to unsubscribe.
+            </p>
+
+            {/* SMS consent checkbox */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 20, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={popupConsent}
+                onChange={e => setPopupConsent(e.target.checked)}
+                style={{ marginTop: 2, accentColor: S.green, width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.5 }}>I agree to receive SMS notifications from SUBS</span>
+            </label>
+
+            {/* Save button */}
+            <button
+              onClick={handlePhonePopupSave}
+              disabled={!popupPhone.trim() || !popupConsent || popupSaving}
+              style={{ width: '100%', background: (!popupPhone.trim() || !popupConsent) ? S.surface : S.green, border: `1px solid ${(!popupPhone.trim() || !popupConsent) ? S.border : S.green}`, borderRadius: 10, color: (!popupPhone.trim() || !popupConsent) ? S.muted : S.black, fontSize: 15, fontWeight: 700, padding: '14px 0', cursor: (!popupPhone.trim() || !popupConsent || popupSaving) ? 'not-allowed' : 'pointer', marginBottom: 10, transition: 'all 0.12s' }}
+            >
+              {popupSaving ? 'Saving…' : 'Save My Number'}
+            </button>
+
+            {/* Remind me later */}
+            <button
+              onClick={() => { sessionStorage.setItem('subs_phone_prompt_dismissed', '1'); setShowPhonePopup(false) }}
+              style={{ width: '100%', background: 'transparent', border: 'none', color: S.muted, fontSize: 13, cursor: 'pointer', padding: '8px 0', marginBottom: 14 }}
+            >
+              Remind me later
+            </button>
+
+            {/* Don't show again */}
+            <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: 14 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={popupDontShow}
+                  onChange={async (e) => {
+                    setPopupDontShow(e.target.checked)
+                    if (e.target.checked) {
+                      setShowPhonePopup(false)
+                      await supabase.functions.invoke('upsert-member', {
+                        body: { clerk_user_id: isImpersonating ? (member?.clerk_user_id || '') : user?.id, phone_popup_dismissed: true },
+                      })
+                      setMember(m => ({ ...m, phone_popup_dismissed: true }))
+                    }
+                  }}
+                  style={{ accentColor: S.muted, width: 14, height: 14, flexShrink: 0, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 12, color: S.muted }}>Don't show this again</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Service limit upgrade modal */}
       {showServiceLimitModal && (

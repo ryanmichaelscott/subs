@@ -180,7 +180,7 @@ serve(async (req) => {
     // SMS each matched contractor
     await Promise.all(matched.map(c => {
       if (!c.phone) return Promise.resolve()
-      const msg = `New SUBS lead: ${trade} · Zip ${zip}${state ? `, ${state}` : ''}. Log in to accept: https://getsubs.co/contractor/dashboard\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app`
+      const msg = `New SUBS lead: ${trade} · Zip ${zip}${state ? `, ${state}` : ''}. Log in to accept: https://getsubs.co/contractor/dashboard\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app\n\nReply STOP to opt out.`
       return sendSms(c.phone, msg)
     }))
 

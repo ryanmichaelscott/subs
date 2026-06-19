@@ -188,7 +188,7 @@ serve(async (req) => {
   if (contractorPhone) {
     await sendSms(
       contractorPhone,
-      `SUBS: New lead — ${lead.service} in ${lead.address}. Member rate: ${lead.rate}. Log in to accept: https://getsubs.co/contractor/dashboard\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app`,
+      `SUBS: New lead — ${lead.service} in ${lead.address}. Member rate: ${lead.rate}. Log in to accept: https://getsubs.co/contractor/dashboard\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app\n\nReply STOP to opt out.`,
     )
   }
 

@@ -90,15 +90,15 @@ serve(async (req) => {
       .eq('id', contractor_id)
       .single()
 
-    // Fetch member phone (for SMS to member)
+    // Fetch member phone (for SMS to member) — only if sms_consent is true
     let memberPhone: string | null = null
     if (updated.clerk_user_id) {
       const { data: member } = await supabase
         .from('members')
-        .select('phone')
+        .select('phone, sms_consent')
         .eq('clerk_user_id', updated.clerk_user_id)
         .single()
-      memberPhone = member?.phone || null
+      memberPhone = (member?.phone && member.sms_consent === true) ? member.phone : null
     }
 
     const resendKey = Deno.env.get('RESEND_API_KEY')
@@ -213,13 +213,13 @@ serve(async (req) => {
 
     // SMS the member
     if (memberPhone) {
-      const msg = `Your SUBS contractor is confirmed — ${contractorName} accepted your ${trade} request.${contractorPhone ? ` Their number: ${contractorPhone}` : ''} They'll be in touch shortly.\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app`
+      const msg = `Your SUBS contractor is confirmed — ${contractorName} accepted your ${trade} request.${contractorPhone ? ` Their number: ${contractorPhone}` : ''} They'll be in touch shortly.\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app\n\nReply STOP to opt out.`
       await sendSms(memberPhone, msg)
     }
 
     // SMS the contractor
     if (contractorPhone) {
-      const msg = `SUBS: You accepted the ${trade} lead.${memberPhone ? ` Member contact: ${memberName}, ${memberPhone}` : ` Member: ${memberName}`}. Check your email for full details.\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app`
+      const msg = `SUBS: You accepted the ${trade} lead.${memberPhone ? ` Member contact: ${memberName}, ${memberPhone}` : ` Member: ${memberName}`}. Check your email for full details.\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app\n\nReply STOP to opt out.`
       await sendSms(contractorPhone, msg)
     }
 
