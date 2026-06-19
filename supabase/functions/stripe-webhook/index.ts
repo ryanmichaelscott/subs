@@ -92,6 +92,23 @@ serve(async (req) => {
     }
   }
 
+  else if (event.type === 'checkout.session.expired') {
+    const session = event.data.object
+    const email = session.customer_details?.email || session.customer_email || ''
+    const name = session.customer_details?.name || ''
+    const clerkUserId = session.metadata?.clerk_user_id || null
+
+    if (email) {
+      await supabase.from('abandoned_checkouts').upsert({
+        session_id: session.id,
+        email,
+        name,
+        clerk_user_id: clerkUserId,
+        expired_at: new Date().toISOString(),
+      }, { onConflict: 'session_id' })
+    }
+  }
+
   else if (event.type === 'customer.subscription.updated') {
     const sub = event.data.object
     const clerkUserId = sub.metadata?.clerk_user_id
