@@ -758,12 +758,14 @@ function Footer() {
           {[
             { title: 'Membership', links: ['Member', 'Member+', 'Elite', 'How It Works'] },
             { title: 'Company', links: ['How It Works', 'Vendor Network', 'FAQ', 'For Vendors'] },
-            { title: 'Legal', links: ['Terms', 'Privacy', 'Licensing'] },
+            { title: 'Legal', links: ['Terms', 'Privacy', 'Licensing', 'SMS Consent'] },
           ].map(col => (
             <div key={col.title}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase', marginBottom: 14 }}>{col.title}</div>
               {col.links.map(link => (
-                <div key={link} style={{ fontSize: 13, color: S.muted, marginBottom: 10, cursor: 'pointer' }}>{link}</div>
+                link === 'SMS Consent'
+                  ? <div key={link} style={{ marginBottom: 10 }}><Link to="/sms-consent" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>SMS Consent</Link></div>
+                  : <div key={link} style={{ fontSize: 13, color: S.muted, marginBottom: 10, cursor: 'pointer' }}>{link}</div>
               ))}
             </div>
           ))}

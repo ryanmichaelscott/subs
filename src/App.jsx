@@ -13,6 +13,7 @@ import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import WaitlistPage from './pages/WaitlistPage'
 import NpsPage from './pages/NpsPage'
+import SmsConsent from './pages/SmsConsent'
 import ProtectedRoute from './components/ProtectedRoute'
 
 class DashboardErrorBoundary extends Component {
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/waitlist" element={<WaitlistPage />} />
         <Route path="/nps" element={<NpsPage />} />
+        <Route path="/sms-consent" element={<SmsConsent />} />
         <Route path="/dashboard" element={
           <ProtectedRoute role="member"><MemberDashboard /></ProtectedRoute>
         } />
