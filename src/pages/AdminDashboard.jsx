@@ -276,7 +276,7 @@ export default function AdminDashboard() {
                   {contractors.filter(c => c.status === 'pending').length}
                 </span>
               )}
-              {id === 'waitlist' && waitlistEntries.filter(e => !e.notified_at).length > 0 && (
+              {id === 'waitlist' && tab !== 'waitlist' && waitlistEntries.filter(e => !e.notified_at).length > 0 && (
                 <span style={{ position: 'absolute', top: 4, right: 8, background: S.blue, color: S.black, borderRadius: '50%', width: 16, height: 16, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {waitlistEntries.filter(e => !e.notified_at).length}
                 </span>
