@@ -110,6 +110,7 @@ serve(async (req) => {
         status: 'paid',
         limit: 100,
         created: { gte: winStartTs, lte: winEndTs },
+        expand: ['data.subscription'],
         ...(startingAfter ? { starting_after: startingAfter } : {}),
       })
 
@@ -118,14 +119,23 @@ serve(async (req) => {
 
         const ts = (inv.status_transitions?.paid_at ?? inv.created) as number
 
-        // Determine member vs contractor by inspecting line item price IDs
+        // Determine member vs contractor — check line items first, then expanded subscription
         let isMember = false
         for (const line of (inv.lines?.data ?? [])) {
           const price = line.price
-          const priceId = typeof price === 'string' ? price : price?.id
-          if (priceId && MEMBER_PRICE_IDS.has(priceId)) {
-            isMember = true
-            break
+          const priceId = typeof price === 'string' ? price : (price as any)?.id
+          if (priceId && MEMBER_PRICE_IDS.has(priceId)) { isMember = true; break }
+          // also check legacy plan field
+          const plan = (line as any).plan
+          const planId = typeof plan === 'string' ? plan : (plan as any)?.id
+          if (planId && MEMBER_PRICE_IDS.has(planId)) { isMember = true; break }
+        }
+        // Fallback: check expanded subscription items
+        if (!isMember && inv.subscription && typeof inv.subscription !== 'string') {
+          const sub = inv.subscription as any
+          for (const item of (sub.items?.data ?? [])) {
+            const priceId = typeof item.price === 'string' ? item.price : item.price?.id
+            if (priceId && MEMBER_PRICE_IDS.has(priceId)) { isMember = true; break }
           }
         }
         // Skip one-time charges that aren't subscriptions
@@ -153,23 +163,28 @@ serve(async (req) => {
       startingAfter = hasMore ? page.data[page.data.length - 1].id : undefined
     }
 
+    const cTotalAll = cTotalMember + cTotalContractor
+    const pTotalAll = pTotalMember + pTotalContractor
+
     const points = labels.map(label => ({
       label,
-      current: Math.round(cBuckets[label].member) / 100,
-      previous: Math.round(pBuckets[label].member) / 100,
+      current: Math.round(cBuckets[label].member + cBuckets[label].contractor) / 100,
+      previous: Math.round(pBuckets[label].member + pBuckets[label].contractor) / 100,
     }))
 
-    const pctChange = pTotalMember > 0
-      ? Math.round(((cTotalMember - pTotalMember) / pTotalMember) * 100)
-      : cTotalMember > 0 ? 100 : 0
+    const pctChange = pTotalAll > 0
+      ? Math.round(((cTotalAll - pTotalAll) / pTotalAll) * 100)
+      : cTotalAll > 0 ? 100 : 0
 
     return new Response(JSON.stringify({
       period,
       points,
       summary: {
-        current_total: Math.round(cTotalMember) / 100,
-        previous_total: Math.round(pTotalMember) / 100,
+        current_total: Math.round(cTotalAll) / 100,
+        previous_total: Math.round(pTotalAll) / 100,
         pct_change: pctChange,
+        member_current: Math.round(cTotalMember) / 100,
+        member_previous: Math.round(pTotalMember) / 100,
         contractor_current: Math.round(cTotalContractor) / 100,
         contractor_previous: Math.round(pTotalContractor) / 100,
       },

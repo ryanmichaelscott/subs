@@ -84,7 +84,7 @@ export default function RevenueChart({ supabase }) {
 
       {/* Header row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite }}>Member Revenue</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite }}>Total Revenue</div>
 
         {/* Period toggle */}
         <div style={{ display: 'flex', gap: 3, background: S.surface, borderRadius: 8, padding: 3 }}>
@@ -204,22 +204,26 @@ export default function RevenueChart({ supabase }) {
         </ResponsiveContainer>
       )}
 
-      {/* Contractor revenue — only shown if there's any */}
-      {summary && (summary.contractor_current > 0 || summary.contractor_previous > 0) && (
+      {/* Per-type breakdown */}
+      {summary && (summary.member_current > 0 || summary.contractor_current > 0 || summary.member_previous > 0 || summary.contractor_previous > 0) && (
         <div style={{
           marginTop: 16, paddingTop: 16, borderTop: `1px solid ${S.border}`,
-          display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+          display: 'flex', gap: 24, flexWrap: 'wrap',
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.09em' }}>
-            Contractor Revenue
-          </div>
-          <div style={{ fontSize: 13 }}>
-            <span style={{ color: BLUE, fontWeight: 600 }}>{fmtDollar(summary.contractor_current)}</span>
-            <span style={{ color: S.muted, marginLeft: 5 }}>this {period}</span>
-          </div>
-          <div style={{ fontSize: 12, color: S.muted }}>
-            vs {fmtDollar(summary.contractor_previous)} {PREV_LABEL[period].toLowerCase()}
-          </div>
+          {(summary.member_current > 0 || summary.member_previous > 0) && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 4 }}>Members</div>
+              <span style={{ fontSize: 13, color: GREEN, fontWeight: 600 }}>{fmtDollar(summary.member_current)}</span>
+              <span style={{ fontSize: 12, color: S.muted, marginLeft: 6 }}>vs {fmtDollar(summary.member_previous)} prior</span>
+            </div>
+          )}
+          {(summary.contractor_current > 0 || summary.contractor_previous > 0) && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 4 }}>Contractors</div>
+              <span style={{ fontSize: 13, color: BLUE, fontWeight: 600 }}>{fmtDollar(summary.contractor_current)}</span>
+              <span style={{ fontSize: 12, color: S.muted, marginLeft: 6 }}>vs {fmtDollar(summary.contractor_previous)} prior</span>
+            </div>
+          )}
         </div>
       )}
     </div>
