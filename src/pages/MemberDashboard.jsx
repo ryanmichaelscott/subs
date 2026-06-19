@@ -143,6 +143,8 @@ export default function MemberDashboard() {
   const [jobForm, setJobForm] = useState({ trade: '', description: '', zip: memberZip, state: 'UT', date: '' })
   const [jobSubmitted, setJobSubmitted] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [showServiceLimitModal, setShowServiceLimitModal] = useState(false)
+  const [upgradeLoading, setUpgradeLoading] = useState(false)
   const [profileForm, setProfileForm] = useState({ name: '', phone: '', zip: '' })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
@@ -707,6 +709,12 @@ export default function MemberDashboard() {
                     </div>
                     <button onClick={async () => {
                       if (!jobForm.trade || !jobForm.zip) return
+                      // Check 5-request annual limit for Member tier
+                      if (member?.tier === 'Member') {
+                        const yearAgo = new Date(); yearAgo.setFullYear(yearAgo.getFullYear() - 1)
+                        const requestsThisYear = jobRequests.filter(j => new Date(j.submitted_at) > yearAgo).length
+                        if (requestsThisYear >= 5) { setShowServiceLimitModal(true); return }
+                      }
                       setSearching(true)
                       const { data } = await supabase.functions.invoke('create-lead', {
                         body: {
@@ -1042,6 +1050,46 @@ export default function MemberDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Service limit upgrade modal */}
+      {showServiceLimitModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
+          <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 32, maxWidth: 420, width: '100%' }}>
+            <div style={{ fontSize: 32, marginBottom: 16, textAlign: 'center' }}>📋</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: S.offwhite, marginBottom: 12, textAlign: 'center' }}>
+              Annual limit reached
+            </div>
+            <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.7, textAlign: 'center', marginBottom: 28 }}>
+              You've used all 5 of your annual service requests. Upgrade to Member+ for unlimited requests.
+            </p>
+            <button
+              onClick={async () => {
+                setUpgradeLoading(true)
+                const { data } = await supabase.functions.invoke('create-checkout-session', {
+                  body: {
+                    priceId: PLAN_PRICE_IDS.plus,
+                    email: user?.primaryEmailAddress?.emailAddress || '',
+                    name: user?.fullName || user?.firstName || '',
+                    clerk_user_id: user?.id || '',
+                  },
+                })
+                setUpgradeLoading(false)
+                if (data?.url) window.location.href = data.url
+              }}
+              disabled={upgradeLoading}
+              style={{ width: '100%', background: S.blue, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, padding: '13px 0', cursor: upgradeLoading ? 'not-allowed' : 'pointer', opacity: upgradeLoading ? 0.7 : 1, marginBottom: 12 }}
+            >
+              {upgradeLoading ? 'Redirecting…' : 'Upgrade to Member+ — $179/yr →'}
+            </button>
+            <button
+              onClick={() => setShowServiceLimitModal(false)}
+              style={{ width: '100%', background: 'transparent', border: `1px solid ${S.border}`, borderRadius: 10, color: S.muted, fontSize: 14, fontWeight: 600, padding: '11px 0', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
