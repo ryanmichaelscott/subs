@@ -47,7 +47,7 @@ const TIERS = [
     tagline: 'Access the SUBS contractor network.',
     perks: [
       'Access to the vetted SUBS contractor network',
-      'Member pricing on every service',
+      'Member discounts on every service',
       'Up to 5 service requests per year',
       'Digital membership card',
       'Concierge line — call us to find and book the right contractor',
