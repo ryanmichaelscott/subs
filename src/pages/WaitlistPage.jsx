@@ -101,13 +101,16 @@ export default function WaitlistPage() {
               <div style={{ textAlign: 'center', marginBottom: 36 }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.amber + '22', border: `1px solid ${S.amber}44`, borderRadius: 100, padding: '6px 16px', marginBottom: 20 }}>
                   <span style={{ color: S.amber, fontSize: 12 }}>●</span>
-                  <span style={{ color: S.amber, fontSize: 12, fontWeight: 600 }}>Coming soon to your state</span>
+                  <span style={{ color: S.amber, fontSize: 12, fontWeight: 600 }}>Coming soon to your area</span>
                 </div>
-                <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite, marginBottom: 12, lineHeight: 1.1 }}>
-                  We're not live in<br />{stateName || 'your state'} yet.
+                <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite, marginBottom: 16, lineHeight: 1.1 }}>
+                  We're so sorry — we aren't in {stateName || 'your area'} yet.
                 </div>
-                <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.65, margin: 0 }}>
-                  SUBS is expanding state by state. Confirm your spot and we'll notify you the moment vetted contractors are available in your area.
+                <p style={{ fontSize: 15, color: S.offwhite, lineHeight: 1.7, margin: '0 0 12px' }}>
+                  Joining the waitlist genuinely matters. Every signup from your area tells us exactly where to focus next — and once enough people sign up, we start onboarding contractors there.
+                </p>
+                <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.65, margin: 0 }}>
+                  You'll be first to know the moment SUBS launches near you, and first in line for early member pricing.
                 </p>
               </div>
 
