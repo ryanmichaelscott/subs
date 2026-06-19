@@ -167,38 +167,31 @@ serve(async (req) => {
   try {
     const { type, name, email, phone, tier, trades, company_name } = await req.json()
 
-    const adminEmail = Deno.env.get('ADMIN_EMAIL')
-    const adminPhone = Deno.env.get('ADMIN_PHONE')
+    // ADMIN_EMAIL supports comma-separated addresses: "ryan@neumi.com, partner@example.com"
+    const adminEmailRaw = Deno.env.get('ADMIN_EMAIL') || ''
+    const adminEmails = adminEmailRaw.split(',').map(e => e.trim()).filter(Boolean)
     const resendKey = Deno.env.get('RESEND_API_KEY')
 
     let subject: string
     let html: string
-    let smsBody: string
 
     if (type === 'member') {
       subject = `New ${tier} signup — ${email}`
       html = memberEmailHtml(name || '', email, tier || 'Member')
-      smsBody = `SUBS: New ${tier} signup — ${name ? name + ' · ' : ''}${email}`
     } else if (type === 'contractor') {
       subject = `New contractor application — ${company_name || email}`
       html = contractorEmailHtml(company_name || '', name || '', email, phone || '', trades || [])
-      smsBody = `SUBS: New contractor application — ${company_name || email}${trades?.length ? ' (' + trades.slice(0, 2).join(', ') + ')' : ''}`
     } else {
       return new Response(JSON.stringify({ error: 'Unknown type' }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
     }
 
-    // Send email
-    if (adminEmail && resendKey) {
+    // Send email to all admin addresses
+    if (adminEmails.length && resendKey) {
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: 'SUBS <hello@subs.app>', to: [adminEmail], subject, html }),
+        body: JSON.stringify({ from: 'SUBS <hello@subs.app>', to: adminEmails, subject, html }),
       })
-    }
-
-    // Send SMS
-    if (adminPhone) {
-      await sendSms(adminPhone, smsBody)
     }
 
     return new Response(JSON.stringify({ ok: true }), { headers: { ...cors, 'Content-Type': 'application/json' } })
