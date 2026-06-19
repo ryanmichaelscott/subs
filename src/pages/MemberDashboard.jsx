@@ -602,11 +602,7 @@ export default function MemberDashboard() {
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           {c.discount_description && <div style={{ fontSize: 13, fontWeight: 700, color: S.green }}>{c.discount_description}</div>}
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                            {['✓ Certified Pro', '✓ Licensed & Insured', '✓ Background Checked'].map(badge => (
-                              <span key={badge} style={{ fontSize: 11, fontWeight: 600, color: S.green, border: '1px solid rgba(93,255,138,0.4)', borderRadius: 20, padding: '3px 9px', lineHeight: 1.4 }}>{badge}</span>
-                            ))}
-                          </div>
+                          <span style={{ display: 'inline-block', marginTop: 6, fontSize: 11, fontWeight: 600, color: S.green, border: '1px solid rgba(93,255,138,0.4)', borderRadius: 20, padding: '3px 9px', lineHeight: 1.4 }}>✓ Certified Pro*</span>
                         </div>
                       </div>
                       {selectedContractor === c.id && (
@@ -683,6 +679,9 @@ export default function MemberDashboard() {
                       <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
                       <div>{contractors.length === 0 ? 'No contractors in your area yet. More coming soon.' : 'No contractors match your filters.'}</div>
                     </div>
+                  )}
+                  {filtered.length > 0 && (
+                    <div style={{ fontSize: 11, color: S.muted, padding: '12px 4px 0' }}>* Certified Pro contractors are licensed, insured, and highly rated.</div>
                   )}
                 </div>
               </div>
