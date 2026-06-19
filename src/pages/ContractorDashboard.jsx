@@ -648,15 +648,6 @@ export default function ContractorDashboard() {
   const [saCounties, setSaCounties] = useState('')
   const [saZip, setSaZip] = useState('')
   const [saRadius, setSaRadius] = useState('25')
-  const [googleUrl, setGoogleUrl] = useState('')
-  const [googleData, setGoogleData] = useState({ rating: null, reviewCount: null, placeId: null, connected: false })
-  const [googleSaving, setGoogleSaving] = useState(false)
-  const [googleError, setGoogleError] = useState(null)
-  const [showGooglePopup, setShowGooglePopup] = useState(false)
-  const [googlePopupUrl, setGooglePopupUrl] = useState('')
-  const [googlePopupDontShow, setGooglePopupDontShow] = useState(false)
-  const [googlePopupSaving, setGooglePopupSaving] = useState(false)
-
   const isActive = contractorStatus === 'active'
   const tabs = [['leads', '📥 Leads'], ['rates', '💲 Rates'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
 
@@ -720,17 +711,6 @@ export default function ContractorDashboard() {
           trades: data.trades?.length ? data.trades : [data.trade].filter(Boolean),
           bio: data.bio || p.bio,
         }))
-        if (data.google_maps_url) setGoogleUrl(data.google_maps_url)
-        setGoogleData({
-          rating: data.google_rating ?? null,
-          reviewCount: data.google_review_count ?? null,
-          placeId: data.google_place_id ?? null,
-          connected: !!data.google_place_id,
-        })
-        // Show Google popup if not dismissed and no reviews connected
-        if (!data.google_review_popup_dismissed && !data.google_place_id && !sessionStorage.getItem('subs_google_popup_dismissed')) {
-          setShowGooglePopup(true)
-        }
         const sa = (() => { try { return JSON.parse(data.service_area || 'null') } catch { return null } })()
         if (sa) {
           setSaType(sa.type || 'county')
@@ -1245,57 +1225,6 @@ export default function ContractorDashboard() {
               </div>
             </div>
 
-            {/* Google Reviews */}
-            <div style={{ marginBottom: 24, paddingBottom: 24, borderBottom: `1px solid ${S.border}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite }}>Google Reviews</div>
-                {googleData.connected && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: S.offwhite }}>⭐ {googleData.rating ?? '—'}</span>
-                    {googleData.reviewCount > 0 && <span style={{ fontSize: 12, color: S.muted }}>· {googleData.reviewCount} reviews</span>}
-                    <span style={{ fontSize: 11, fontWeight: 700, color: S.green, marginLeft: 4 }}>Connected</span>
-                  </div>
-                )}
-              </div>
-              {!googleData.connected && (
-                <div style={{ padding: '12px 14px', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, marginBottom: 12, fontSize: 13, color: S.muted, lineHeight: 1.5 }}>
-                  Contractors with Google reviews get significantly more job requests. Paste your Google Business Profile or Maps URL to display your rating.
-                </div>
-              )}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="url"
-                  value={googleUrl}
-                  onChange={e => { setGoogleUrl(e.target.value); setGoogleError(null) }}
-                  placeholder="Paste your Google Business Profile or Maps URL"
-                  style={{ flex: 1, background: S.surface, border: `1px solid ${googleError ? S.danger : S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                />
-                <button
-                  onClick={async () => {
-                    if (!googleUrl.trim() || !contractorId) return
-                    setGoogleSaving(true)
-                    setGoogleError(null)
-                    const { data, error } = await supabase.functions.invoke('connect-google-reviews', {
-                      body: { contractor_id: contractorId, google_maps_url: googleUrl.trim() },
-                    })
-                    setGoogleSaving(false)
-                    if (error || data?.error) { setGoogleError(data?.error || error?.message || 'Failed to connect. Try again.'); return }
-                    setGoogleData({ rating: data.google_rating, reviewCount: data.google_review_count, placeId: data.google_place_id, connected: true })
-                  }}
-                  disabled={googleSaving || !googleUrl.trim()}
-                  style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '10px 18px', borderRadius: 8, cursor: googleSaving || !googleUrl.trim() ? 'not-allowed' : 'pointer', opacity: !googleUrl.trim() ? 0.5 : 1, whiteSpace: 'nowrap', flexShrink: 0 }}
-                >
-                  {googleSaving ? 'Connecting…' : googleData.connected ? 'Update' : 'Connect'}
-                </button>
-              </div>
-              {googleError && <div style={{ fontSize: 12, color: S.danger, marginTop: 6 }}>{googleError}</div>}
-              {googleData.connected && googleData.rating && (
-                <div style={{ marginTop: 10, fontSize: 12, color: S.muted }}>
-                  Showing <span style={{ color: S.offwhite, fontWeight: 600 }}>⭐ {googleData.rating} · {googleData.reviewCount ?? 0} Google reviews</span> on your directory listing. Updates daily.
-                </div>
-              )}
-            </div>
-
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 12 }}>Documents</div>
               {[
@@ -1417,74 +1346,6 @@ export default function ContractorDashboard() {
         )}
       </div>
 
-      {/* Google Reviews popup */}
-      {showGooglePopup && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 20 }}>
-          <div style={{ background: '#101410', border: '1px solid #252A23', borderRadius: 18, padding: '32px 28px', maxWidth: 460, width: '100%' }}>
-            <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 32, fontWeight: 400, color: '#F0EEE8', margin: '0 0 14px', lineHeight: 1.1 }}>
-              Add your Google reviews.
-            </h2>
-            <p style={{ fontSize: 14, color: '#8A9088', margin: '0 0 24px', lineHeight: 1.7 }}>
-              Help members trust you instantly. Contractors with reviews get significantly more job requests. Paste your Google Business Profile URL below and your rating will appear in the directory automatically.
-            </p>
-            <input
-              type="url"
-              value={googlePopupUrl}
-              onChange={e => setGooglePopupUrl(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && googlePopupUrl.trim() && document.getElementById('google-popup-connect-btn')?.click()}
-              placeholder="Paste your Google Business Profile or Maps URL"
-              style={{ width: '100%', boxSizing: 'border-box', background: '#141814', border: '1px solid #252A23', borderRadius: 10, padding: '13px 16px', color: '#F0EEE8', fontSize: 14, outline: 'none', fontFamily: 'inherit', marginBottom: 16 }}
-            />
-            <button
-              id="google-popup-connect-btn"
-              onClick={async () => {
-                if (!googlePopupUrl.trim() || !contractorId) return
-                setGooglePopupSaving(true)
-                const { data, error } = await supabase.functions.invoke('connect-google-reviews', {
-                  body: { contractor_id: contractorId, google_maps_url: googlePopupUrl.trim() },
-                })
-                setGooglePopupSaving(false)
-                if (error || data?.error) {
-                  alert(data?.error || error?.message || 'Could not connect. Try a different URL.')
-                  return
-                }
-                setGoogleUrl(googlePopupUrl.trim())
-                setGoogleData({ rating: data.google_rating, reviewCount: data.google_review_count, placeId: data.google_place_id, connected: true })
-                setShowGooglePopup(false)
-              }}
-              disabled={!googlePopupUrl.trim() || googlePopupSaving}
-              style={{ width: '100%', background: !googlePopupUrl.trim() ? '#141814' : '#5DFF8A', border: `1px solid ${!googlePopupUrl.trim() ? '#252A23' : '#5DFF8A'}`, borderRadius: 10, color: !googlePopupUrl.trim() ? '#8A9088' : '#0C0F0A', fontSize: 15, fontWeight: 700, padding: '14px 0', cursor: !googlePopupUrl.trim() || googlePopupSaving ? 'not-allowed' : 'pointer', marginBottom: 10, transition: 'all 0.12s' }}
-            >
-              {googlePopupSaving ? 'Connecting…' : 'Connect Google Reviews'}
-            </button>
-            <button
-              onClick={() => { sessionStorage.setItem('subs_google_popup_dismissed', '1'); setShowGooglePopup(false) }}
-              style={{ width: '100%', background: 'transparent', border: 'none', color: '#8A9088', fontSize: 13, cursor: 'pointer', padding: '8px 0', marginBottom: 14 }}
-            >
-              Remind me later
-            </button>
-            <div style={{ borderTop: '1px solid #252A23', paddingTop: 14 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={googlePopupDontShow}
-                  onChange={async (e) => {
-                    setGooglePopupDontShow(e.target.checked)
-                    if (e.target.checked && contractorId) {
-                      setShowGooglePopup(false)
-                      await supabase.functions.invoke('connect-google-reviews', {
-                        body: { contractor_id: contractorId },
-                      })
-                    }
-                  }}
-                  style={{ accentColor: '#8A9088', width: 14, height: 14, cursor: 'pointer', flexShrink: 0 }}
-                />
-                <span style={{ fontSize: 12, color: '#8A9088' }}>Don't show this again</span>
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
