@@ -18,6 +18,7 @@ const TRADES = [
   { icon: '🌳', name: 'Tree Service', discount: '10–15% off' },
   { icon: '🍂', name: 'Landscaping', discount: 'Contractor rates' },
   { icon: '🐛', name: 'Pest Control', discount: '~40% off' },
+  { icon: '🌊', name: 'Fire, Mold & Flood Restoration', discount: 'Contractor rates' },
   { icon: '🔬', name: 'Mold Detection', discount: 'Contractor rates' },
   { icon: '💧', name: 'Water Filtration', discount: 'Contractor rates' },
   { icon: '🔨', name: 'Handyman', discount: '$65–75/hr' },

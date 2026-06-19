@@ -11,7 +11,7 @@ const TRADES = [
   'Fencing', 'Finish Carpentry', 'Fireplace & Chimney', 'Flooring', 'Framing',
   'Garage Doors', 'Gutters', 'Handyman', 'House Cleaning', 'HVAC',
   'Insulation', 'Interior Painting', 'Kitchen Remodel', 'Landscaping', 'Lawn Care',
-  'Mold Detection', 'Pest Control', 'Plumbing', 'Pool Service', 'Roofing',
+  'Fire, Mold & Flood Restoration', 'Mold Detection', 'Pest Control', 'Plumbing', 'Pool Service', 'Roofing',
   'Siding & Stucco', 'Smart Home / AV', 'Solar', 'Tree Service', 'Water Filtration',
   'Waterproofing', 'Window Install', 'Windows & Doors',
 ]
