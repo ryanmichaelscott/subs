@@ -1055,7 +1055,7 @@ export default function MemberDashboard() {
                       </div>
                     </div>
                     <div style={{ fontSize: 22, fontWeight: 800, color: S.offwhite }}>
-                      {member?.tier === 'Member' ? '$99' : member?.tier === 'Member+' ? '$199' : member?.tier === 'Elite' ? '$399' : '—'}
+                      {(TIER_PRICES[member?.tier] || '—').replace('/yr', '')}
                       <span style={{ fontSize: 13, color: S.muted, fontWeight: 400 }}>/yr</span>
                     </div>
                   </div>
