@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import https from 'https'
+import https from 'node:https'
 
 // Use Node.js https module instead of fetch for PassKit — more reliable in serverless
 // and surfaces the real cause (DNS, TLS, timeout) instead of a generic "fetch failed"

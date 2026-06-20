@@ -218,7 +218,8 @@ export default function AdminDashboard() {
       try { data = JSON.parse(text) } catch { data = null }
       setSendingCard(null)
       if (!res.ok || data?.error) {
-        alert(`Failed to send card:\n\n${data?.error || text.slice(0, 300)}`)
+        const detail = [data?.error, data?.detail, data?.cause].filter(Boolean).join('\n')
+        alert(`Failed to send card:\n\n${detail || text.slice(0, 500)}`)
       } else {
         setCardSent(prev => ({ ...prev, [m.id]: true }))
       }
