@@ -100,7 +100,7 @@ export default async function handler(req, res) {
     'Elite':   process.env.PASSKIT_ELITE_TEMPLATE_ID,
   }
   const resendKey = process.env.RESEND_API_KEY
-  const supabaseUrl = process.env.SUPABASE_URL
+  const supabaseUrl = process.env.VITE_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!apiKey) return res.status(500).json({ error: 'PASSKIT_API_KEY not configured' })
