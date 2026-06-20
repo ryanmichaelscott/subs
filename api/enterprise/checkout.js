@@ -1,8 +1,8 @@
 import Stripe from 'stripe'
 
 const PRICE_IDS = {
-  portfolio:    process.env.STRIPE_ENTERPRISE_PORTFOLIO_PRICE_ID,
-  professional: process.env.STRIPE_ENTERPRISE_PROFESSIONAL_PRICE_ID,
+  portfolio:    process.env.STRIPE_ENTERPRISE_PORTFOLIO_PRICE_ID    || 'price_1TkX1RAYDs9oVarWRPRsTDsU',
+  professional: process.env.STRIPE_ENTERPRISE_PROFESSIONAL_PRICE_ID || 'price_1TkX1hAYDs9oVarWI99Q2FP4',
 }
 
 export default async function handler(req, res) {

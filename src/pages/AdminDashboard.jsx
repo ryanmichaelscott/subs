@@ -4,6 +4,7 @@ import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
 import RevenueChart from '../components/RevenueChart'
+import CreateAccountModal from '../components/CreateAccountModal'
 
 const TIER_COLORS = { Member: S.green, 'Member+': S.blue, Elite: S.purple }
 const STATUS_COLORS = { Active: S.green, Churned: S.danger, Trial: S.amber }
@@ -51,6 +52,7 @@ export default function AdminDashboard() {
   const [enterpriseLeadFilter, setEnterpriseLeadFilter] = useState('all')
   const [assigningManager, setAssigningManager] = useState(null)
   const [managerForm, setManagerForm] = useState({ name: '', email: '', phone: '' })
+  const [showCreateAccount, setShowCreateAccount] = useState(false)
 
   const loadData = async () => {
     await Promise.all([
@@ -291,11 +293,13 @@ export default function AdminDashboard() {
           <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
           <span style={{ fontSize: 11, fontWeight: 700, color: S.danger, background: S.danger + '22', padding: '3px 10px', borderRadius: 100 }}>Admin</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => setShowCreateAccount(true)} style={{ background: S.green, border: 'none', color: S.black, fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, cursor: 'pointer', letterSpacing: '0.02em' }}>+ Create Account</button>
           <span style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || 'admin@subs.co'}</span>
-<button onClick={() => signOut().then(() => navigate('/admin/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
+          <button onClick={() => signOut().then(() => navigate('/admin/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
       </nav>
+      {showCreateAccount && <CreateAccountModal onClose={() => setShowCreateAccount(false)} onCreated={() => { loadData(); setShowCreateAccount(false) }} />}
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px' }}>
         <div style={{ marginBottom: 24 }}>

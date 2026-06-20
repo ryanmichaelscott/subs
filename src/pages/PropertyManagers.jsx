@@ -514,7 +514,7 @@ function Pricing() {
     {
       id: 'portfolio',
       name: 'Portfolio',
-      price: '$499',
+      price: '$749',
       period: '/yr',
       tagline: 'For growing portfolios up to 5 units.',
       highlighted: false,
@@ -532,7 +532,7 @@ function Pricing() {
     {
       id: 'professional',
       name: 'Professional',
-      price: '$1,499',
+      price: '$1,899',
       period: '/yr',
       tagline: 'For active property managers up to 20 units.',
       highlighted: true,
