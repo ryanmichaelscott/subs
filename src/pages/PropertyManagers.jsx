@@ -490,31 +490,6 @@ function HowItWorks() {
 
 // ─── Pricing ──────────────────────────────────────────────────────────────────
 function Pricing() {
-  const [loading, setLoading] = useState({})
-
-  const handleCheckout = async (plan) => {
-    setLoading((prev) => ({ ...prev, [plan]: true }))
-    try {
-      const res = await fetch('/api/enterprise/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        alert(data.error || 'Something went wrong. Please try again.')
-        setLoading((prev) => ({ ...prev, [plan]: false }))
-        return
-      }
-      if (data.url) {
-        window.location.href = data.url
-      }
-    } catch {
-      alert('Network error. Please check your connection and try again.')
-      setLoading((prev) => ({ ...prev, [plan]: false }))
-    }
-  }
-
   const tiers = [
     {
       id: 'portfolio',
@@ -531,8 +506,9 @@ function Pricing() {
         'Job history by property',
         '30-day money back guarantee',
       ],
-      cta: 'Get Started',
-      ctaAction: () => handleCheckout('portfolio'),
+      cta: 'Talk to Sales',
+      ctaAction: () => scrollTo('pm-contact'),
+      isSales: true,
     },
     {
       id: 'professional',
@@ -550,8 +526,9 @@ function Pricing() {
         'Bulk job request submission',
         'Everything in Portfolio',
       ],
-      cta: 'Get Started',
-      ctaAction: () => handleCheckout('professional'),
+      cta: 'Talk to Sales',
+      ctaAction: () => scrollTo('pm-contact'),
+      isSales: true,
     },
     {
       id: 'enterprise',
@@ -713,19 +690,18 @@ function Pricing() {
               {/* CTA */}
               <button
                 onClick={tier.ctaAction}
-                disabled={!!loading[tier.id]}
                 style={{
                   width: '100%',
-                  background: tier.highlighted ? S.green : tier.isSales ? S.purple + '18' : 'transparent',
-                  border: tier.highlighted ? 'none' : tier.isSales ? `1.5px solid ${S.purple}66` : `1.5px solid ${S.border}`,
-                  color: tier.highlighted ? S.black : tier.isSales ? S.purple : S.offwhite,
+                  background: tier.highlighted ? S.green : S.purple + '18',
+                  border: tier.highlighted ? 'none' : `1.5px solid ${S.purple}66`,
+                  color: tier.highlighted ? S.black : S.purple,
                   fontSize: 15,
                   fontWeight: 700,
                   padding: '13px 20px',
                   borderRadius: 10,
-                  cursor: loading[tier.id] ? 'wait' : 'pointer',
+                  cursor: 'pointer',
                   fontFamily: C.body,
-                  opacity: loading[tier.id] ? 0.7 : 1,
+                  opacity: 1,
                   transition: 'opacity 0.2s',
                 }}
               >
