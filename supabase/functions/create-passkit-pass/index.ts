@@ -128,15 +128,15 @@ serve(async (req) => {
       })
     }
 
-    const apiKey = Deno.env.get('PASS_APP_KEY')
+    const apiKey = Deno.env.get('PASSKIT_API_KEY')
     const templates: Record<string, string | undefined> = {
-      'Member':  Deno.env.get('PASS_APP_MEMBER_TEMPLATE_ID') || Deno.env.get('PASSKIT_MEMBER_TEMPLATE_ID'),
-      'Member+': Deno.env.get('PASS_APP_MEMBER_PLUS_TEMPLATE_ID') || Deno.env.get('PASSKIT_MEMBER_PLUS_TEMPLATE_ID'),
-      'Elite':   Deno.env.get('PASS_APP_ELITE_TEMPLATE_ID') || Deno.env.get('PASSKIT_ELITE_TEMPLATE_ID'),
+      'Member':  Deno.env.get('PASSKIT_MEMBER_TEMPLATE_ID'),
+      'Member+': Deno.env.get('PASSKIT_MEMBER_PLUS_TEMPLATE_ID'),
+      'Elite':   Deno.env.get('PASSKIT_ELITE_TEMPLATE_ID'),
     }
     const resendKey = Deno.env.get('RESEND_API_KEY')
 
-    if (!apiKey) throw new Error('PASS_APP_KEY not configured')
+    if (!apiKey) throw new Error('PASSKIT_API_KEY not configured')
 
     const templateId = templates[tier]
     if (!templateId) throw new Error(`No PassKit template configured for tier: ${tier}`)
