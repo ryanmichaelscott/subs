@@ -6,12 +6,14 @@ const LOGIN_PATHS = {
   member: '/login',
   contractor: '/contractor/login',
   admin: '/admin/login',
+  enterprise: '/login',
 }
 
 const DASHBOARD_PATHS = {
   member: '/dashboard',
   contractor: '/contractor/dashboard',
   admin: '/admin/dashboard',
+  enterprise: '/enterprise/dashboard',
 }
 
 export default function ProtectedRoute({ children, role }) {

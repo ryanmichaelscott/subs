@@ -14,6 +14,9 @@ import AdminDashboard from './pages/AdminDashboard'
 import WaitlistPage from './pages/WaitlistPage'
 import NpsPage from './pages/NpsPage'
 import SmsConsent from './pages/SmsConsent'
+import PropertyManagers from './pages/PropertyManagers'
+import EnterpriseDashboard from './pages/EnterpriseDashboard'
+import EnterpriseOnboarding from './pages/EnterpriseOnboarding'
 import ProtectedRoute from './components/ProtectedRoute'
 
 class DashboardErrorBoundary extends Component {
@@ -80,6 +83,20 @@ export default function App() {
         } />
         <Route path="/admin/*" element={
           <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
+        } />
+        <Route path="/property-managers" element={<PropertyManagers />} />
+        <Route path="/enterprise/dashboard" element={
+          <DashboardErrorBoundary>
+            <ProtectedRoute role="enterprise"><EnterpriseDashboard /></ProtectedRoute>
+          </DashboardErrorBoundary>
+        } />
+        <Route path="/enterprise/onboarding" element={
+          <ProtectedRoute role="enterprise"><EnterpriseOnboarding /></ProtectedRoute>
+        } />
+        <Route path="/enterprise/*" element={
+          <DashboardErrorBoundary>
+            <ProtectedRoute role="enterprise"><EnterpriseDashboard /></ProtectedRoute>
+          </DashboardErrorBoundary>
         } />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

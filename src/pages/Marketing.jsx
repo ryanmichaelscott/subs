@@ -751,7 +751,7 @@ function Footer() {
   return (
     <footer style={{ background: S.black, borderTop: `1px solid ${S.border}` }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 20px 32px' }}>
-        <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 48 }}>
+        <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 40, marginBottom: 48 }}>
           <div>
             <div style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em', marginBottom: 12 }}>SUBS</div>
             <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.6, maxWidth: 260, margin: 0 }}>The membership that unlocks contractor pricing on every trade that touches your home.</p>
@@ -770,6 +770,12 @@ function Footer() {
               ))}
             </div>
           ))}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase', marginBottom: 14 }}>Solutions</div>
+            <div style={{ marginBottom: 10 }}><Link to="/signup" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>For Homeowners</Link></div>
+            <div style={{ marginBottom: 10 }}><Link to="/contractor/apply" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>For Contractors</Link></div>
+            <div style={{ marginBottom: 10 }}><Link to="/property-managers" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>For Property Managers</Link></div>
+          </div>
         </div>
         <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 12, color: S.muted }}>© 2026 SUBS Membership. All rights reserved.</span>

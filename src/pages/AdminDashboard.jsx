@@ -46,6 +46,11 @@ export default function AdminDashboard() {
   const [kpiLoading, setKpiLoading] = useState(false)
   const [sendingCard, setSendingCard] = useState(null)
   const [cardSent, setCardSent] = useState({})
+  const [enterpriseMembers, setEnterpriseMembers] = useState([])
+  const [enterpriseLeads, setEnterpriseLeads] = useState([])
+  const [enterpriseLeadFilter, setEnterpriseLeadFilter] = useState('all')
+  const [assigningManager, setAssigningManager] = useState(null)
+  const [managerForm, setManagerForm] = useState({ name: '', email: '', phone: '' })
 
   const loadData = async () => {
     await Promise.all([
@@ -60,6 +65,12 @@ export default function AdminDashboard() {
 
       supabase.from('waitlist').select('*').order('created_at', { ascending: false })
         .then(({ data }) => setWaitlistEntries(data || [])),
+
+      supabase.from('enterprise_members').select('*').order('created_at', { ascending: false })
+        .then(({ data }) => setEnterpriseMembers(data || [])),
+
+      supabase.from('enterprise_leads').select('*').order('created_at', { ascending: false })
+        .then(({ data }) => setEnterpriseLeads(data || [])),
 
       Promise.all([
         supabase.from('lead_notifications')
@@ -271,7 +282,7 @@ export default function AdminDashboard() {
       .finally(() => setKpiLoading(false))
   }, [tab])
 
-  const tabs = [['stats', '📊 Revenue'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist'], ['kpis', '📈 KPIs']]
+  const tabs = [['stats', '📊 Revenue'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist'], ['kpis', '📈 KPIs'], ['enterprise', '🏢 Enterprise']]
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
@@ -929,6 +940,153 @@ export default function AdminDashboard() {
                   </div>
                 </Card>
               )}
+            </div>
+          )
+        })()}
+
+        {/* ── ENTERPRISE TAB ── */}
+        {tab === 'enterprise' && (() => {
+          const filteredLeads = enterpriseLeadFilter === 'all'
+            ? enterpriseLeads
+            : enterpriseLeads.filter(l => l.status === enterpriseLeadFilter)
+
+          const handleLeadStatus = async (id, status) => {
+            await supabase.from('enterprise_leads').update({ status }).eq('id', id)
+            setEnterpriseLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l))
+          }
+
+          const handleAssignManager = async (memberId) => {
+            if (!managerForm.name) return
+            await supabase.from('enterprise_members').update({
+              account_manager_name: managerForm.name,
+              account_manager_email: managerForm.email,
+              account_manager_phone: managerForm.phone,
+            }).eq('id', memberId)
+            setEnterpriseMembers(prev => prev.map(m => m.id === memberId ? { ...m, ...{ account_manager_name: managerForm.name, account_manager_email: managerForm.email, account_manager_phone: managerForm.phone } } : m))
+            setAssigningManager(null)
+            setManagerForm({ name: '', email: '', phone: '' })
+          }
+
+          const handleMemberStatus = async (id, status) => {
+            await supabase.from('enterprise_members').update({ status }).eq('id', id)
+            setEnterpriseMembers(prev => prev.map(m => m.id === id ? { ...m, status } : m))
+          }
+
+          const enterpriseArr = enterpriseMembers.reduce((sum, m) => {
+            const price = m.plan === 'professional' ? 1499 : m.plan === 'enterprise' ? 0 : 499
+            return sum + price
+          }, 0)
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {/* Enterprise revenue summary */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+                {[
+                  ['Enterprise Members', enterpriseMembers.filter(m => m.status === 'active').length, S.purple],
+                  ['Enterprise ARR', `$${enterpriseArr.toLocaleString()}`, S.green],
+                  ['Open Leads', enterpriseLeads.filter(l => !l.status || l.status === 'new').length, S.amber],
+                ].map(([label, value, color]) => (
+                  <Card key={label} style={{ padding: '20px 24px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{label}</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, color }}>{value}</div>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Enterprise members list */}
+              <Card style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: `1px solid ${S.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>Enterprise Members</div>
+                  <div style={{ fontSize: 12, color: S.muted }}>{enterpriseMembers.length} total</div>
+                </div>
+                {enterpriseMembers.length === 0 ? (
+                  <div style={{ padding: '32px 20px', textAlign: 'center', color: S.muted, fontSize: 13 }}>No enterprise members yet</div>
+                ) : enterpriseMembers.map(m => (
+                  <div key={m.id} style={{ padding: '16px 20px', borderBottom: `1px solid ${S.border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{m.company_name || '—'}</div>
+                        <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>{m.contact_name} · {m.email}</div>
+                        <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>{m.unit_count} units · Joined {m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}</div>
+                        {m.account_manager_name && (
+                          <div style={{ fontSize: 12, color: S.blue, marginTop: 4 }}>AM: {m.account_manager_name} · {m.account_manager_email}</div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: (m.plan === 'professional' ? S.blue : m.plan === 'enterprise' ? S.purple : S.green) + '22', color: m.plan === 'professional' ? S.blue : m.plan === 'enterprise' ? S.purple : S.green, border: `1px solid ${(m.plan === 'professional' ? S.blue : m.plan === 'enterprise' ? S.purple : S.green)}44` }}>
+                          {m.plan || 'portfolio'}
+                        </span>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: (m.status === 'active' ? S.green : S.danger) + '22', color: m.status === 'active' ? S.green : S.danger }}>
+                          {m.status || 'pending'}
+                        </span>
+                        <button onClick={() => { setAssigningManager(m.id); setManagerForm({ name: m.account_manager_name || '', email: m.account_manager_email || '', phone: m.account_manager_phone || '' }) }} style={{ fontSize: 12, background: S.surface, border: `1px solid ${S.border}`, color: S.muted, padding: '5px 10px', borderRadius: 6, cursor: 'pointer' }}>Assign AM</button>
+                        {m.status !== 'active' && (
+                          <button onClick={() => handleMemberStatus(m.id, 'active')} style={{ fontSize: 12, background: S.green + '22', border: `1px solid ${S.green}44`, color: S.green, padding: '5px 10px', borderRadius: 6, cursor: 'pointer' }}>Approve</button>
+                        )}
+                        {m.status === 'active' && (
+                          <button onClick={() => handleMemberStatus(m.id, 'suspended')} style={{ fontSize: 12, background: S.danger + '22', border: `1px solid ${S.danger}44`, color: S.danger, padding: '5px 10px', borderRadius: 6, cursor: 'pointer' }}>Suspend</button>
+                        )}
+                      </div>
+                    </div>
+                    {/* Assign manager inline form */}
+                    {assigningManager === m.id && (
+                      <div style={{ marginTop: 12, padding: '14px 16px', background: S.surface, borderRadius: 8, border: `1px solid ${S.border}` }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: S.muted, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Assign Account Manager</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
+                          {[['Name', 'name'], ['Email', 'email'], ['Phone', 'phone']].map(([label, field]) => (
+                            <input key={field} placeholder={label} value={managerForm[field]} onChange={e => setManagerForm(f => ({ ...f, [field]: e.target.value }))}
+                              style={{ background: S.card, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 13, padding: '8px 10px', borderRadius: 6, outline: 'none' }} />
+                          ))}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={() => handleAssignManager(m.id)} style={{ background: S.green, color: S.black, fontSize: 12, fontWeight: 700, padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer' }}>Save</button>
+                          <button onClick={() => setAssigningManager(null)} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '7px 14px', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </Card>
+
+              {/* Enterprise leads */}
+              <Card style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: `1px solid ${S.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>Enterprise Leads</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {[['all', 'All'], ['new', 'New'], ['contacted', 'Contacted'], ['closed', 'Closed']].map(([val, label]) => (
+                      <button key={val} onClick={() => setEnterpriseLeadFilter(val)}
+                        style={{ fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: `1px solid ${enterpriseLeadFilter === val ? S.green : S.border}`, background: enterpriseLeadFilter === val ? S.green + '22' : 'transparent', color: enterpriseLeadFilter === val ? S.green : S.muted, cursor: 'pointer' }}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {filteredLeads.length === 0 ? (
+                  <div style={{ padding: '32px 20px', textAlign: 'center', color: S.muted, fontSize: 13 }}>No leads found</div>
+                ) : filteredLeads.map(lead => (
+                  <div key={lead.id} style={{ padding: '16px 20px', borderBottom: `1px solid ${S.border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{lead.company_name || lead.full_name}</div>
+                        <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>{lead.full_name} · {lead.email} · {lead.phone || '—'}</div>
+                        <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>{lead.unit_count} units · Spend: {lead.monthly_spend || '—'} · {lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '—'}</div>
+                        {lead.message && <div style={{ fontSize: 12, color: S.muted, marginTop: 4, fontStyle: 'italic' }}>"{lead.message.slice(0, 120)}{lead.message.length > 120 ? '…' : ''}"</div>}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: (!lead.status || lead.status === 'new' ? S.amber : lead.status === 'contacted' ? S.blue : S.green) + '22', color: !lead.status || lead.status === 'new' ? S.amber : lead.status === 'contacted' ? S.blue : S.green }}>
+                          {lead.status || 'new'}
+                        </span>
+                        {(!lead.status || lead.status === 'new') && (
+                          <button onClick={() => handleLeadStatus(lead.id, 'contacted')} style={{ fontSize: 11, background: S.blue + '22', border: `1px solid ${S.blue}44`, color: S.blue, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Mark Contacted</button>
+                        )}
+                        {lead.status === 'contacted' && (
+                          <button onClick={() => handleLeadStatus(lead.id, 'closed')} style={{ fontSize: 11, background: S.green + '22', border: `1px solid ${S.green}44`, color: S.green, padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>Close</button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </Card>
             </div>
           )
         })()}
