@@ -76,6 +76,11 @@ const ResponsiveStyles = () => (
       .pm-steps-row {
         flex-direction: column;
         gap: 16px;
+        align-items: center;
+      }
+      .pm-steps-row > div {
+        width: 100%;
+        justify-content: center;
       }
       .pm-step-connector {
         display: none;
