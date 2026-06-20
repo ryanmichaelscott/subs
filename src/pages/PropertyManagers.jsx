@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { S, C } from '../theme'
 
@@ -563,8 +563,9 @@ function Pricing() {
         'Quarterly business review',
         'API access for property management software',
       ],
-      cta: 'Contact Sales',
+      cta: 'Talk to Sales',
       ctaAction: () => scrollTo('pm-contact'),
+      isSales: true,
     },
   ]
 
@@ -710,9 +711,9 @@ function Pricing() {
                 disabled={!!loading[tier.id]}
                 style={{
                   width: '100%',
-                  background: tier.highlighted ? S.green : 'transparent',
-                  border: tier.highlighted ? 'none' : `1.5px solid ${S.border}`,
-                  color: tier.highlighted ? S.black : S.offwhite,
+                  background: tier.highlighted ? S.green : tier.isSales ? S.purple + '18' : 'transparent',
+                  border: tier.highlighted ? 'none' : tier.isSales ? `1.5px solid ${S.purple}66` : `1.5px solid ${S.border}`,
+                  color: tier.highlighted ? S.black : tier.isSales ? S.purple : S.offwhite,
                   fontSize: 15,
                   fontWeight: 700,
                   padding: '13px 20px',
@@ -1086,6 +1087,7 @@ function Footer() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function PropertyManagers() {
+  useEffect(() => { window.scrollTo(0, 0) }, [])
   return (
     <div style={{ background: S.black, minHeight: '100vh', fontFamily: C.body }}>
       <ResponsiveStyles />

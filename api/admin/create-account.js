@@ -187,7 +187,7 @@ export default async function handler(req, res) {
 
       if (plan === 'enterprise_custom') {
         await sendEmail({
-          to: 'ryan@skscott.com',
+          to: 'support@subs.app',
           subject: `New Enterprise Inquiry — ${company_name || full_name} — ${unit_count || '?'} units`,
           html: `<div style="font-family:sans-serif;padding:24px"><h2>New Enterprise Account (Admin Created)</h2>
             <p><strong>Contact:</strong> ${full_name}</p>
@@ -199,7 +199,7 @@ export default async function handler(req, res) {
           </div>`,
         })
 
-        return res.status(200).json({ success: true, clerk_user_id: clerkUserId, message: `Enterprise account created (pending). ryan@skscott.com notified.` })
+        return res.status(200).json({ success: true, clerk_user_id: clerkUserId, message: `Enterprise account created (pending). support@subs.app notified.` })
       }
 
       const priceId = ENTERPRISE_PRICE_IDS[plan]

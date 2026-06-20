@@ -53,7 +53,7 @@ export default async function handler(req, res) {
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'SUBS <hello@subs.app>',
-          to: 'ryan@skscott.com',
+          to: 'support@subs.app',
           subject,
           html,
         }),
