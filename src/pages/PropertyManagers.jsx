@@ -214,7 +214,7 @@ function Hero() {
             margin: '0 0 24px',
           }}
         >
-          Every property, every trade, one membership.
+          Every property. Every trade. One Membership.
         </h1>
 
         {/* Subheadline */}
