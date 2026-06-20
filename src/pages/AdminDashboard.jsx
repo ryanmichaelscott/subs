@@ -207,14 +207,25 @@ export default function AdminDashboard() {
 
   const handleSendCard = async (m) => {
     setSendingCard(m.id)
-    const { data, error } = await supabase.functions.invoke('create-passkit-pass', {
-      body: { clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member' },
-    })
-    setSendingCard(null)
-    if (error || data?.error) {
-      alert(`Failed to send card: ${data?.error || error?.message}`)
-    } else {
-      setCardSent(prev => ({ ...prev, [m.id]: true }))
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-passkit-pass`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member' }),
+      })
+      const data = await res.json()
+      setSendingCard(null)
+      if (!res.ok || data?.error) {
+        alert(`Failed to send card:\n\n${data?.error || 'Unknown error'}`)
+      } else {
+        setCardSent(prev => ({ ...prev, [m.id]: true }))
+      }
+    } catch (e) {
+      setSendingCard(null)
+      alert(`Failed to send card: ${e.message}`)
     }
   }
 
