@@ -1,4 +1,37 @@
 import { createClient } from '@supabase/supabase-js'
+import https from 'https'
+
+// Use Node.js https module instead of fetch for PassKit — more reliable in serverless
+// and surfaces the real cause (DNS, TLS, timeout) instead of a generic "fetch failed"
+function httpsPost(url, headers, body) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url)
+    const bodyStr = typeof body === 'string' ? body : JSON.stringify(body)
+    const req = https.request(
+      {
+        hostname: u.hostname,
+        path: u.pathname + u.search,
+        method: 'POST',
+        headers: { ...headers, 'Content-Length': Buffer.byteLength(bodyStr) },
+      },
+      (res) => {
+        let data = ''
+        res.on('data', (chunk) => { data += chunk })
+        res.on('end', () => {
+          resolve({
+            ok: res.statusCode >= 200 && res.statusCode < 300,
+            status: res.statusCode,
+            text: () => data,
+            json: () => JSON.parse(data),
+          })
+        })
+      }
+    )
+    req.on('error', reject)
+    req.write(bodyStr)
+    req.end()
+  })
+}
 
 function tierBadgeColor(tier) {
   if (tier === 'Elite') return '#F5A623'
@@ -155,37 +188,34 @@ export default async function handler(req, res) {
 
     const joinedAt = member.joined_at ? new Date(member.joined_at) : new Date()
     const year = joinedAt.getFullYear()
-    const memberId = `SUB-${year}-${String(member.id).padStart(5, '0')}`
+
+    // members.id is a UUID — derive a short sequential position via count
+    const { count: memberPos } = await supabase
+      .from('members')
+      .select('id', { count: 'exact', head: true })
+      .lte('joined_at', member.joined_at)
+    const memberId = `SUB-${year}-${String(memberPos || 1).padStart(5, '0')}`
 
     const expiry = new Date(joinedAt)
     expiry.setFullYear(expiry.getFullYear() + 1)
     const expiryStr = expiry.toISOString().split('T')[0]
 
-    console.log('[passkit/issue] Step 3: Calling PassKit API, templateId:', templateId, 'memberId:', memberId)
+    console.log('[passkit/issue] Step 3: Calling PassKit API via https.request, templateId:', templateId, 'memberId:', memberId)
     const auth = Buffer.from(`${apiKey}:`).toString('base64')
-    const passkitRes = await fetch(
+    const passkitRes = await httpsPost(
       `https://api.passkit.net/v1/pass/issue/single/${encodeURIComponent(templateId)}`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${auth}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          dynamicData: { name: name || '', member_id: memberId, tier, expiry_date: expiryStr },
-          externalId: clerk_user_id,
-        }),
-      }
+      { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' },
+      { dynamicData: { name: name || '', member_id: memberId, tier, expiry_date: expiryStr }, externalId: clerk_user_id }
     )
 
     console.log('[passkit/issue] PassKit response status:', passkitRes.status)
     if (!passkitRes.ok) {
-      const errText = await passkitRes.text()
+      const errText = passkitRes.text()
       console.error('[passkit/issue] PassKit API error body:', errText)
       return res.status(500).json({ error: `PassKit API ${passkitRes.status}: ${errText}` })
     }
 
-    const passData = await passkitRes.json()
+    const passData = passkitRes.json()
     console.log('[passkit/issue] PassKit response keys:', Object.keys(passData).join(', '))
     const passUrl = passData.url ?? passData.pass?.url ?? passData.passUrl ?? passData.walletUrl
 
@@ -230,7 +260,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, passUrl, memberId })
 
   } catch (err) {
-    console.error('[passkit/issue] Unhandled exception:', err?.message, err?.stack)
-    return res.status(500).json({ error: 'Internal server error', detail: err?.message })
+    const cause = err?.cause?.message || err?.cause?.code || String(err?.cause || '')
+    console.error('[passkit/issue] Unhandled exception:', err?.message, '| cause:', cause, '| stack:', err?.stack)
+    return res.status(500).json({ error: 'Internal server error', detail: err?.message, cause })
   }
 }
