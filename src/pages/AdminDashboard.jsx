@@ -208,12 +208,9 @@ export default function AdminDashboard() {
   const handleSendCard = async (m) => {
     setSendingCard(m.id)
     try {
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-passkit-pass`, {
+      const res = await fetch('/api/passkit/issue', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member' }),
       })
       const data = await res.json()
