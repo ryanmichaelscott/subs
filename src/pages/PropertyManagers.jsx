@@ -705,7 +705,7 @@ function Pricing() {
                   transition: 'opacity 0.2s',
                 }}
               >
-                {loading[tier.id] ? 'Loading…' : tier.cta}
+                {tier.cta}
               </button>
             </div>
           ))}
