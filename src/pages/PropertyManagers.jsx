@@ -380,23 +380,23 @@ function HowItWorks() {
   const steps = [
     {
       number: '01',
-      title: 'Join SUBS as a property manager',
-      body: 'Choose the plan that fits your portfolio size. Get instant access to our vetted contractor network.',
+      title: 'Choose your plan',
+      body: 'Pick the tier that fits your portfolio. Instant access, no setup fees.',
     },
     {
       number: '02',
-      title: 'Submit job requests for any property',
-      body: 'One call handles everything. Tell us the address, the issue, and we take it from there.',
+      title: 'Submit a job request',
+      body: 'Give us the address and the issue. We handle everything else.',
     },
     {
       number: '03',
-      title: 'Vetted contractors show up at member rates',
-      body: 'Across your entire portfolio — licensed, insured, and background-checked pros at prices you couldn\'t negotiate alone.',
+      title: 'Vetted pros show up',
+      body: 'Licensed, insured, background-checked — at rates you couldn\'t negotiate solo.',
     },
     {
       number: '04',
-      title: 'Track spending and savings by property',
-      body: 'Your dashboard shows full job history, per-property spend, and exactly how much you\'re saving versus retail rates.',
+      title: 'Track spend by property',
+      body: 'Full job history and savings vs. retail, broken down per property.',
     },
   ]
 
@@ -434,38 +434,43 @@ function HowItWorks() {
           {steps.map((step, i) => (
             <div key={step.number} style={{ display: 'flex', flex: 1, alignItems: 'flex-start', minWidth: 0 }}>
               {/* Step card */}
-              <div style={{ flex: 1, textAlign: 'center', padding: '0 12px' }}>
+              <div style={{ flex: 1, textAlign: 'center', padding: '0 16px' }}>
                 <div style={{
-                  width: 56,
-                  height: 56,
+                  width: 52,
+                  height: 52,
                   borderRadius: '50%',
-                  background: 'rgba(93,255,138,0.1)',
-                  border: `1.5px solid rgba(93,255,138,0.3)`,
+                  background: 'rgba(93,255,138,0.08)',
+                  border: `1.5px solid rgba(93,255,138,0.25)`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 20px',
-                  fontFamily: C.display,
-                  fontSize: 18,
+                  fontFamily: C.body,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
                   color: S.green,
                 }}>
                   {step.number}
                 </div>
                 <h3 style={{
                   fontFamily: C.display,
-                  fontSize: 17,
+                  fontSize: 21,
                   fontWeight: 400,
                   color: S.offwhite,
-                  margin: '0 0 10px',
-                  lineHeight: 1.35,
+                  margin: '0 0 12px',
+                  lineHeight: 1.25,
                 }}>
                   {step.title}
                 </h3>
                 <p style={{
                   fontSize: 13,
-                  lineHeight: 1.65,
+                  lineHeight: 1.7,
                   color: S.muted,
                   margin: 0,
+                  maxWidth: 200,
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
                 }}>
                   {step.body}
                 </p>
