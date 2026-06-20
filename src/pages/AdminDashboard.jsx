@@ -213,10 +213,12 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member' }),
       })
-      const data = await res.json()
+      const text = await res.text()
+      let data
+      try { data = JSON.parse(text) } catch { data = null }
       setSendingCard(null)
       if (!res.ok || data?.error) {
-        alert(`Failed to send card:\n\n${data?.error || 'Unknown error'}`)
+        alert(`Failed to send card:\n\n${data?.error || text.slice(0, 300)}`)
       } else {
         setCardSent(prev => ({ ...prev, [m.id]: true }))
       }
