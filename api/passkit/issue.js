@@ -90,7 +90,7 @@ export default async function handler(req, res) {
 
   console.log('[passkit/issue] Handler invoked, method:', req.method)
 
-  // Log which env vars are present (names only, not values)
+  // Log which env vars are present (names only, not values) — all aliases shown
   const envCheck = {
     PASSKIT_API_KEY: !!process.env.PASSKIT_API_KEY,
     PASSKIT_MEMBER_TEMPLATE_ID: !!process.env.PASSKIT_MEMBER_TEMPLATE_ID,
@@ -99,6 +99,7 @@ export default async function handler(req, res) {
     VITE_SUPABASE_URL: !!process.env.VITE_SUPABASE_URL,
     SUPABASE_URL: !!process.env.SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    SUPABASE_SERVICE_KEY: !!process.env.SUPABASE_SERVICE_KEY,
     RESEND_API_KEY: !!process.env.RESEND_API_KEY,
   }
   console.log('[passkit/issue] Env vars present:', JSON.stringify(envCheck))
@@ -118,15 +119,16 @@ export default async function handler(req, res) {
       'Elite':   process.env.PASSKIT_ELITE_TEMPLATE_ID,
     }
     const resendKey = process.env.RESEND_API_KEY
-    // Support both naming conventions for Supabase URL
+    // Support both naming conventions for Supabase URL and service key
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
 
     console.log('[passkit/issue] supabaseUrl resolved:', supabaseUrl ? 'YES' : 'NO')
+    console.log('[passkit/issue] supabaseServiceKey resolved:', supabaseServiceKey ? 'YES' : 'NO')
 
     if (!apiKey) return res.status(500).json({ error: 'PASSKIT_API_KEY not configured' })
     if (!supabaseUrl) return res.status(500).json({ error: 'Supabase URL not configured (set VITE_SUPABASE_URL or SUPABASE_URL in Vercel)' })
-    if (!supabaseServiceKey) return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured' })
+    if (!supabaseServiceKey) return res.status(500).json({ error: 'Supabase service key not configured (set SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY in Vercel)' })
 
     const templateId = templates[tier]
     if (!templateId) return res.status(500).json({ error: `No PassKit template configured for tier: ${tier}` })
