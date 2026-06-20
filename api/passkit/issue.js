@@ -203,7 +203,7 @@ export default async function handler(req, res) {
     console.log('[passkit/issue] Step 3: Calling PassKit API via https.request, templateId:', templateId, 'memberId:', memberId)
     const auth = Buffer.from(`${apiKey}:`).toString('base64')
     const passkitRes = await httpsPost(
-      `https://api.passkit.net/v1/pass/issue/single/${encodeURIComponent(templateId)}`,
+      `https://api.passkit.io/v1/pass/issue/single/${encodeURIComponent(templateId)}`,
       { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' },
       { dynamicData: { name: name || '', member_id: memberId, tier, expiry_date: expiryStr }, externalId: clerk_user_id }
     )
