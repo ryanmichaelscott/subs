@@ -44,6 +44,8 @@ export default function AdminDashboard() {
   const [stripeRevenue, setStripeRevenue] = useState(null)
   const [kpiData, setKpiData] = useState(null)
   const [kpiLoading, setKpiLoading] = useState(false)
+  const [sendingCard, setSendingCard] = useState(null)
+  const [cardSent, setCardSent] = useState({})
 
   const loadData = async () => {
     await Promise.all([
@@ -201,6 +203,19 @@ export default function AdminDashboard() {
   const handleImpersonate = (name, email, role, contractorData) => {
     localStorage.setItem('subs_impersonating', JSON.stringify({ name, email, role, contractorData: contractorData || null }))
     navigate(role === 'member' ? '/dashboard' : '/contractor/dashboard')
+  }
+
+  const handleSendCard = async (m) => {
+    setSendingCard(m.id)
+    const { data, error } = await supabase.functions.invoke('create-passkit-pass', {
+      body: { clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member' },
+    })
+    setSendingCard(null)
+    if (error || data?.error) {
+      alert(`Failed to send card: ${data?.error || error?.message}`)
+    } else {
+      setCardSent(prev => ({ ...prev, [m.id]: true }))
+    }
   }
 
   const handleAdminDocUpload = async (contractorId, docType, col, file) => {
@@ -404,9 +419,9 @@ export default function AdminDashboard() {
             </div>
             <div className="rate-table-wrap">
             <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 100px 80px 110px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
-                {['ID', 'Name', 'Email', 'Tier', 'Joined', 'Status', ''].map(h => (
-                  <div key={h} style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 100px 80px 110px 110px', padding: '10px 20px', borderBottom: `1px solid ${S.border}` }}>
+                {['ID', 'Name', 'Email', 'Tier', 'Joined', 'Status', '', ''].map((h, i) => (
+                  <div key={i} style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</div>
                 ))}
               </div>
               {filteredMembers.length === 0 && (
@@ -415,7 +430,7 @@ export default function AdminDashboard() {
                 </div>
               )}
               {filteredMembers.map((m, i) => (
-                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 100px 80px 110px', padding: '14px 20px', borderBottom: i < filteredMembers.length - 1 ? `1px solid ${S.border}` : 'none', alignItems: 'center' }}>
+                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 100px 100px 80px 110px 110px', padding: '14px 20px', borderBottom: i < filteredMembers.length - 1 ? `1px solid ${S.border}` : 'none', alignItems: 'center' }}>
                   <span style={{ fontSize: 11, fontFamily: 'monospace', color: S.muted }}>{m.id.slice(0, 8)}</span>
                   <span style={{ fontSize: 14, fontWeight: 600, color: S.offwhite }}>{m.name || '—'}</span>
                   <span style={{ fontSize: 13, color: S.muted }}>{m.email || '—'}</span>
@@ -426,6 +441,13 @@ export default function AdminDashboard() {
                   </span>
                   <button onClick={() => handleImpersonate(m.name, m.email, 'member')} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer' }}>
                     Impersonate
+                  </button>
+                  <button
+                    onClick={() => handleSendCard(m)}
+                    disabled={sendingCard === m.id || cardSent[m.id]}
+                    style={{ background: cardSent[m.id] ? S.green + '22' : 'transparent', border: `1px solid ${cardSent[m.id] ? S.green + '44' : S.border}`, color: cardSent[m.id] ? S.green : S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: sendingCard === m.id || cardSent[m.id] ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
+                  >
+                    {sendingCard === m.id ? '…' : cardSent[m.id] ? '✓ Sent' : 'Send Card'}
                   </button>
                 </div>
               ))}
