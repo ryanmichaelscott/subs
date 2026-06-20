@@ -88,96 +88,147 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { clerk_user_id, name, email, tier } = req.body || {}
-  if (!clerk_user_id || !email || !tier) {
-    return res.status(400).json({ error: 'clerk_user_id, email, and tier are required' })
+  console.log('[passkit/issue] Handler invoked, method:', req.method)
+
+  // Log which env vars are present (names only, not values)
+  const envCheck = {
+    PASSKIT_API_KEY: !!process.env.PASSKIT_API_KEY,
+    PASSKIT_MEMBER_TEMPLATE_ID: !!process.env.PASSKIT_MEMBER_TEMPLATE_ID,
+    PASSKIT_MEMBER_PLUS_TEMPLATE_ID: !!process.env.PASSKIT_MEMBER_PLUS_TEMPLATE_ID,
+    PASSKIT_ELITE_TEMPLATE_ID: !!process.env.PASSKIT_ELITE_TEMPLATE_ID,
+    VITE_SUPABASE_URL: !!process.env.VITE_SUPABASE_URL,
+    SUPABASE_URL: !!process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    RESEND_API_KEY: !!process.env.RESEND_API_KEY,
   }
+  console.log('[passkit/issue] Env vars present:', JSON.stringify(envCheck))
+  console.log('[passkit/issue] Request body:', JSON.stringify(req.body))
 
-  const apiKey = process.env.PASSKIT_API_KEY
-  const templates = {
-    'Member':  process.env.PASSKIT_MEMBER_TEMPLATE_ID,
-    'Member+': process.env.PASSKIT_MEMBER_PLUS_TEMPLATE_ID,
-    'Elite':   process.env.PASSKIT_ELITE_TEMPLATE_ID,
-  }
-  const resendKey = process.env.RESEND_API_KEY
-  const supabaseUrl = process.env.VITE_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!apiKey) return res.status(500).json({ error: 'PASSKIT_API_KEY not configured' })
-
-  const templateId = templates[tier]
-  if (!templateId) return res.status(500).json({ error: `No PassKit template configured for tier: ${tier}` })
-
-  const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-  const { data: member, error: memberError } = await supabase
-    .from('members')
-    .select('id, joined_at')
-    .eq('clerk_user_id', clerk_user_id)
-    .single()
-
-  if (memberError || !member) {
-    return res.status(404).json({ error: 'Member not found' })
-  }
-
-  const joinedAt = member.joined_at ? new Date(member.joined_at) : new Date()
-  const year = joinedAt.getFullYear()
-  const memberId = `SUB-${year}-${String(member.id).padStart(5, '0')}`
-
-  const expiry = new Date(joinedAt)
-  expiry.setFullYear(expiry.getFullYear() + 1)
-  const expiryStr = expiry.toISOString().split('T')[0]
-
-  // Call PassKit
-  const auth = Buffer.from(`${apiKey}:`).toString('base64')
-  const passkitRes = await fetch(
-    `https://api.passkit.net/v1/pass/issue/single/${encodeURIComponent(templateId)}`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        dynamicData: { name: name || '', member_id: memberId, tier, expiry_date: expiryStr },
-        externalId: clerk_user_id,
-      }),
+  try {
+    const { clerk_user_id, name, email, tier } = req.body || {}
+    if (!clerk_user_id || !email || !tier) {
+      console.log('[passkit/issue] Missing required fields')
+      return res.status(400).json({ error: 'clerk_user_id, email, and tier are required' })
     }
-  )
 
-  if (!passkitRes.ok) {
-    const errText = await passkitRes.text()
-    return res.status(500).json({ error: `PassKit API ${passkitRes.status}: ${errText}` })
+    const apiKey = process.env.PASSKIT_API_KEY
+    const templates = {
+      'Member':  process.env.PASSKIT_MEMBER_TEMPLATE_ID,
+      'Member+': process.env.PASSKIT_MEMBER_PLUS_TEMPLATE_ID,
+      'Elite':   process.env.PASSKIT_ELITE_TEMPLATE_ID,
+    }
+    const resendKey = process.env.RESEND_API_KEY
+    // Support both naming conventions for Supabase URL
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    console.log('[passkit/issue] supabaseUrl resolved:', supabaseUrl ? 'YES' : 'NO')
+
+    if (!apiKey) return res.status(500).json({ error: 'PASSKIT_API_KEY not configured' })
+    if (!supabaseUrl) return res.status(500).json({ error: 'Supabase URL not configured (set VITE_SUPABASE_URL or SUPABASE_URL in Vercel)' })
+    if (!supabaseServiceKey) return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured' })
+
+    const templateId = templates[tier]
+    if (!templateId) return res.status(500).json({ error: `No PassKit template configured for tier: ${tier}` })
+
+    console.log('[passkit/issue] Step 1: Creating Supabase client')
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    console.log('[passkit/issue] Step 2: Looking up member, clerk_user_id:', clerk_user_id)
+    const { data: member, error: memberError } = await supabase
+      .from('members')
+      .select('id, joined_at')
+      .eq('clerk_user_id', clerk_user_id)
+      .single()
+
+    if (memberError) {
+      console.error('[passkit/issue] Supabase member lookup error:', JSON.stringify(memberError))
+      return res.status(404).json({ error: 'Member not found', detail: memberError.message })
+    }
+    if (!member) {
+      console.error('[passkit/issue] No member row found for clerk_user_id:', clerk_user_id)
+      return res.status(404).json({ error: 'Member not found' })
+    }
+    console.log('[passkit/issue] Member found: id=', member.id, 'joined_at=', member.joined_at)
+
+    const joinedAt = member.joined_at ? new Date(member.joined_at) : new Date()
+    const year = joinedAt.getFullYear()
+    const memberId = `SUB-${year}-${String(member.id).padStart(5, '0')}`
+
+    const expiry = new Date(joinedAt)
+    expiry.setFullYear(expiry.getFullYear() + 1)
+    const expiryStr = expiry.toISOString().split('T')[0]
+
+    console.log('[passkit/issue] Step 3: Calling PassKit API, templateId:', templateId, 'memberId:', memberId)
+    const auth = Buffer.from(`${apiKey}:`).toString('base64')
+    const passkitRes = await fetch(
+      `https://api.passkit.net/v1/pass/issue/single/${encodeURIComponent(templateId)}`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dynamicData: { name: name || '', member_id: memberId, tier, expiry_date: expiryStr },
+          externalId: clerk_user_id,
+        }),
+      }
+    )
+
+    console.log('[passkit/issue] PassKit response status:', passkitRes.status)
+    if (!passkitRes.ok) {
+      const errText = await passkitRes.text()
+      console.error('[passkit/issue] PassKit API error body:', errText)
+      return res.status(500).json({ error: `PassKit API ${passkitRes.status}: ${errText}` })
+    }
+
+    const passData = await passkitRes.json()
+    console.log('[passkit/issue] PassKit response keys:', Object.keys(passData).join(', '))
+    const passUrl = passData.url ?? passData.pass?.url ?? passData.passUrl ?? passData.walletUrl
+
+    if (!passUrl) {
+      console.error('[passkit/issue] No URL in PassKit response:', JSON.stringify(passData))
+      return res.status(500).json({ error: `PassKit returned no URL. Response: ${JSON.stringify(passData)}` })
+    }
+    console.log('[passkit/issue] passUrl obtained successfully')
+
+    console.log('[passkit/issue] Step 4: Storing passUrl in Supabase')
+    const { error: updateError } = await supabase
+      .from('members')
+      .update({ passkit_pass_url: passUrl })
+      .eq('clerk_user_id', clerk_user_id)
+    if (updateError) {
+      console.error('[passkit/issue] Supabase update error (non-fatal):', JSON.stringify(updateError))
+    }
+
+    if (resendKey) {
+      console.log('[passkit/issue] Step 5: Sending welcome email to', email)
+      const html = welcomeEmailHtml(name || '', email, tier, memberId, expiryStr, passUrl)
+      const emailRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'SUBS <hello@subs.app>',
+          to: email,
+          subject: `Your SUBS ${tier} card is ready`,
+          html,
+        }),
+      })
+      if (!emailRes.ok) {
+        console.error('[passkit/issue] Resend error:', await emailRes.text())
+      } else {
+        console.log('[passkit/issue] Email sent successfully')
+      }
+    } else {
+      console.log('[passkit/issue] Step 5: Skipping email — RESEND_API_KEY not set')
+    }
+
+    console.log('[passkit/issue] Done — returning success')
+    return res.status(200).json({ success: true, passUrl, memberId })
+
+  } catch (err) {
+    console.error('[passkit/issue] Unhandled exception:', err?.message, err?.stack)
+    return res.status(500).json({ error: 'Internal server error', detail: err?.message })
   }
-
-  const passData = await passkitRes.json()
-  const passUrl = passData.url ?? passData.pass?.url ?? passData.passUrl ?? passData.walletUrl
-
-  if (!passUrl) {
-    return res.status(500).json({ error: `PassKit returned no URL. Response: ${JSON.stringify(passData)}` })
-  }
-
-  // Store pass URL on member record
-  await supabase
-    .from('members')
-    .update({ passkit_pass_url: passUrl })
-    .eq('clerk_user_id', clerk_user_id)
-
-  // Send welcome email
-  if (resendKey) {
-    const html = welcomeEmailHtml(name || '', email, tier, memberId, expiryStr, passUrl)
-    const emailRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'SUBS <hello@subs.app>',
-        to: email,
-        subject: `Your SUBS ${tier} card is ready`,
-        html,
-      }),
-    })
-    if (!emailRes.ok) console.error('Resend error:', await emailRes.text())
-  }
-
-  return res.status(200).json({ success: true, passUrl, memberId })
 }
