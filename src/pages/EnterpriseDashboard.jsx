@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const ENTERPRISE_TRADES = [
   'HVAC', 'Plumbing', 'Electrical', 'Roofing', 'Painting',
-  'Flooring', 'Pest Control', 'Handyman', 'Landscaping', 'Other',
+  'Flooring', 'Pest Control', 'Handyman', 'Landscaping', 'Window Cleaning', 'Other',
 ]
 
 const PROPERTY_TYPES = [

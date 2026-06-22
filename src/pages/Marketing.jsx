@@ -36,6 +36,7 @@ const TRADES = [
   { icon: '🏡', name: 'Decks & Patios', discount: 'Contractor rates' },
   { icon: '🪵', name: 'Framing', discount: 'Contractor rates' },
   { icon: '🧹', name: 'House Cleaning', discount: 'Member rates' },
+  { icon: '🪟', name: 'Window Cleaning', discount: 'Member rates' },
 ]
 
 const TIERS = [

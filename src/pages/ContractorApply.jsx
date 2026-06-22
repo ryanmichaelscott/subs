@@ -11,7 +11,7 @@ const TRADES_LIST = [
   'Insulation', 'Interior Painting', 'Kitchen Remodel', 'Landscaping', 'Lawn Care',
   'Fire, Mold & Flood Restoration', 'Mold Detection', 'Pest Control', 'Plumbing', 'Pool Service', 'Roofing',
   'Siding & Stucco', 'Smart Home / AV', 'Solar', 'Tree Service', 'Water Filtration',
-  'Waterproofing', 'Window Install', 'Windows & Doors',
+  'Waterproofing', 'Window Cleaning', 'Window Install', 'Windows & Doors',
 ]
 
 const US_STATES = [
