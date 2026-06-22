@@ -853,8 +853,9 @@ export default function ContractorDashboard() {
       <style>{`
         .cd-nav-meta { display: flex; align-items: center; gap: 8px; }
         .cd-nav-email, .cd-nav-name { display: inline; }
+        .cd-nav-badge { display: inline; }
         @media (max-width: 600px) {
-          .cd-nav-email, .cd-nav-name { display: none; }
+          .cd-nav-email, .cd-nav-name, .cd-nav-badge { display: none; }
           .tabs-bar button { font-size: 11px !important; padding: 9px 3px !important; }
           .cd-content { padding: 16px 12px !important; }
         }
@@ -865,10 +866,10 @@ export default function ContractorDashboard() {
           <span className="cd-nav-email" style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || profile.email}</span>
           <span className="cd-nav-name" style={{ fontSize: 13, color: S.offwhite, fontWeight: 600 }}>{user?.fullName || profile.name}</span>
           {contractorStatus === 'pending'
-            ? <span style={{ fontSize: 11, fontWeight: 700, color: S.amber, background: S.amber + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>Pending Review</span>
+            ? <span className="cd-nav-badge" style={{ fontSize: 11, fontWeight: 700, color: S.amber, background: S.amber + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>Pending Review</span>
             : contractorStatus === 'approved'
-            ? <span style={{ fontSize: 11, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>Approved</span>
-            : <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>Active Partner</span>
+            ? <span className="cd-nav-badge" style={{ fontSize: 11, fontWeight: 700, color: S.blue, background: S.blue + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>Approved</span>
+            : <span className="cd-nav-badge" style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '22', padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>Active Partner</span>
           }
           <button onClick={() => signOut().then(() => navigate('/contractor/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer', whiteSpace: 'nowrap' }}>Sign out</button>
         </div>

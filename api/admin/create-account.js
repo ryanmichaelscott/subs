@@ -66,7 +66,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const { type, ...fields } = req.body || {}
+    const { type, send_email = false, ...fields } = req.body || {}
     if (!type) return res.status(400).json({ error: 'type is required' })
 
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
@@ -114,20 +114,22 @@ export default async function handler(req, res) {
         checkoutUrl = session.url
 
         const tierLabel = tier === 'member' ? 'Member ($99/yr)' : tier === 'plus' ? 'Member+ ($179/yr)' : 'Elite ($349/yr)'
-        await sendEmail({
-          to: email,
-          subject: 'Your SUBS membership — complete your setup',
-          html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0C0F0A;color:#F0EEE8;padding:32px;border-radius:12px">
-            <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px">SUBS</div>
-            <h2 style="font-size:20px;margin:16px 0 8px">Hi ${full_name.split(' ')[0]}, you're almost in.</h2>
-            <p style="color:#8A9088;font-size:14px;line-height:1.6">Your SUBS account has been created. Complete your ${tierLabel} membership by clicking below.</p>
-            <a href="${checkoutUrl}" style="display:inline-block;margin-top:20px;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none">Complete Membership →</a>
-            <p style="color:#8A9088;font-size:12px;margin-top:24px">Questions? Reply to this email or text us.</p>
-          </div>`,
-        })
+        if (send_email) {
+          await sendEmail({
+            to: email,
+            subject: 'Your SUBS membership — complete your setup',
+            html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0C0F0A;color:#F0EEE8;padding:32px;border-radius:12px">
+              <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px">SUBS</div>
+              <h2 style="font-size:20px;margin:16px 0 8px">Hi ${full_name.split(' ')[0]}, you're almost in.</h2>
+              <p style="color:#8A9088;font-size:14px;line-height:1.6">Your SUBS account has been created. Complete your ${tierLabel} membership by clicking below.</p>
+              <a href="${checkoutUrl}" style="display:inline-block;margin-top:20px;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none">Complete Membership →</a>
+              <p style="color:#8A9088;font-size:12px;margin-top:24px">Questions? Reply to this email or text us.</p>
+            </div>`,
+          })
+        }
       }
 
-      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, message: `Member account created. Payment link sent to ${email}.` })
+      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, full_name, email, tier_label: tier === 'member' ? 'Member' : tier === 'plus' ? 'Member+' : 'Elite', message: `Member account created.` })
     }
 
     // ── CONTRACTOR ──────────────────────────────────────────────────────────
@@ -222,19 +224,21 @@ export default async function handler(req, res) {
         checkoutUrl = session.url
 
         const planLabel = plan === 'portfolio' ? 'Portfolio ($749/yr)' : 'Professional ($1,899/yr)'
-        await sendEmail({
-          to: email,
-          subject: 'Your SUBS Enterprise account — complete your setup',
-          html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0C0F0A;color:#F0EEE8;padding:32px;border-radius:12px">
-            <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px">SUBS</div>
-            <h2 style="font-size:20px;margin:16px 0 8px">Hi ${full_name.split(' ')[0]}, welcome to SUBS Enterprise.</h2>
-            <p style="color:#8A9088;font-size:14px;line-height:1.6">Your ${planLabel} account has been created. Complete setup by clicking below.</p>
-            <a href="${checkoutUrl}" style="display:inline-block;margin-top:20px;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none">Complete Setup →</a>
-          </div>`,
-        })
+        if (send_email) {
+          await sendEmail({
+            to: email,
+            subject: 'Your SUBS Enterprise account — complete your setup',
+            html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0C0F0A;color:#F0EEE8;padding:32px;border-radius:12px">
+              <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px">SUBS</div>
+              <h2 style="font-size:20px;margin:16px 0 8px">Hi ${full_name.split(' ')[0]}, welcome to SUBS Enterprise.</h2>
+              <p style="color:#8A9088;font-size:14px;line-height:1.6">Your ${planLabel} account has been created. Complete setup by clicking below.</p>
+              <a href="${checkoutUrl}" style="display:inline-block;margin-top:20px;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none">Complete Setup →</a>
+            </div>`,
+          })
+        }
       }
 
-      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, message: `Property manager account created. Payment link sent to ${email}.` })
+      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, full_name, email, message: `Property manager account created.` })
     }
 
     // ── ENTERPRISE CUSTOM ───────────────────────────────────────────────────

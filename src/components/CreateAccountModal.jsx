@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { S, C } from '../theme'
 
 const ACCOUNT_TYPES = [
-  { id: 'member',           label: 'Homeowner',        sub: 'Member account' },
-  { id: 'contractor',       label: 'Contractor',        sub: 'Service provider' },
-  { id: 'property_manager', label: 'Property Manager',  sub: 'Portfolio/Professional' },
-  { id: 'enterprise_custom',label: 'Enterprise',        sub: 'Custom deal' },
+  { id: 'member',            label: 'Homeowner',       sub: 'Member account' },
+  { id: 'contractor',        label: 'Contractor',       sub: 'Service provider' },
+  { id: 'property_manager',  label: 'Prop. Manager',    sub: 'Portfolio/Pro' },
+  { id: 'enterprise_custom', label: 'Enterprise',       sub: 'Custom deal' },
 ]
 
 const MEMBER_TIERS = [
@@ -15,10 +15,12 @@ const MEMBER_TIERS = [
 ]
 
 const PM_PLANS = [
-  { id: 'portfolio',       label: 'Portfolio',     price: '$749/yr' },
-  { id: 'professional',    label: 'Professional',  price: '$1,899/yr' },
-  { id: 'enterprise_custom', label: 'Enterprise',  price: 'Custom' },
+  { id: 'portfolio',         label: 'Portfolio',    price: '$749/yr' },
+  { id: 'professional',      label: 'Professional', price: '$1,899/yr' },
+  { id: 'enterprise_custom', label: 'Enterprise',   price: 'Custom' },
 ]
+
+const HAS_PAYMENT = ['member', 'property_manager']
 
 function Label({ children }) {
   return <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{children}</div>
@@ -47,27 +49,57 @@ function Field({ label, children }) {
   )
 }
 
-function SegmentPicker({ options, value, onChange }) {
+function SegmentPicker({ options, value, onChange, columns }) {
   return (
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: columns ? `repeat(${columns}, 1fr)` : `repeat(${options.length}, 1fr)`, gap: 6 }}>
       {options.map(opt => (
         <button
           key={opt.id}
           onClick={() => onChange(opt.id)}
           style={{
-            flex: 1, minWidth: 80, padding: '8px 12px', borderRadius: 8, cursor: 'pointer',
+            padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
             border: `1px solid ${value === opt.id ? S.green : S.border}`,
             background: value === opt.id ? S.green + '18' : 'transparent',
             color: value === opt.id ? S.green : S.muted,
-            fontSize: 13, fontWeight: 600, textAlign: 'center',
+            fontSize: 12, fontWeight: 600, textAlign: 'center',
             transition: 'all 0.15s',
           }}
         >
           <div>{opt.label}</div>
-          {opt.price && <div style={{ fontSize: 11, opacity: 0.8, marginTop: 2 }}>{opt.price}</div>}
-          {opt.sub && <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>{opt.sub}</div>}
+          {opt.price && <div style={{ fontSize: 11, opacity: 0.75, marginTop: 2 }}>{opt.price}</div>}
+          {opt.sub && <div style={{ fontSize: 10, opacity: 0.65, marginTop: 2 }}>{opt.sub}</div>}
         </button>
       ))}
+    </div>
+  )
+}
+
+function PaymentToggle({ value, onChange }) {
+  return (
+    <div>
+      <Label>Collect payment</Label>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {[
+          { id: 'open_now',   icon: '💳', title: 'Open now',        sub: 'Take card over the phone' },
+          { id: 'send_email', icon: '✉️', title: 'Send link',       sub: 'Customer pays via email' },
+        ].map(opt => (
+          <button
+            key={opt.id}
+            onClick={() => onChange(opt.id)}
+            style={{
+              padding: '10px 12px', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+              border: `1px solid ${value === opt.id ? S.green : S.border}`,
+              background: value === opt.id ? S.green + '15' : 'transparent',
+              color: value === opt.id ? S.green : S.muted,
+              transition: 'all 0.15s',
+            }}
+          >
+            <div style={{ fontSize: 16, marginBottom: 4 }}>{opt.icon}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: value === opt.id ? S.green : S.offwhite }}>{opt.title}</div>
+            <div style={{ fontSize: 11, color: S.muted, marginTop: 2 }}>{opt.sub}</div>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -75,22 +107,26 @@ function SegmentPicker({ options, value, onChange }) {
 export default function CreateAccountModal({ onClose, onCreated }) {
   const [accountType, setAccountType] = useState('member')
   const [fields, setFields] = useState({})
+  const [paymentMode, setPaymentMode] = useState('open_now')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const [emailSent, setEmailSent] = useState(false)
+  const [emailSending, setEmailSending] = useState(false)
 
   const set = (key, val) => setFields(f => ({ ...f, [key]: val }))
+  const showPaymentToggle = HAS_PAYMENT.includes(accountType) &&
+    !(accountType === 'property_manager' && fields.plan === 'enterprise_custom')
 
   const handleSubmit = async () => {
     setLoading(true)
     setError(null)
     setResult(null)
     try {
-      const body = { type: accountType, ...fields }
-
-      // normalize property_manager with enterprise_custom plan
-      if (accountType === 'property_manager' && fields.plan === 'enterprise_custom') {
-        body.type = 'property_manager'
+      const body = {
+        type: accountType,
+        send_email: showPaymentToggle && paymentMode === 'send_email',
+        ...fields,
       }
 
       const res = await fetch('/api/admin/create-account', {
@@ -104,11 +140,38 @@ export default function CreateAccountModal({ onClose, onCreated }) {
       } else {
         setResult(data)
         if (onCreated) onCreated(accountType)
+        // Auto-open payment page if that mode was selected
+        if (showPaymentToggle && paymentMode === 'open_now' && data.checkout_url) {
+          window.open(data.checkout_url, '_blank')
+        }
+        if (paymentMode === 'send_email') setEmailSent(true)
       }
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSendEmail = async () => {
+    if (!result?.checkout_url) return
+    setEmailSending(true)
+    try {
+      await fetch('/api/admin/send-payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: result.email,
+          name: result.full_name,
+          checkout_url: result.checkout_url,
+          tier_label: result.tier_label,
+        }),
+      })
+      setEmailSent(true)
+    } catch {
+      // fail silently — link is always visible to copy
+    } finally {
+      setEmailSending(false)
     }
   }
 
@@ -121,9 +184,7 @@ export default function CreateAccountModal({ onClose, onCreated }) {
         <Field label="Tier">
           <SegmentPicker options={MEMBER_TIERS} value={fields.tier || 'member'} onChange={v => set('tier', v)} />
         </Field>
-        <div style={{ fontSize: 12, color: S.muted, background: S.surface, padding: '10px 12px', borderRadius: 8, lineHeight: 1.6 }}>
-          Creates Clerk account, Supabase member record, Stripe customer, and sends payment link to their email.
-        </div>
+        <PaymentToggle value={paymentMode} onChange={setPaymentMode} />
       </div>
     )
 
@@ -133,13 +194,13 @@ export default function CreateAccountModal({ onClose, onCreated }) {
         <Field label="Business Name (optional)"><Input value={fields.business_name || ''} onChange={v => set('business_name', v)} placeholder="Johnson Plumbing LLC" /></Field>
         <Field label="Email"><Input type="email" value={fields.email || ''} onChange={v => set('email', v)} placeholder="mike@johnsonplumbing.com" /></Field>
         <Field label="Phone"><Input value={fields.phone || ''} onChange={v => set('phone', v)} placeholder="+1 555 000 0000" /></Field>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Field label="Trade / Specialty"><Input value={fields.trade || ''} onChange={v => set('trade', v)} placeholder="Plumbing" /></Field>
-          <Field label="Service City"><Input value={fields.service_city || ''} onChange={v => set('service_city', v)} placeholder="Nashville" /></Field>
+        <Field label="Trade"><Input value={fields.trade || ''} onChange={v => set('trade', v)} placeholder="Plumbing" /></Field>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <Field label="City"><Input value={fields.service_city || ''} onChange={v => set('service_city', v)} placeholder="Nashville" /></Field>
+          <Field label="State"><Input value={fields.service_state || ''} onChange={v => set('service_state', v)} placeholder="TN" /></Field>
         </div>
-        <Field label="Service State"><Input value={fields.service_state || ''} onChange={v => set('service_state', v)} placeholder="TN" /></Field>
         <div style={{ fontSize: 12, color: S.muted, background: S.surface, padding: '10px 12px', borderRadius: 8, lineHeight: 1.6 }}>
-          Creates Clerk account with contractor role, Supabase record (status: pending), and sends onboarding email to complete their profile.
+          Creates Clerk account (contractor role), Supabase record (pending), sends onboarding email.
         </div>
       </div>
     )
@@ -154,11 +215,12 @@ export default function CreateAccountModal({ onClose, onCreated }) {
         <Field label="Plan">
           <SegmentPicker options={PM_PLANS} value={fields.plan || 'portfolio'} onChange={v => set('plan', v)} />
         </Field>
-        <div style={{ fontSize: 12, color: S.muted, background: S.surface, padding: '10px 12px', borderRadius: 8, lineHeight: 1.6 }}>
-          {fields.plan === 'enterprise_custom'
-            ? 'Creates account with status pending. ryan@skscott.com will be notified to finalize pricing.'
-            : 'Creates Clerk account with enterprise role, Stripe customer, and sends payment link to their email.'}
-        </div>
+        {showPaymentToggle && <PaymentToggle value={paymentMode} onChange={setPaymentMode} />}
+        {fields.plan === 'enterprise_custom' && (
+          <div style={{ fontSize: 12, color: S.muted, background: S.surface, padding: '10px 12px', borderRadius: 8, lineHeight: 1.6 }}>
+            Creates account (pending). support@subs.app will be notified to finalize pricing.
+          </div>
+        )}
       </div>
     )
 
@@ -173,88 +235,128 @@ export default function CreateAccountModal({ onClose, onCreated }) {
           <Input type="number" value={fields.negotiated_price || ''} onChange={v => set('negotiated_price', v)} placeholder="3500" />
         </Field>
         <div style={{ fontSize: 12, color: S.muted, background: S.surface, padding: '10px 12px', borderRadius: 8, lineHeight: 1.6 }}>
-          Creates Clerk account, enterprise_member record, Stripe customer, creates a custom Stripe price at the negotiated amount, and starts the subscription immediately. Sends welcome email + notifies ryan@skscott.com.
+          Creates Clerk account, Supabase record, custom Stripe price at negotiated amount, starts subscription immediately.
         </div>
       </div>
     )
   }
 
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-      onClick={e => { if (e.target === e.currentTarget && !result) onClose() }}
-    >
-      <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, width: '100%', maxWidth: 540, maxHeight: '90vh', overflow: 'auto', padding: 32 }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-          <div>
-            <div style={{ fontFamily: C.display, fontSize: 22, color: S.offwhite }}>Create Account</div>
-            <div style={{ fontSize: 13, color: S.muted, marginTop: 3 }}>Manually onboard a new account</div>
+    <>
+      <style>{`
+        .cam-inner { padding: 32px; }
+        .cam-types { grid-template-columns: repeat(4, 1fr); }
+        @media (max-width: 540px) {
+          .cam-inner { padding: 20px 16px; }
+          .cam-types { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
+      <div
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', zIndex: 200, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '16px 12px', overflowY: 'auto' }}
+        onClick={e => { if (e.target === e.currentTarget && !result) onClose() }}
+      >
+        <div className="cam-inner" style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, width: '100%', maxWidth: 520, marginTop: 24, marginBottom: 24 }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+            <div>
+              <div style={{ fontFamily: C.display, fontSize: 20, color: S.offwhite }}>Create Account</div>
+              <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>Manually onboard a new account</div>
+            </div>
+            {!result && (
+              <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: S.muted, fontSize: 22, cursor: 'pointer', padding: '0 4px', lineHeight: 1, marginTop: -2 }}>×</button>
+            )}
           </div>
-          {!result && (
-            <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: S.muted, fontSize: 20, cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>×</button>
-          )}
-        </div>
 
-        {/* Success state */}
-        {result ? (
-          <div>
-            <div style={{ background: S.green + '18', border: `1px solid ${S.green}44`, borderRadius: 10, padding: '20px 20px', marginBottom: 20 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: S.green, marginBottom: 6 }}>Account created</div>
-              <div style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.6 }}>{result.message}</div>
+          {/* Success state */}
+          {result ? (
+            <div>
+              <div style={{ background: S.green + '18', border: `1px solid ${S.green}44`, borderRadius: 10, padding: '16px 18px', marginBottom: 16 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: S.green, marginBottom: 4 }}>Account created</div>
+                <div style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.6 }}>{result.message}</div>
+              </div>
+
               {result.checkout_url && (
-                <div style={{ marginTop: 12 }}>
-                  <div style={{ fontSize: 11, color: S.muted, marginBottom: 4 }}>PAYMENT LINK (also sent by email)</div>
-                  <a href={result.checkout_url} target="_blank" rel="noreferrer"
-                    style={{ fontSize: 12, color: S.blue, wordBreak: 'break-all', textDecoration: 'none', background: S.surface, padding: '8px 10px', borderRadius: 6, display: 'block', border: `1px solid ${S.border}` }}>
-                    {result.checkout_url}
-                  </a>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Payment link</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                    <a
+                      href={result.checkout_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '11px 12px', borderRadius: 8, cursor: 'pointer', textDecoration: 'none' }}
+                    >
+                      💳 Open payment page
+                    </a>
+                    <button
+                      onClick={handleSendEmail}
+                      disabled={emailSent || emailSending}
+                      style={{ background: emailSent ? S.green + '18' : S.surface, border: `1px solid ${emailSent ? S.green + '44' : S.border}`, color: emailSent ? S.green : S.offwhite, fontSize: 13, fontWeight: 600, padding: '11px 12px', borderRadius: 8, cursor: emailSent ? 'default' : 'pointer' }}
+                    >
+                      {emailSent ? '✓ Link sent' : emailSending ? 'Sending…' : `✉️ Email to ${result.email?.split('@')[0]}`}
+                    </button>
+                  </div>
+                  <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 6, padding: '8px 10px' }}>
+                    <div style={{ fontSize: 10, color: S.muted, marginBottom: 3 }}>Or copy link manually</div>
+                    <div style={{ fontSize: 11, color: S.blue, wordBreak: 'break-all', lineHeight: 1.4 }}>{result.checkout_url}</div>
+                  </div>
                 </div>
               )}
-              {result.clerk_user_id && (
-                <div style={{ marginTop: 10, fontSize: 12, color: S.muted }}>Clerk ID: <span style={{ color: S.offwhite, fontFamily: 'monospace' }}>{result.clerk_user_id}</span></div>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setResult(null); setFields({}); setAccountType('member') }}
-                style={{ flex: 1, background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 13, fontWeight: 600, padding: '10px', borderRadius: 8, cursor: 'pointer' }}>
-                Create Another
-              </button>
-              <button onClick={onClose}
-                style={{ flex: 1, background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '10px', borderRadius: 8, cursor: 'pointer' }}>
-                Done
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Account type tabs */}
-            <div style={{ marginBottom: 24 }}>
-              <Label>Account Type</Label>
-              <SegmentPicker options={ACCOUNT_TYPES} value={accountType} onChange={v => { setAccountType(v); setFields({}) }} />
-            </div>
 
-            {/* Form */}
-            {renderForm()}
-
-            {/* Error */}
-            {error && (
-              <div style={{ marginTop: 16, background: S.danger + '18', border: `1px solid ${S.danger}44`, borderRadius: 8, padding: '10px 14px', fontSize: 13, color: S.danger }}>
-                {error}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <button onClick={() => { setResult(null); setFields({}); setEmailSent(false); setPaymentMode('open_now') }}
+                  style={{ background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 13, fontWeight: 600, padding: '10px', borderRadius: 8, cursor: 'pointer' }}>
+                  Create Another
+                </button>
+                <button onClick={onClose}
+                  style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '10px', borderRadius: 8, cursor: 'pointer' }}>
+                  Done
+                </button>
               </div>
-            )}
+            </div>
+          ) : (
+            <>
+              {/* Account type picker */}
+              <div style={{ marginBottom: 20 }}>
+                <Label>Account Type</Label>
+                <div className="cam-types" style={{ display: 'grid', gap: 6 }}>
+                  {ACCOUNT_TYPES.map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => { setAccountType(opt.id); setFields({}); setPaymentMode('open_now') }}
+                      style={{
+                        padding: '9px 8px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
+                        border: `1px solid ${accountType === opt.id ? S.green : S.border}`,
+                        background: accountType === opt.id ? S.green + '18' : 'transparent',
+                        color: accountType === opt.id ? S.green : S.muted,
+                        fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
+                      }}
+                    >
+                      <div>{opt.label}</div>
+                      <div style={{ fontSize: 10, opacity: 0.7, marginTop: 2 }}>{opt.sub}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            {/* Submit */}
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              style={{ marginTop: 20, width: '100%', background: loading ? S.border : S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '12px', borderRadius: 9, cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.15s' }}
-            >
-              {loading ? 'Creating…' : 'Create Account'}
-            </button>
-          </>
-        )}
+              {renderForm()}
+
+              {error && (
+                <div style={{ marginTop: 14, background: S.danger + '18', border: `1px solid ${S.danger}44`, borderRadius: 8, padding: '10px 14px', fontSize: 13, color: S.danger }}>
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                style={{ marginTop: 18, width: '100%', background: loading ? S.border : S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '12px', borderRadius: 9, cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.15s' }}
+              >
+                {loading ? 'Creating…' : 'Create Account'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
