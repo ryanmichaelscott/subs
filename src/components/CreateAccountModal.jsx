@@ -20,7 +20,7 @@ const PM_PLANS = [
   { id: 'enterprise_custom', label: 'Enterprise',   price: 'Custom' },
 ]
 
-const HAS_PAYMENT = ['member', 'property_manager']
+const HAS_PAYMENT = ['member', 'contractor', 'property_manager']
 
 function Label({ children }) {
   return <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{children}</div>
@@ -199,9 +199,7 @@ export default function CreateAccountModal({ onClose, onCreated }) {
           <Field label="City"><Input value={fields.service_city || ''} onChange={v => set('service_city', v)} placeholder="Nashville" /></Field>
           <Field label="State"><Input value={fields.service_state || ''} onChange={v => set('service_state', v)} placeholder="TN" /></Field>
         </div>
-        <div style={{ fontSize: 12, color: S.muted, background: S.surface, padding: '10px 12px', borderRadius: 8, lineHeight: 1.6 }}>
-          Creates Clerk account (contractor role), Supabase record (pending), sends onboarding email.
-        </div>
+        {showPaymentToggle && <PaymentToggle value={paymentMode} onChange={setPaymentMode} />}
       </div>
     )
 

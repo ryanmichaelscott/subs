@@ -89,7 +89,7 @@ export default function ContractorApply() {
             <div style={{ fontSize: 52, marginBottom: 20 }}>📬</div>
             <div style={{ fontFamily: C.display, fontSize: 32, color: S.offwhite, marginBottom: 12 }}>Application submitted!</div>
             <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.7, marginBottom: 28 }}>
-              Check your inbox — we sent login instructions to <strong style={{ color: S.offwhite }}>{form.email}</strong>. Log in now to upload your documents and build your profile while we review your application.
+              Check your inbox — we sent a login link to <strong style={{ color: S.offwhite }}>{form.email}</strong>. We review every partner in 1–2 business days. Start building your profile now.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link to="/contractor/login" style={{ textDecoration: 'none' }}>

@@ -7,6 +7,8 @@ const MEMBER_PRICE_IDS = {
   elite:  'price_1TjQ7DAYDs9oVarWbJONkQ1P',
 }
 
+const CONTRACTOR_PRICE_ID = process.env.STRIPE_CONTRACTOR_PRICE_ID || 'price_1TicGZAYDs9oVarWmVWT27wz'
+
 const ENTERPRISE_PRICE_IDS = {
   portfolio:    process.env.STRIPE_ENTERPRISE_PORTFOLIO_PRICE_ID || 'price_1TkX1RAYDs9oVarWRPRsTDsU',
   professional: process.env.STRIPE_ENTERPRISE_PROFESSIONAL_PRICE_ID || 'price_1TkX1hAYDs9oVarWI99Q2FP4',
@@ -152,19 +154,35 @@ export default async function handler(req, res) {
         submitted_at: new Date().toISOString(),
       })
 
-      await sendEmail({
-        to: email,
-        subject: 'Welcome to SUBS — complete your contractor profile',
-        html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0C0F0A;color:#F0EEE8;padding:32px;border-radius:12px">
-          <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px">SUBS</div>
-          <h2 style="font-size:20px;margin:16px 0 8px">Hi ${full_name.split(' ')[0]}, welcome aboard.</h2>
-          <p style="color:#8A9088;font-size:14px;line-height:1.6">Your contractor account has been created. Complete your profile to start receiving job requests from SUBS members.</p>
-          <a href="${BASE_URL}/contractor/apply" style="display:inline-block;margin-top:20px;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none">Complete Profile →</a>
-          <p style="color:#8A9088;font-size:12px;margin-top:24px">Questions? Reply to this email or text us.</p>
-        </div>`,
-      })
+      let checkoutUrl = null
+      if (stripe) {
+        const customer = await stripe.customers.create({ email, name: business_name || full_name, metadata: { clerk_user_id: clerkUserId, type: 'contractor' } })
 
-      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, message: `Contractor account created. Onboarding email sent to ${email}.` })
+        const session = await stripe.checkout.sessions.create({
+          customer: customer.id,
+          mode: 'subscription',
+          line_items: [{ price: CONTRACTOR_PRICE_ID, quantity: 1 }],
+          success_url: `${BASE_URL}/contractor/dashboard`,
+          cancel_url: `${BASE_URL}/contractor/apply`,
+          metadata: { clerk_user_id: clerkUserId, admin_created: 'true' },
+        })
+        checkoutUrl = session.url
+
+        if (send_email) {
+          await sendEmail({
+            to: email,
+            subject: 'Welcome to SUBS — activate your contractor account',
+            html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0C0F0A;color:#F0EEE8;padding:32px;border-radius:12px">
+              <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px">SUBS</div>
+              <h2 style="font-size:20px;margin:16px 0 8px">Hi ${full_name.split(' ')[0]}, welcome.</h2>
+              <p style="color:#8A9088;font-size:14px;line-height:1.6">Your contractor account is ready. Complete your subscription to start receiving job requests from SUBS members.</p>
+              <a href="${checkoutUrl}" style="display:inline-block;margin-top:20px;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none">Activate Account →</a>
+            </div>`,
+          })
+        }
+      }
+
+      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, full_name, email, tier_label: 'Contractor', message: `Contractor account created.` })
     }
 
     // ── PROPERTY MANAGER ────────────────────────────────────────────────────

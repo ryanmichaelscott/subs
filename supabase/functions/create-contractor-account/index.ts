@@ -104,6 +104,56 @@ serve(async (req) => {
       }
     }
 
+    // Send welcome email with login instructions via Resend
+    try {
+      const resendKey = Deno.env.get('RESEND_API_KEY')
+      const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
+      const loginLink = `${appUrl}/contractor/login`
+
+      if (resendKey) {
+        const welcomeHtml = `
+<!DOCTYPE html>
+<html>
+<body style="font-family:Inter,system-ui,sans-serif;background:#0C0F0A;color:#F0EEE8;margin:0;padding:0;">
+  <div style="max-width:520px;margin:0 auto;padding:48px 28px;">
+    <div style="font-size:22px;font-weight:800;color:#5DFF8A;letter-spacing:0.06em;margin-bottom:32px;">SUBS.</div>
+    <h1 style="font-size:30px;font-weight:700;color:#F0EEE8;margin:0 0 16px;line-height:1.2;">
+      Welcome, ${contact_name || company_name}!
+    </h1>
+    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 32px;">
+      We received your application for <strong style="color:#F0EEE8;">${company_name}</strong>. We review every partner — typically 1–2 business days. In the meantime, log in to start building your profile.
+    </p>
+    <a href="${loginLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;margin-bottom:24px;">
+      Log In to Your Account →
+    </a>
+    <p style="font-size:13px;color:#8A9088;line-height:1.6;margin:0;">
+      Enter your email — we'll send a one-time code to sign you in.
+    </p>
+    <p style="font-size:13px;color:#8A9088;margin-top:32px;line-height:1.6;">
+      Questions? <a href="mailto:partners@subs.app" style="color:#5DFF8A;text-decoration:none;">partners@subs.app</a>
+    </p>
+  </div>
+</body>
+</html>`
+
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'SUBS <hello@subs.app>',
+            to: normalizedEmail,
+            subject: 'Application received — log in to build your profile',
+            html: welcomeHtml,
+          }),
+        })
+      }
+    } catch (e) {
+      console.error('Welcome email error:', e)
+    }
+
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
