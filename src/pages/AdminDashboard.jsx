@@ -53,6 +53,7 @@ export default function AdminDashboard() {
   const [assigningManager, setAssigningManager] = useState(null)
   const [managerForm, setManagerForm] = useState({ name: '', email: '', phone: '' })
   const [showCreateAccount, setShowCreateAccount] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
 
   const loadData = async () => {
     await Promise.all([
@@ -288,17 +289,52 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
-      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
+      <style>{`
+        .admin-nav-actions { display: flex; align-items: center; gap: 10px; }
+        .admin-hamburger { display: none; }
+        .admin-mobile-menu { display: none; }
+        @media (max-width: 640px) {
+          .admin-nav-actions { display: none; }
+          .admin-hamburger { display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid ${S.border}; color: ${S.muted}; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 18px; }
+          .admin-mobile-menu { display: block; position: absolute; top: 58px; right: 0; left: 0; background: ${S.card}; border-bottom: 1px solid ${S.border}; z-index: 49; padding: 12px 16px; }
+        }
+      `}</style>
+      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
           <span style={{ fontSize: 11, fontWeight: 700, color: S.danger, background: S.danger + '22', padding: '3px 10px', borderRadius: 100 }}>Admin</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Desktop nav actions */}
+        <div className="admin-nav-actions">
           <button onClick={() => setShowCreateAccount(true)} style={{ background: S.green, border: 'none', color: S.black, fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, cursor: 'pointer', letterSpacing: '0.02em' }}>+ Create Account</button>
           <span style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || 'admin@subs.co'}</span>
           <button onClick={() => signOut().then(() => navigate('/admin/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
+        {/* Mobile hamburger */}
+        <button className="admin-hamburger" onClick={() => setNavOpen(o => !o)}>
+          {navOpen ? '✕' : '☰'}
+        </button>
       </nav>
+      {/* Mobile dropdown menu */}
+      {navOpen && (
+        <div className="admin-mobile-menu">
+          <div style={{ fontSize: 12, color: S.muted, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${S.border}` }}>
+            {user?.primaryEmailAddress?.emailAddress || 'admin@subs.co'}
+          </div>
+          <button
+            onClick={() => { setShowCreateAccount(true); setNavOpen(false) }}
+            style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '11px 16px', borderRadius: 8, cursor: 'pointer', marginBottom: 10, textAlign: 'left' }}
+          >
+            + Create Account
+          </button>
+          <button
+            onClick={() => signOut().then(() => navigate('/admin/login'))}
+            style={{ width: '100%', background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, padding: '10px 16px', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
+          >
+            Sign out
+          </button>
+        </div>
+      )}
       {showCreateAccount && <CreateAccountModal onClose={() => setShowCreateAccount(false)} onCreated={() => { loadData(); setShowCreateAccount(false) }} />}
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px' }}>
