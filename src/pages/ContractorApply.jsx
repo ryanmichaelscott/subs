@@ -35,6 +35,7 @@ export default function ContractorApply() {
   const [saCounties, setSaCounties] = useState('')
   const [saZip, setSaZip] = useState('')
   const [saRadius, setSaRadius] = useState('25')
+  const [smsConsent, setSmsConsent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [submitted, setSubmitted] = useState(false)
@@ -49,6 +50,7 @@ export default function ContractorApply() {
     if (!trades.length) { setError('Please select at least one trade.'); return }
     if (saType === 'county' && !saCounties.trim()) { setError('Please enter the counties you serve.'); return }
     if (saType === 'radius' && !saZip.trim()) { setError('Please enter your zip code.'); return }
+    if (!smsConsent) { setError('Please consent to SMS communications to submit your application.'); return }
 
     const service_area = saType === 'county'
       ? { type: 'county', state: saState, counties: saCounties.trim() }
@@ -247,6 +249,19 @@ export default function ContractorApply() {
                 )}
               </div>
             </div>
+
+            {/* SMS consent checkbox */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 16, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={smsConsent}
+                onChange={e => { setSmsConsent(e.target.checked); setError(null) }}
+                style={{ marginTop: 3, width: 15, height: 15, accentColor: S.green, flexShrink: 0, cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 11, color: S.muted, lineHeight: 1.65 }}>
+                By providing your phone number and checking this box, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, contractor updates, and promotional offers. Message and data rates may apply. Message frequency varies. Reply STOP to opt out at any time. Reply HELP for help. View our <Link to="/privacy" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>Privacy Policy</Link> at subs.app/privacy and <Link to="/sms-consent" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>SMS Consent Policy</Link> at subs.app/sms-consent.
+              </span>
+            </label>
 
             {error && (
               <div style={{ background: '#2D1010', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: S.danger, fontSize: 13 }}>

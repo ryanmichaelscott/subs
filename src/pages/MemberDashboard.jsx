@@ -1020,7 +1020,7 @@ export default function MemberDashboard() {
                       <div>
                         <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Phone</label>
                         <input value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} placeholder="(801) 555-0100" style={inp} />
-                        <div style={{ fontSize: 11, color: S.muted, marginTop: 5, lineHeight: 1.5 }}>By adding your phone number, you agree to receive service updates and notifications from SUBS via SMS. Message &amp; data rates may apply. Reply STOP to opt out.</div>
+                        <div style={{ fontSize: 11, color: S.muted, marginTop: 5, lineHeight: 1.65 }}>By providing your phone number and checking this box, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, contractor updates, and promotional offers. Message and data rates may apply. Message frequency varies. Reply STOP to opt out at any time. Reply HELP for help. View our <Link to="/privacy" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>Privacy Policy</Link> at subs.app/privacy and <Link to="/sms-consent" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>SMS Consent Policy</Link> at subs.app/sms-consent.</div>
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Zip code</label>
@@ -1154,20 +1154,17 @@ export default function MemberDashboard() {
               style={{ width: '100%', boxSizing: 'border-box', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, padding: '13px 16px', color: S.offwhite, fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10 }}
             />
 
-            {/* TCPA language */}
-            <p style={{ fontSize: 11, color: S.muted, lineHeight: 1.6, margin: '0 0 14px' }}>
-              By providing your phone number, you agree to receive SMS notifications from SUBS including service updates, booking confirmations, and support messages. Message &amp; data rates may apply. Reply STOP at any time to unsubscribe.
-            </p>
-
             {/* SMS consent checkbox */}
             <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 20, cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={popupConsent}
                 onChange={e => setPopupConsent(e.target.checked)}
-                style={{ marginTop: 2, accentColor: S.green, width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
+                style={{ marginTop: 3, accentColor: S.green, width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
               />
-              <span style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.5 }}>I agree to receive SMS notifications from SUBS</span>
+              <span style={{ fontSize: 11, color: S.muted, lineHeight: 1.65 }}>
+                By providing your phone number and checking this box, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, contractor updates, and promotional offers. Message and data rates may apply. Message frequency varies. Reply STOP to opt out at any time. Reply HELP for help. View our <Link to="/privacy" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>Privacy Policy</Link> at subs.app/privacy and <Link to="/sms-consent" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>SMS Consent Policy</Link> at subs.app/sms-consent.
+              </span>
             </label>
 
             {/* Save button */}

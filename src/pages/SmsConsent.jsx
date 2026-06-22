@@ -64,9 +64,7 @@ export default function SmsConsent() {
             Consent &amp; Disclosure
           </h2>
           <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.8, margin: 0 }}>
-            By providing your phone number you agree to receive SMS notifications from SUBS. Message and data rates may apply.
-            Reply <strong style={{ color: S.offwhite, fontWeight: 700 }}>STOP</strong> at any time to unsubscribe from SMS messages.
-            Reply <strong style={{ color: S.offwhite, fontWeight: 700 }}>HELP</strong> for assistance.
+            By providing your phone number and checking this box, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, contractor updates, and promotional offers. Message and data rates may apply. Message frequency varies. Reply <strong style={{ color: S.offwhite, fontWeight: 700 }}>STOP</strong> to opt out at any time. Reply <strong style={{ color: S.offwhite, fontWeight: 700 }}>HELP</strong> for help. View our <Link to="/privacy" style={{ color: S.green, textDecoration: 'none' }}>Privacy Policy</Link> at subs.app/privacy and <Link to="/sms-consent" style={{ color: S.green, textDecoration: 'none' }}>SMS Consent Policy</Link> at subs.app/sms-consent.
           </p>
         </section>
 
