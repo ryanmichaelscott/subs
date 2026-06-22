@@ -102,10 +102,16 @@ export default function CheckoutPage() {
     check()
   }, [isLoaded, isSignedIn])
 
+  const [agreed, setAgreed] = useState(false)
+
   const handleSelect = async (tier) => {
     if (loadingId) return
     if (!memberState) {
       setError('Please select your state so we can confirm service availability in your area.')
+      return
+    }
+    if (!agreed) {
+      setError('Please agree to the Member Agreement and Terms of Service to continue.')
       return
     }
     setError(null)
@@ -215,6 +221,22 @@ export default function CheckoutPage() {
             />
           </div>
         </div>
+
+        {/* Agreement checkbox */}
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', maxWidth: 400, width: '100%', marginBottom: 24 }}>
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={e => setAgreed(e.target.checked)}
+            style={{ marginTop: 3, width: 16, height: 16, accentColor: S.green, flexShrink: 0, cursor: 'pointer' }}
+          />
+          <span style={{ fontSize: 13, color: S.muted, lineHeight: 1.6 }}>
+            I agree to the{' '}
+            <a href="/member-agreement" target="_blank" rel="noreferrer" style={{ color: S.green, textDecoration: 'none' }}>Member Agreement</a>
+            {' '}and{' '}
+            <a href="/terms" target="_blank" rel="noreferrer" style={{ color: S.green, textDecoration: 'none' }}>Terms of Service</a>
+          </span>
+        </label>
 
         {error && (
           <div style={{ background: '#2D1010', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 16px', marginBottom: 24, color: S.danger, fontSize: 14 }}>

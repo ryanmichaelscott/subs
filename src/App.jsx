@@ -17,6 +17,7 @@ import SmsConsent from './pages/SmsConsent'
 import PropertyManagers from './pages/PropertyManagers'
 import EnterpriseDashboard from './pages/EnterpriseDashboard'
 import EnterpriseOnboarding from './pages/EnterpriseOnboarding'
+import LegalPage from './pages/LegalPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 class DashboardErrorBoundary extends Component {
@@ -85,6 +86,10 @@ export default function App() {
           <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
         } />
         <Route path="/property-managers" element={<PropertyManagers />} />
+        <Route path="/terms" element={<LegalPage />} />
+        <Route path="/privacy" element={<LegalPage />} />
+        <Route path="/refund-policy" element={<LegalPage />} />
+        <Route path="/member-agreement" element={<LegalPage />} />
         <Route path="/enterprise/dashboard" element={
           <DashboardErrorBoundary>
             <ProtectedRoute role="enterprise"><EnterpriseDashboard /></ProtectedRoute>

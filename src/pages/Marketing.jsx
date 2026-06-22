@@ -756,20 +756,26 @@ function Footer() {
             <div style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em', marginBottom: 12 }}>SUBS</div>
             <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.6, maxWidth: 260, margin: 0 }}>The membership that unlocks contractor pricing on every trade that touches your home.</p>
           </div>
-          {[
-            { title: 'Membership', links: ['Member', 'Member+', 'Elite', 'How It Works'] },
-            { title: 'Company', links: ['How It Works', 'Vendor Network', 'FAQ', 'For Vendors'] },
-            { title: 'Legal', links: ['Terms', 'Privacy', 'Licensing', 'SMS Consent'] },
-          ].map(col => (
-            <div key={col.title}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase', marginBottom: 14 }}>{col.title}</div>
-              {col.links.map(link => (
-                link === 'SMS Consent'
-                  ? <div key={link} style={{ marginBottom: 10 }}><Link to="/sms-consent" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>SMS Consent</Link></div>
-                  : <div key={link} style={{ fontSize: 13, color: S.muted, marginBottom: 10, cursor: 'pointer' }}>{link}</div>
-              ))}
-            </div>
-          ))}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase', marginBottom: 14 }}>Membership</div>
+            {['Member', 'Member+', 'Elite', 'How It Works'].map(link => (
+              <div key={link} style={{ fontSize: 13, color: S.muted, marginBottom: 10 }}>{link}</div>
+            ))}
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase', marginBottom: 14 }}>Company</div>
+            {['How It Works', 'Vendor Network', 'FAQ', 'For Vendors'].map(link => (
+              <div key={link} style={{ fontSize: 13, color: S.muted, marginBottom: 10 }}>{link}</div>
+            ))}
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase', marginBottom: 14 }}>Legal</div>
+            <div style={{ marginBottom: 10 }}><Link to="/terms" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>Terms of Service</Link></div>
+            <div style={{ marginBottom: 10 }}><Link to="/privacy" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>Privacy Policy</Link></div>
+            <div style={{ marginBottom: 10 }}><Link to="/refund-policy" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>Refund Policy</Link></div>
+            <div style={{ marginBottom: 10 }}><Link to="/member-agreement" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>Member Agreement</Link></div>
+            <div style={{ marginBottom: 10 }}><Link to="/sms-consent" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>SMS Consent</Link></div>
+          </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase', marginBottom: 14 }}>Solutions</div>
             <div style={{ marginBottom: 10 }}><Link to="/signup" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>For Homeowners</Link></div>
