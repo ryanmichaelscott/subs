@@ -257,8 +257,8 @@ export default async function handler(req, res) {
     // ── Step 4: Add fields ────────────────────────────────────────────────────
     console.log('[wallet/apple] step 4: adding fields')
     const displayName = name || email
-    const firstName = displayName.split(' ')[0]
-    pass.primaryFields.add({ key: 'name', label: 'MEMBER', value: firstName })
+    // Trailing \n creates visual separation between the name value and the MEMBER label below it
+    pass.primaryFields.add({ key: 'name', label: 'MEMBER', value: displayName + '\n' })
     pass.secondaryFields.add({ key: 'tier', label: 'TIER', value: tier })
     pass.secondaryFields.add({ key: 'member_id', label: 'MEMBER ID', value: memberId })
     pass.auxiliaryFields.add({ key: 'expires', label: 'VALID THROUGH', value: expiryStr })
