@@ -81,7 +81,7 @@ export default function MemberLogin() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0C0F0A', padding: '24px 16px' }}>
-      <style>{`.member-login-card { padding: 28px; } @media (max-width: 480px) { .member-login-card { padding: 20px 16px; } }`}</style>
+      <style>{`.member-login-card { padding: 28px; overflow-x: hidden; } @media (max-width: 480px) { .member-login-card { padding: 20px 16px; } }`}</style>
       <div style={{ width: '100%', maxWidth: 440 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite, marginBottom: 8 }}>

@@ -90,7 +90,7 @@ export default function ContractorLogin() {
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <style>{`.contractor-login-card { padding: 28px; } @media (max-width: 480px) { .contractor-login-card { padding: 20px 16px; } }`}</style>
+      <style>{`.contractor-login-card { padding: 28px; overflow-x: hidden; } @media (max-width: 480px) { .contractor-login-card { padding: 20px 16px; } }`}</style>
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', width: '100%', boxSizing: 'border-box' }}>
         <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
         <Link to="/login" style={{ fontSize: 13, color: S.muted }}>Homeowner? Member login</Link>
