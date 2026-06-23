@@ -243,10 +243,10 @@ export default function AdminDashboard() {
   const handleSendCard = async (m) => {
     setSendingCard(m.id)
     try {
-      const res = await fetch('/api/wallet/generate', {
+      const res = await fetch('/api/wallet/apple', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member' }),
+        body: JSON.stringify({ clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member', mode: 'email' }),
       })
       const text = await res.text()
       let data
