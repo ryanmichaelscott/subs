@@ -13,6 +13,8 @@ const MEMBER_PRICE_TIERS: Record<string, string> = {
   'price_1TjQ8TAYDs9oVarWqCQyxLM5': 'Member+',
   'price_1TjQ7DAYDs9oVarWbJONkQ1P': 'Elite',
   'price_1TicGZAYDs9oVarWmVWT27wz': 'Contractor', // contractor annual plan
+  'price_1SlTWgAYDs9oVarWIJ1XpACp': 'Contractor', // legacy $199 plan
+  'price_1Sm6l4AYDs9oVarWCL2lDWOl': 'Contractor', // legacy $20 plan
 }
 
 serve(async (req) => {
