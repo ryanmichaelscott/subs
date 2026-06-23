@@ -12,11 +12,14 @@ export default function ContractorPaymentSuccess() {
 
   useEffect(() => {
     if (!isLoaded) return
+    if (!sessionId) { setStatus('error'); return }
+
+    // email is optional — the edge function will resolve it from the Stripe session
+    // if the contractor isn't signed in yet (common for admin-sent payment links)
     const email = user?.primaryEmailAddress?.emailAddress
-    if (!email || !sessionId) { setStatus('error'); return }
 
     supabase.functions.invoke('confirm-contractor-subscription', {
-      body: { session_id: sessionId, email },
+      body: { session_id: sessionId, ...(email ? { email } : {}) },
     }).then(({ data, error }) => {
       if (data?.success) {
         setStatus('success')

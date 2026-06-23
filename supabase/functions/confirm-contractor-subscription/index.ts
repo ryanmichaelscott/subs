@@ -11,10 +11,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { session_id, email } = await req.json()
+    const { session_id, email: clientEmail } = await req.json()
 
-    if (!session_id || !email) {
-      return new Response(JSON.stringify({ error: 'session_id and email are required.' }), {
+    if (!session_id) {
+      return new Response(JSON.stringify({ error: 'session_id is required.' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -33,43 +33,73 @@ serve(async (req) => {
       })
     }
 
+    // Resolve email: prefer client-provided (signed-in user), fall back to Stripe session
+    const sessionEmail = session.customer_details?.email
+      || (session.metadata as Record<string, string> | null)?.email
+      || ''
+    const email = clientEmail?.toLowerCase().trim() || sessionEmail?.toLowerCase().trim()
+
+    if (!email) {
+      return new Response(JSON.stringify({ error: 'Could not determine contractor email from session.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    console.log(`[confirm-contractor-subscription] session ${session_id}, resolving email: client="${clientEmail}" session="${sessionEmail}" using="${email}"`)
+
     const updatePayload = {
       status: 'active',
       stripe_customer_id: session.customer as string | null,
       stripe_subscription_id: session.subscription as string | null,
     }
 
-    // Try matching by email first
-    let { error, count } = await supabase
-      .from('contractors')
-      .update(updatePayload)
-      .eq('contact_email', email.toLowerCase().trim())
-      .select('id', { count: 'exact', head: true })
+    // 1) Match by client-provided email
+    let matched = false
+    if (clientEmail?.trim()) {
+      const { error, count } = await supabase
+        .from('contractors')
+        .update(updatePayload)
+        .eq('contact_email', clientEmail.toLowerCase().trim())
+        .select('id', { count: 'exact', head: true })
+      if (error) throw new Error(`DB update failed: ${error.message}`)
+      if (count && count > 0) matched = true
+    }
 
-    if (error) throw new Error(`DB update failed: ${error.message}`)
+    // 2) Match by session email (covers contractors who paid without being signed in)
+    if (!matched && sessionEmail) {
+      const { error, count } = await supabase
+        .from('contractors')
+        .update(updatePayload)
+        .eq('contact_email', sessionEmail.toLowerCase().trim())
+        .select('id', { count: 'exact', head: true })
+      if (error) throw new Error(`DB update failed (session email): ${error.message}`)
+      if (count && count > 0) { matched = true; console.log(`[confirm-contractor-subscription] matched by session email "${sessionEmail}"`) }
+    }
 
-    // Fall back: match by company name in Stripe metadata (handles email mismatch)
-    if (!count || count === 0) {
+    // 3) Match by company name in Stripe metadata
+    if (!matched) {
       const companyName = (session.metadata as Record<string, string> | null)?.company_name
       if (companyName) {
-        const fallback = await supabase
+        const { error, count } = await supabase
           .from('contractors')
           .update(updatePayload)
           .ilike('name', companyName.trim())
           .select('id', { count: 'exact', head: true })
-        error = fallback.error
-        count = fallback.count
-        if (error) throw new Error(`DB update failed (fallback): ${error.message}`)
+        if (error) throw new Error(`DB update failed (company name): ${error.message}`)
+        if (count && count > 0) { matched = true; console.log(`[confirm-contractor-subscription] matched by company name "${companyName}"`) }
       }
     }
 
-    if (!count || count === 0) throw new Error(`No contractor found for email: ${email}`)
+    if (!matched) {
+      throw new Error(`No contractor found for email "${email}"${sessionEmail !== email ? ` or session email "${sessionEmail}"` : ''}`)
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error('[confirm-contractor-subscription] error:', (err as Error).message)
+    return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
