@@ -28,6 +28,8 @@ export default function AdminDashboard() {
   const navigate = useNavigate()
   const { user } = useUser()
   const { signOut } = useClerk()
+  const userRole = user?.publicMetadata?.role
+  const isAdmin = userRole === 'admin'
   const [tab, setTab] = useState('stats')
   const [contractors, setContractors] = useState([])
   const [members, setMembers] = useState([])
@@ -54,6 +56,13 @@ export default function AdminDashboard() {
   const [managerForm, setManagerForm] = useState({ name: '', email: '', phone: '' })
   const [showCreateAccount, setShowCreateAccount] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
+  const [staffMembers, setStaffMembers] = useState([])
+  const [staffLoading, setStaffLoading] = useState(false)
+  const [showAddStaff, setShowAddStaff] = useState(false)
+  const [staffForm, setStaffForm] = useState({ full_name: '', email: '', role: 'staff' })
+  const [staffFormError, setStaffFormError] = useState(null)
+  const [staffFormLoading, setStaffFormLoading] = useState(false)
+  const [changingStaffRole, setChangingStaffRole] = useState(null)
 
   const loadData = async () => {
     await Promise.all([
@@ -297,7 +306,17 @@ export default function AdminDashboard() {
       .finally(() => setKpiLoading(false))
   }, [tab])
 
-  const tabs = [['stats', '📊 Revenue'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist'], ['kpis', '📈 KPIs'], ['enterprise', '🏢 Enterprise']]
+  useEffect(() => {
+    if (tab !== 'staff' || !isAdmin) return
+    setStaffLoading(true)
+    fetch('/api/admin/staff')
+      .then(r => r.json())
+      .then(d => setStaffMembers(d.staff || []))
+      .catch(() => {})
+      .finally(() => setStaffLoading(false))
+  }, [tab, isAdmin])
+
+  const tabs = [['stats', '📊 Revenue'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist'], ['kpis', '📈 KPIs'], ['enterprise', '🏢 Enterprise'], ...(isAdmin ? [['staff', '👤 Staff']] : [])]
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
@@ -339,6 +358,14 @@ export default function AdminDashboard() {
           >
             + Create Account
           </button>
+          {isAdmin && (
+            <button
+              onClick={() => { setTab('staff'); setNavOpen(false) }}
+              style={{ width: '100%', background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, padding: '10px 16px', borderRadius: 8, cursor: 'pointer', marginBottom: 10, textAlign: 'left' }}
+            >
+              👤 Staff Management
+            </button>
+          )}
           <button
             onClick={() => signOut().then(() => navigate('/admin/login'))}
             style={{ width: '100%', background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, padding: '10px 16px', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
@@ -377,6 +404,7 @@ export default function AdminDashboard() {
         {/* Stats */}
         {tab === 'stats' && (
           <div>
+            {isAdmin && (
             <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
               {[
                 ['MRR', mrr !== null ? `$${Math.round(mrr).toLocaleString()}` : '—', S.green, `Monthly recurring revenue · ${stripeRevenue?.subscription_count ?? '…'} active subs`],
@@ -391,6 +419,7 @@ export default function AdminDashboard() {
                 </Card>
               ))}
             </div>
+            )}
 
             <div className="billing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
               <Card style={{ padding: 24 }}>
@@ -443,7 +472,7 @@ export default function AdminDashboard() {
               </Card>
             </div>
 
-            <RevenueChart supabase={supabase} />
+            {isAdmin && <RevenueChart supabase={supabase} />}
 
             {stripeRevenue?.lines?.length > 0 && (
               <Card style={{ padding: 24, marginBottom: 20 }}>
@@ -1001,6 +1030,147 @@ export default function AdminDashboard() {
                   </div>
                 </Card>
               )}
+            </div>
+          )
+        })()}
+
+        {/* ── STAFF MANAGEMENT TAB ── */}
+        {tab === 'staff' && isAdmin && (() => {
+          const handleAddStaff = async (e) => {
+            e.preventDefault()
+            setStaffFormError(null)
+            if (!staffForm.full_name || !staffForm.email) { setStaffFormError('Name and email are required.'); return }
+            setStaffFormLoading(true)
+            try {
+              const res = await fetch('/api/admin/staff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(staffForm),
+              })
+              const data = await res.json()
+              if (!res.ok) { setStaffFormError(data.error || 'Failed to add staff member'); return }
+              setStaffMembers(prev => [data.staff, ...prev])
+              setShowAddStaff(false)
+              setStaffForm({ full_name: '', email: '', role: 'staff' })
+            } catch { setStaffFormError('Network error') }
+            finally { setStaffFormLoading(false) }
+          }
+
+          const handleRoleChange = async (id, role) => {
+            setChangingStaffRole(id)
+            try {
+              const res = await fetch('/api/admin/staff', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, role }),
+              })
+              if (res.ok) setStaffMembers(prev => prev.map(s => s.id === id ? { ...s, role } : s))
+            } finally { setChangingStaffRole(null) }
+          }
+
+          const handleRemoveStaff = async (id) => {
+            const res = await fetch('/api/admin/staff', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id }),
+            })
+            if (res.ok) setStaffMembers(prev => prev.filter(s => s.id !== id))
+          }
+
+          return (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: S.offwhite }}>Staff Management</div>
+                  <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>Staff can access this dashboard but cannot see KPI cards or revenue data.</div>
+                </div>
+                <button onClick={() => setShowAddStaff(true)} style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 8, cursor: 'pointer', flexShrink: 0 }}>
+                  + Add Staff
+                </button>
+              </div>
+
+              {/* Add Staff Modal */}
+              {showAddStaff && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}>
+                  <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, width: '100%', maxWidth: 420 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: S.offwhite, marginBottom: 20 }}>Add Staff Member</div>
+                    <form onSubmit={handleAddStaff}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+                        {[['Full Name', 'full_name', 'text', 'Jane Smith'], ['Email', 'email', 'email', 'jane@example.com']].map(([label, field, type, placeholder]) => (
+                          <div key={field}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{label}</div>
+                            <input type={type} placeholder={placeholder} value={staffForm[field]}
+                              onChange={e => setStaffForm(f => ({ ...f, [field]: e.target.value }))}
+                              style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 14, padding: '10px 12px', borderRadius: 8, outline: 'none', boxSizing: 'border-box' }} />
+                          </div>
+                        ))}
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Role</div>
+                          <select value={staffForm.role} onChange={e => setStaffForm(f => ({ ...f, role: e.target.value }))}
+                            style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 14, padding: '10px 12px', borderRadius: 8, outline: 'none', cursor: 'pointer' }}>
+                            <option value="staff">Staff — no KPI or revenue data</option>
+                            <option value="admin">Admin — full access</option>
+                          </select>
+                        </div>
+                      </div>
+                      {staffFormError && <div style={{ fontSize: 13, color: S.danger, marginBottom: 12 }}>{staffFormError}</div>}
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <button type="submit" disabled={staffFormLoading}
+                          style={{ flex: 1, background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: 11, borderRadius: 8, cursor: staffFormLoading ? 'not-allowed' : 'pointer', opacity: staffFormLoading ? 0.7 : 1 }}>
+                          {staffFormLoading ? 'Sending…' : 'Send Invite'}
+                        </button>
+                        <button type="button" onClick={() => { setShowAddStaff(false); setStaffFormError(null) }}
+                          style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, padding: '11px 18px', borderRadius: 8, cursor: 'pointer' }}>
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* Staff list */}
+              {staffLoading ? (
+                <div style={{ textAlign: 'center', padding: '60px 0', color: S.muted, fontSize: 14 }}>Loading…</div>
+              ) : staffMembers.length === 0 ? (
+                <Card style={{ padding: '48px 24px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>👤</div>
+                  <div style={{ fontSize: 14, color: S.muted }}>No staff members yet. Add one to give them dashboard access.</div>
+                </Card>
+              ) : (
+                <Card style={{ padding: 0, overflow: 'hidden' }}>
+                  {staffMembers.map((s, i) => (
+                    <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: i < staffMembers.length - 1 ? `1px solid ${S.border}` : 'none', gap: 12, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{s.full_name}</div>
+                        <div style={{ fontSize: 12, color: S.muted, marginTop: 2 }}>{s.email}</div>
+                        <div style={{ fontSize: 11, color: S.muted, marginTop: 2 }}>
+                          Added {s.added_at ? new Date(s.added_at).toLocaleDateString() : '—'}
+                          {s.last_login ? ` · Last login ${new Date(s.last_login).toLocaleDateString()}` : ' · Never logged in'}
+                          {s.status === 'invited' && ' · Invite pending'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                        <select value={s.role} onChange={e => handleRoleChange(s.id, e.target.value)} disabled={changingStaffRole === s.id}
+                          style={{ background: S.surface, border: `1px solid ${S.border}`, color: s.role === 'admin' ? S.amber : S.blue, fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 6, cursor: 'pointer', outline: 'none' }}>
+                          <option value="staff">Staff</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <button onClick={() => handleRemoveStaff(s.id)}
+                          style={{ background: S.danger + '22', border: `1px solid ${S.danger}44`, color: S.danger, fontSize: 12, padding: '5px 10px', borderRadius: 6, cursor: 'pointer' }}>
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </Card>
+              )}
+
+              <div style={{ marginTop: 20, padding: '14px 18px', background: S.surface, borderRadius: 10, border: `1px solid ${S.border}` }}>
+                <div style={{ fontSize: 12, color: S.muted, lineHeight: 1.7 }}>
+                  <span style={{ color: S.amber, fontWeight: 700 }}>Reminder:</span> After adding a staff member, ensure the <span style={{ color: S.offwhite }}>'staff'</span> role is configured in your <span style={{ color: S.offwhite }}>Clerk dashboard → Roles & Permissions</span>. The invitation will set their role automatically on sign-up.
+                </div>
+              </div>
             </div>
           )
         })()}

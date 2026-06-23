@@ -205,3 +205,18 @@ create index if not exists contractors_dropbox_sign_request_id_idx on contractor
 alter table contractors drop constraint if exists contractors_status_check;
 alter table contractors add constraint contractors_status_check
   check (status in ('pending', 'approved', 'docs_signed', 'active', 'rejected'));
+
+-- Staff members (admin-invited users with restricted dashboard access)
+create table if not exists staff_members (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  full_name text not null,
+  role text not null default 'staff' check (role in ('staff', 'admin')),
+  clerk_invitation_id text,
+  clerk_user_id text,
+  last_login timestamptz,
+  added_at timestamptz not null default now(),
+  status text not null default 'invited' check (status in ('invited', 'active', 'removed'))
+);
+create index if not exists staff_members_email_idx on staff_members (email);
+create index if not exists staff_members_clerk_user_id_idx on staff_members (clerk_user_id);

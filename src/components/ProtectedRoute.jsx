@@ -13,6 +13,7 @@ const DASHBOARD_PATHS = {
   member: '/dashboard',
   contractor: '/contractor/dashboard',
   admin: '/admin/dashboard',
+  staff: '/admin/dashboard',
   enterprise: '/enterprise/dashboard',
 }
 
@@ -43,6 +44,11 @@ export default function ProtectedRoute({ children, role }) {
   // Allow admin to navigate into member/contractor dashboards when impersonating
   const impersonating = (() => { try { return JSON.parse(localStorage.getItem('subs_impersonating') || 'null') } catch { return null } })()
   if (role && userRole === 'admin' && impersonating?.role === role) {
+    return children
+  }
+
+  // Staff can access admin routes (KPI/revenue sections are hidden in the dashboard)
+  if (role === 'admin' && userRole === 'staff') {
     return children
   }
 
