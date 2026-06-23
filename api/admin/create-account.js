@@ -166,23 +166,33 @@ export default async function handler(req, res) {
 
     // ── CONTRACTOR ──────────────────────────────────────────────────────────
     if (type === 'contractor') {
-      const { full_name, business_name, email, phone, trade, service_city, service_state } = fields
+      const { full_name, business_name, email, phone, trade, service_city, service_state, zip_code, service_radius } = fields
       if (!full_name || !email) return res.status(400).json({ error: 'full_name and email required' })
 
       const { clerkUserId, existed: contractorExisted } = await findOrCreateClerkUser({ email, firstName: full_name, role: 'contractor' })
 
-      await supabase.from('contractors').insert({
+      const serviceAreaParts = [
+        service_city && service_state ? `${service_city}, ${service_state}` : (service_city || service_state || null),
+        zip_code || null,
+        service_radius ? `${service_radius} radius` : null,
+      ].filter(Boolean)
+
+      const { error: insertError } = await supabase.from('contractors').insert({
         clerk_user_id: clerkUserId,
-        name: full_name,
-        business_name: business_name || null,
-        email,
+        name: business_name || full_name,
+        contact_name: full_name,
+        contact_email: email,
         phone: phone || null,
         trade: trade || null,
-        service_area: service_city && service_state ? `${service_city}, ${service_state}` : (service_city || service_state || null),
+        service_area: serviceAreaParts.length ? serviceAreaParts.join(' · ') : null,
         status: 'pending',
-        admin_created: true,
         submitted_at: new Date().toISOString(),
       })
+
+      if (insertError) {
+        console.error('[create-account/contractor] Supabase insert error:', insertError.message, insertError.details)
+        return res.status(500).json({ error: `Failed to save contractor: ${insertError.message}` })
+      }
 
       let checkoutUrl = null
       let stripeError = null
@@ -229,7 +239,7 @@ export default async function handler(req, res) {
 
           // Mark as pending_payment so it's not lost
           await supabase.from('contractors').update({ status: 'pending_payment' })
-            .eq('clerk_user_id', clerkUserId)
+            .eq('contact_email', email)
         }
       }
 

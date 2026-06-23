@@ -1,6 +1,19 @@
 import { useState } from 'react'
 import { S, C } from '../theme'
 
+const TRADES_LIST = [
+  'Additions & ADUs', 'Bathroom Remodel', 'Carpet Cleaning', 'Concrete Work', 'Countertops',
+  'Decks & Patios', 'Driveway Paving', 'Electrical', 'Excavation', 'Exterior Painting',
+  'Fencing', 'Finish Carpentry', 'Fireplace & Chimney', 'Flooring', 'Framing',
+  'Garage Doors', 'Gutters', 'Handyman', 'House Cleaning', 'HVAC',
+  'Insulation', 'Interior Painting', 'Kitchen Remodel', 'Landscaping', 'Lawn Care',
+  'Fire, Mold & Flood Restoration', 'Mold Detection', 'Pest Control', 'Plumbing', 'Pool Service', 'Roofing',
+  'Siding & Stucco', 'Smart Home / AV', 'Solar', 'Tree Service', 'Water Filtration',
+  'Waterproofing', 'Window Cleaning', 'Window Install', 'Windows & Doors',
+]
+
+const RADIUS_OPTIONS = ['10 miles', '25 miles', '50 miles', '75 miles', '100 miles', '150 miles', 'Statewide']
+
 const ACCOUNT_TYPES = [
   { id: 'member',            label: 'Homeowner',       sub: 'Member account' },
   { id: 'contractor',        label: 'Contractor',       sub: 'Service provider' },
@@ -37,6 +50,19 @@ function Input({ value, onChange, placeholder, type = 'text' }) {
       onFocus={e => { e.target.style.borderColor = S.green }}
       onBlur={e => { e.target.style.borderColor = S.border }}
     />
+  )
+}
+
+function Select({ value, onChange, options, placeholder }) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      style={{ width: '100%', background: S.surface, border: `1px solid ${S.border}`, color: value ? S.offwhite : S.muted, fontSize: 13, padding: '9px 12px', borderRadius: 8, outline: 'none', boxSizing: 'border-box', appearance: 'none' }}
+    >
+      {placeholder && <option value="">{placeholder}</option>}
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
   )
 }
 
@@ -194,10 +220,18 @@ export default function CreateAccountModal({ onClose, onCreated }) {
         <Field label="Business Name (optional)"><Input value={fields.business_name || ''} onChange={v => set('business_name', v)} placeholder="Johnson Plumbing LLC" /></Field>
         <Field label="Email"><Input type="email" value={fields.email || ''} onChange={v => set('email', v)} placeholder="mike@johnsonplumbing.com" /></Field>
         <Field label="Phone"><Input value={fields.phone || ''} onChange={v => set('phone', v)} placeholder="+1 555 000 0000" /></Field>
-        <Field label="Trade"><Input value={fields.trade || ''} onChange={v => set('trade', v)} placeholder="Plumbing" /></Field>
+        <Field label="Trade">
+          <Select value={fields.trade || ''} onChange={v => set('trade', v)} options={TRADES_LIST} placeholder="Select trade…" />
+        </Field>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <Field label="City"><Input value={fields.service_city || ''} onChange={v => set('service_city', v)} placeholder="Nashville" /></Field>
           <Field label="State"><Input value={fields.service_state || ''} onChange={v => set('service_state', v)} placeholder="TN" /></Field>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <Field label="Zip Code"><Input value={fields.zip_code || ''} onChange={v => set('zip_code', v)} placeholder="37201" /></Field>
+          <Field label="Service Radius">
+            <Select value={fields.service_radius || ''} onChange={v => set('service_radius', v)} options={RADIUS_OPTIONS} placeholder="Select radius…" />
+          </Field>
         </div>
         {showPaymentToggle && <PaymentToggle value={paymentMode} onChange={setPaymentMode} />}
       </div>
