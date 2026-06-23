@@ -210,7 +210,7 @@ export default async function handler(req, res) {
       organizationName: 'SUBS',
       description: 'SUBS Membership Card',
       backgroundColor: 'rgb(12,15,10)',
-      labelColor: 'rgb(255,255,255)',
+      labelColor: 'rgb(93,255,138)',
       foregroundColor: 'rgb(255,255,255)',
       logoText: 'SUBS',
     })
