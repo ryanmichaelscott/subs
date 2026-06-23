@@ -3,10 +3,10 @@ import { Template } from '@walletpass/pass-js'
 import { deflateSync } from 'node:zlib'
 import { createClient } from '@supabase/supabase-js'
 
-const TIER_STRIP_RGB = {
-  'Member':  [93, 255, 138],
-  'Member+': [91, 141, 239],
-  'Elite':   [192, 132, 252],
+const TIER_LABEL_COLOR = {
+  'Member':  'rgb(93,255,138)',
+  'Member+': 'rgb(91,141,239)',
+  'Elite':   'rgb(192,132,252)',
 }
 
 function makeSolidPNG(w, h, r, g, b) {
@@ -43,6 +43,80 @@ function makeSolidPNG(w, h, r, g, b) {
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
     chunk('IHDR', ihdr),
     chunk('IDAT', deflateSync(Buffer.concat(rows))),
+    chunk('IEND', Buffer.alloc(0)),
+  ])
+}
+
+// Renders "SUBS" as #5DFF8A pixel text on a transparent PNG background.
+// Uses a hand-coded 5×7 bitmap font scaled up so Apple renders crisp text.
+function makeSubsLogoPNG(scale) {
+  const FONT = {
+    S: [0b01110, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b01110],
+    U: [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
+    B: [0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110],
+  }
+  const text = ['S', 'U', 'B', 'S']
+  const GW = 5, GH = 7, GAP = 2, PAD = 4
+  const w = PAD * 2 + text.length * GW * scale + (text.length - 1) * GAP * scale
+  const h = PAD * 2 + GH * scale
+  const rgba = Buffer.alloc(w * h * 4, 0) // fully transparent
+
+  let cx = PAD
+  for (const ch of text) {
+    const rows = FONT[ch]
+    for (let r = 0; r < GH; r++) {
+      for (let c = 0; c < GW; c++) {
+        if ((rows[r] >> (GW - 1 - c)) & 1) {
+          for (let sy = 0; sy < scale; sy++) {
+            for (let sx = 0; sx < scale; sx++) {
+              const px = cx + c * scale + sx
+              const py = PAD + r * scale + sy
+              const i = (py * w + px) * 4
+              rgba[i] = 93; rgba[i+1] = 255; rgba[i+2] = 138; rgba[i+3] = 255 // #5DFF8A
+            }
+          }
+        }
+      }
+    }
+    cx += (GW + GAP) * scale
+  }
+
+  // Encode RGBA PNG (color type 6 = 8-bit RGBA)
+  const crcTable = new Uint32Array(256)
+  for (let i = 0; i < 256; i++) {
+    let c = i
+    for (let j = 0; j < 8; j++) c = (c & 1) ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+    crcTable[i] = c
+  }
+  function crc32(buf) {
+    let c = 0xffffffff
+    for (const byte of buf) c = crcTable[(c ^ byte) & 0xff] ^ (c >>> 8)
+    return (c ^ 0xffffffff) >>> 0
+  }
+  function chunk(type, data) {
+    const t = Buffer.from(type)
+    const l = Buffer.alloc(4); l.writeUInt32BE(data.length)
+    const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(Buffer.concat([t, data])))
+    return Buffer.concat([l, t, data, crc])
+  }
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4)
+  ihdr[8] = 8; ihdr[9] = 6
+  const pngRows = []
+  for (let y = 0; y < h; y++) {
+    const row = Buffer.alloc(1 + w * 4)
+    row[0] = 0
+    for (let x = 0; x < w; x++) {
+      const si = (y * w + x) * 4
+      row[1 + x*4] = rgba[si]; row[2 + x*4] = rgba[si+1]
+      row[3 + x*4] = rgba[si+2]; row[4 + x*4] = rgba[si+3]
+    }
+    pngRows.push(row)
+  }
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(Buffer.concat(pngRows))),
     chunk('IEND', Buffer.alloc(0)),
   ])
 }
@@ -190,19 +264,14 @@ export default async function handler(req, res) {
 
     console.log('[wallet/apple] building pass, tier:', tier, 'memberId:', memberId)
 
-    const BG     = [12, 15, 10]       // #0C0F0A
-    const GREEN  = [93, 255, 138]     // #5DFF8A — always-green logo
-    const strip  = TIER_STRIP_RGB[tier] || GREEN
+    const BG = [12, 15, 10] // #0C0F0A
 
-    const icon1x  = makeSolidPNG(29,   29,  ...BG)
-    const icon2x  = makeSolidPNG(58,   58,  ...BG)
-    const icon3x  = makeSolidPNG(87,   87,  ...BG)
-    const logo1x  = makeSolidPNG(160,  50,  ...GREEN)
-    const logo2x  = makeSolidPNG(320,  100, ...GREEN)
-    const logo3x  = makeSolidPNG(480,  150, ...GREEN)
-    const strip1x = makeSolidPNG(375,  123, ...strip)
-    const strip2x = makeSolidPNG(750,  246, ...strip)
-    const strip3x = makeSolidPNG(1125, 369, ...strip)
+    const icon1x = makeSolidPNG(29, 29, ...BG)
+    const icon2x = makeSolidPNG(58, 58, ...BG)
+    const icon3x = makeSolidPNG(87, 87, ...BG)
+    const logo1x = makeSubsLogoPNG(4)
+    const logo2x = makeSubsLogoPNG(8)
+    const logo3x = makeSubsLogoPNG(12)
 
     const template = new Template('storeCard', {
       passTypeIdentifier: passTypeId,
@@ -210,9 +279,9 @@ export default async function handler(req, res) {
       organizationName: 'SUBS',
       description: 'SUBS Membership Card',
       backgroundColor: 'rgb(12,15,10)',
-      labelColor: 'rgb(93,255,138)',
+      labelColor: TIER_LABEL_COLOR[tier] || 'rgb(93,255,138)',
       foregroundColor: 'rgb(255,255,255)',
-      logoText: 'SUBS',
+      logoText: '',
     })
 
     template.setCertificate(certPem, p12Password || undefined)
@@ -220,15 +289,12 @@ export default async function handler(req, res) {
 
     const pass = template.createPass({ serialNumber: memberId })
 
-    await pass.images.add('icon',  icon1x,  '1x')
-    await pass.images.add('icon',  icon2x,  '2x')
-    await pass.images.add('icon',  icon3x,  '3x')
-    await pass.images.add('logo',  logo1x,  '1x')
-    await pass.images.add('logo',  logo2x,  '2x')
-    await pass.images.add('logo',  logo3x,  '3x')
-    await pass.images.add('strip', strip1x, '1x')
-    await pass.images.add('strip', strip2x, '2x')
-    await pass.images.add('strip', strip3x, '3x')
+    await pass.images.add('icon', icon1x, '1x')
+    await pass.images.add('icon', icon2x, '2x')
+    await pass.images.add('icon', icon3x, '3x')
+    await pass.images.add('logo', logo1x, '1x')
+    await pass.images.add('logo', logo2x, '2x')
+    await pass.images.add('logo', logo3x, '3x')
 
     pass.primaryFields.add({ key: 'name', label: 'MEMBER', value: name || email })
     pass.secondaryFields.add({ key: 'tier', label: 'TIER', value: tier })
