@@ -621,6 +621,7 @@ export default function ContractorDashboard() {
   const impersonating = (() => { try { return JSON.parse(localStorage.getItem('subs_impersonating') || 'null') } catch { return null } })()
   const isImpersonating = impersonating?.role === 'contractor'
   const [showOnboarding, setShowOnboarding] = useState(location.state?.firstTime ?? false)
+  const [showRateTip, setShowRateTip] = useState(() => localStorage.getItem('subs_rate_tip_dismissed') !== 'true')
   const [tab, setTab] = useState('leads')
   const [leads, setLeads] = useState(INITIAL_LEADS)
   const [completingId, setCompletingId] = useState(null)
@@ -944,6 +945,23 @@ export default function ContractorDashboard() {
             </Card>
           ))}
         </div>
+
+        {showRateTip && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, background: S.surface, border: `1px solid ${S.border}`, borderLeft: `3px solid ${S.green}`, borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
+            <span style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>💡</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 4 }}>Pro tip: show market retail rates</div>
+              <div style={{ fontSize: 13, color: S.muted, lineHeight: 1.6 }}>When quoting a job, pull up what competitors charge for the same work and show the customer side by side. Your SUBS price vs. market rate makes the discount concrete — and closes faster.</div>
+            </div>
+            <button
+              onClick={() => { setShowRateTip(false); localStorage.setItem('subs_rate_tip_dismissed', 'true') }}
+              style={{ background: 'transparent', border: 'none', color: S.muted, fontSize: 18, lineHeight: 1, cursor: 'pointer', padding: '0 2px', flexShrink: 0 }}
+              aria-label="Dismiss tip"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         <div className="tabs-bar" style={{ display: 'flex', gap: 2, background: S.surface, borderRadius: 10, padding: 4, border: `1px solid ${S.border}`, marginBottom: 24 }}>
           {tabs.map(([id, label]) => (
