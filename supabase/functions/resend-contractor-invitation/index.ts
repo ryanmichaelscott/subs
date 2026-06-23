@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import Stripe from 'https://esm.sh/stripe@14'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,30 +35,25 @@ serve(async (req) => {
       })
     }
 
-    if (contractor.status !== 'approved') {
-      return new Response(JSON.stringify({ error: 'Contractor is not in approved status' }), {
+    // Works for both approved (needs to sign) and docs_signed (needs to pay)
+    if (!['approved', 'docs_signed'].includes(contractor.status)) {
+      return new Response(JSON.stringify({ error: 'Contractor must be in approved or docs_signed status' }), {
         status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
     const clerkKey = Deno.env.get('CLERK_SECRET_KEY')
-    let clerkAccountCreated = false
 
+    // Ensure Clerk account exists so OTP login works
     if (clerkKey) {
-      // Create the Clerk user account directly — this is what enables OTP login.
-      // Invitations only create a pending state; the user can't sign in via OTP until
-      // they have a real account. POST /v1/users creates it immediately.
       const nameParts = (contractor.contact_name || contractor.name || '').trim().split(/\s+/)
       const firstName = nameParts[0] || 'Partner'
       const lastName = nameParts.slice(1).join(' ') || '-'
 
       const createRes = await fetch('https://api.clerk.com/v1/users', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${clerkKey}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email_address: [contractor.contact_email],
           first_name: firstName,
@@ -69,75 +65,174 @@ serve(async (req) => {
       })
 
       const createData = await createRes.json()
-
-      if (createRes.ok) {
-        clerkAccountCreated = true
-        console.log('Clerk user created:', createData.id)
-      } else {
+      if (!createRes.ok) {
         const alreadyExists = createData?.errors?.some((e: any) =>
           e.code === 'form_identifier_exists' || e.code === 'duplicate_record'
         )
-        if (alreadyExists) {
-          clerkAccountCreated = true
-          console.log('Clerk user already exists for', contractor.contact_email)
-        } else {
+        if (!alreadyExists) {
           console.error(`Clerk user creation ${createRes.status}:`, JSON.stringify(createData))
         }
       }
     }
 
-    // Send login email via Resend
-    const resendKey = Deno.env.get('RESEND_API_KEY')
-    if (resendKey) {
-      const loginLink = `${appUrl}/contractor/login`
-
-      const html = `
-<!DOCTYPE html>
-<html>
-<body style="font-family:Inter,system-ui,sans-serif;background:#0C0F0A;color:#F0EEE8;margin:0;padding:0;">
-  <div style="max-width:520px;margin:0 auto;padding:48px 28px;">
-    <div style="font-size:22px;font-weight:800;color:#5DFF8A;letter-spacing:0.06em;margin-bottom:32px;">SUBS.</div>
-    <h1 style="font-size:28px;font-weight:700;color:#F0EEE8;margin:0 0 16px;line-height:1.2;">
-      Your SUBS partner account is ready.
-    </h1>
-    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 32px;">
-      <strong style="color:#F0EEE8;">${contractor.name}</strong> — your application is approved. Log in to activate your account and start receiving pre-qualified homeowners in your area.
-    </p>
-    <a href="${loginLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;margin-bottom:32px;">
-      Log In to Your Account →
-    </a>
-    <p style="font-size:13px;color:#8A9088;line-height:1.6;margin:0 0 8px;">
-      Enter your email — we'll send a one-time code to sign you in.
-    </p>
-    <p style="font-size:13px;color:#8A9088;margin-top:32px;line-height:1.6;">
-      Questions? <a href="mailto:partners@subs.app" style="color:#5DFF8A;text-decoration:none;">partners@subs.app</a>
-    </p>
-  </div>
-</body>
-</html>`
-
-      const resendRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'SUBS <hello@subs.app>',
-          to: contractor.contact_email,
-          subject: 'Your SUBS partner account is ready — log in to activate',
-          html,
-        }),
-      })
-
-      if (!resendRes.ok) {
-        const err = await resendRes.json().catch(() => ({}))
-        console.error('Resend error:', JSON.stringify(err))
+    // Generate a direct Stripe checkout URL for all statuses — payment is the primary action
+    let checkoutUrl: string | null = null
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
+    if (stripeKey) {
+      try {
+        const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' })
+        const session = await stripe.checkout.sessions.create({
+          mode: 'subscription',
+          payment_method_types: ['card'],
+          line_items: [{ price: 'price_1TicGZAYDs9oVarWmVWT27wz', quantity: 1 }],
+          customer_email: contractor.contact_email,
+          success_url: `${appUrl}/contractor/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${appUrl}/contractor/login`,
+          metadata: { email: contractor.contact_email, company_name: contractor.name },
+          allow_promotion_codes: true,
+        })
+        checkoutUrl = session.url
+      } catch (e) {
+        console.error('Stripe session creation failed:', e.message)
       }
     }
 
+    const resendKey = Deno.env.get('RESEND_API_KEY')
+    if (!resendKey) {
+      return new Response(JSON.stringify({ success: true, warning: 'RESEND_API_KEY not set' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const contractorName = contractor.contact_name || contractor.name || 'there'
+    const firstName = contractorName.split(' ')[0]
+    const trade = contractor.trade || 'your trade'
+    const loginLink = `${appUrl}/contractor/login`
+
+    const isDocsSigned = contractor.status === 'docs_signed'
+    const subject = `${firstName}, your SUBS spot isn't reserved yet`
+
+    const primaryCta = checkoutUrl
+      ? { label: 'Reserve My Spot — Complete Payment →', url: checkoutUrl }
+      : { label: 'Log In to Complete Your Application →', url: loginLink }
+
+    const stepsList = isDocsSigned
+      ? `<tr><td style="padding:10px 0;border-bottom:1px solid #252A23;">
+           <span style="color:#5DFF8A;font-weight:700;">✓</span>
+           <span style="color:#5DFF8A;margin-left:10px;">Application approved</span>
+         </td></tr>
+         <tr><td style="padding:10px 0;border-bottom:1px solid #252A23;">
+           <span style="color:#5DFF8A;font-weight:700;">✓</span>
+           <span style="color:#5DFF8A;margin-left:10px;">Agreement signed</span>
+         </td></tr>
+         <tr><td style="padding:10px 0;">
+           <span style="color:#F0EEE8;font-weight:700;">→</span>
+           <span style="color:#F0EEE8;font-weight:700;margin-left:10px;">Activate subscription to reserve your spot</span>
+         </td></tr>`
+      : `<tr><td style="padding:10px 0;border-bottom:1px solid #252A23;">
+           <span style="color:#5DFF8A;font-weight:700;">✓</span>
+           <span style="color:#5DFF8A;margin-left:10px;">Application approved</span>
+         </td></tr>
+         <tr><td style="padding:10px 0;border-bottom:1px solid #252A23;">
+           <span style="color:#F0EEE8;font-weight:700;">→</span>
+           <span style="color:#F0EEE8;font-weight:700;margin-left:10px;">Activate subscription to reserve your spot</span>
+         </td></tr>
+         <tr><td style="padding:10px 0;">
+           <span style="color:#8A9088;margin-left:10px;">Upload documents to go live</span>
+         </td></tr>`
+
+    const bodyText = isDocsSigned
+      ? `Your agreement is signed — the only step left is payment. Once your subscription is active, your spot as a SUBS ${trade} partner is locked in and you'll start receiving pre-qualified homeowners in your area.`
+      : `Your application is approved — but your spot as a SUBS ${trade} partner won't be reserved until your subscription is active. Complete payment now to lock it in. Documents can be uploaded right after.`
+
+    const urgencyNote = checkoutUrl
+      ? `<p style="font-size:12px;color:#8A9088;margin:16px 0 0;line-height:1.6;">This payment link is valid for 24 hours. If it expires, log in at <a href="${loginLink}" style="color:#5DFF8A;text-decoration:none;">subs.app/contractor/login</a> to complete payment from your dashboard.</p>`
+      : ''
+
+    const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0C0F0A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0C0F0A;padding:40px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#101410;border:1px solid #252A23;border-radius:14px;overflow:hidden;max-width:560px;width:100%;">
+
+  <tr><td style="padding:28px 32px 24px;border-bottom:1px solid #252A23;">
+    <table width="100%"><tr>
+      <td><span style="font-size:17px;font-weight:800;color:#5DFF8A;letter-spacing:0.06em;">SUBS</span></td>
+      <td align="right"><span style="background:#5DFF8A22;color:#5DFF8A;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;border:1px solid #5DFF8A44;">Partner Program</span></td>
+    </tr></table>
+  </td></tr>
+
+  <tr><td style="padding:28px 32px 20px;">
+    <div style="font-size:11px;font-weight:800;color:#F59E0B;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Action Required</div>
+    <h1 style="font-size:26px;font-weight:800;color:#F0EEE8;margin:0 0 14px;line-height:1.2;">
+      Your spot isn't reserved yet, ${firstName}.
+    </h1>
+    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0 0 8px;">
+      ${bodyText}
+    </p>
+    <p style="font-size:14px;color:#F0EEE8;line-height:1.6;margin:8px 0 0;">
+      We only work with a limited number of <strong>${trade}</strong> contractors per market — your spot is held but not confirmed until your subscription is active.
+    </p>
+  </td></tr>
+
+  <tr><td style="padding:0 32px 24px;">
+    <table width="100%" style="background:#0C0F0A;border:1px solid #252A23;border-radius:10px;overflow:hidden;">
+      <tr><td style="padding:14px 20px;border-bottom:1px solid #252A23;">
+        <div style="font-size:11px;font-weight:700;color:#8A9088;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">Your progress</div>
+      </td></tr>
+      <tr><td style="padding:4px 20px 4px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          ${stepsList}
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding:0 32px 8px;">
+    <a href="${primaryCta.url}" style="display:block;background:#5DFF8A;color:#0C0F0A;font-size:15px;font-weight:800;padding:16px 24px;border-radius:10px;text-decoration:none;text-align:center;">
+      ${primaryCta.label}
+    </a>
+    ${urgencyNote}
+  </td></tr>
+
+  ${checkoutUrl ? `
+  <tr><td style="padding:16px 32px 8px;text-align:center;">
+    <span style="font-size:13px;color:#8A9088;">Prefer to log in instead? </span>
+    <a href="${loginLink}" style="font-size:13px;color:#5DFF8A;text-decoration:none;">Go to contractor login →</a>
+  </td></tr>` : ''}
+
+  <tr><td style="padding:24px 32px;border-top:1px solid #252A23;margin-top:16px;">
+    <p style="margin:0;font-size:12px;color:#8A9088;line-height:1.8;">
+      Questions? <a href="mailto:partners@subs.app" style="color:#5DFF8A;text-decoration:none;">partners@subs.app</a> or call <span style="color:#F0EEE8;">1-888-454-3019</span>
+    </p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+
+    const emailRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'SUBS Partners <hello@subs.app>',
+        to: contractor.contact_email,
+        subject,
+        html,
+      }),
+    })
+
+    if (!emailRes.ok) {
+      const err = await emailRes.json().catch(() => ({}))
+      console.error('Resend error:', JSON.stringify(err))
+    }
+
     return new Response(
-      JSON.stringify({ success: true, clerk_account_created: clerkAccountCreated }),
+      JSON.stringify({ success: true, checkout_url_generated: !!checkoutUrl }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (err) {

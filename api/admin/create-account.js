@@ -212,9 +212,9 @@ export default async function handler(req, res) {
             customer: customer.id,
             mode: 'subscription',
             line_items: [{ price: CONTRACTOR_PRICE_ID, quantity: 1 }],
-            success_url: `${BASE_URL}/contractor/dashboard`,
+            success_url: `${BASE_URL}/contractor/payment-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${BASE_URL}/contractor/apply`,
-            metadata: { clerk_user_id: clerkUserId, admin_created: 'true' },
+            metadata: { clerk_user_id: clerkUserId, admin_created: 'true', email },
           })
           checkoutUrl = session.url
           console.log('[create-account/contractor] checkout session created:', session.id)

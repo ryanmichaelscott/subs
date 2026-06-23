@@ -63,6 +63,8 @@ export default function AdminDashboard() {
   const [staffFormError, setStaffFormError] = useState(null)
   const [staffFormLoading, setStaffFormLoading] = useState(false)
   const [changingStaffRole, setChangingStaffRole] = useState(null)
+  const [backfillLoading, setBackfillLoading] = useState(false)
+  const [backfillResult, setBackfillResult] = useState(null)
 
   const loadData = async () => {
     await Promise.all([
@@ -278,6 +280,24 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleBackfill = async () => {
+    setBackfillLoading(true)
+    setBackfillResult(null)
+    try {
+      const res = await fetch('/api/admin/backfill-subscriptions', { method: 'POST' })
+      const data = await res.json()
+      setBackfillResult(data)
+      if (data.backfilled > 0) {
+        // Reload Stripe revenue to reflect updated tiers
+        supabase.functions.invoke('get-stripe-revenue').then(({ data: d }) => { if (d?.arr !== undefined) setStripeRevenue(d) })
+      }
+    } catch (e) {
+      setBackfillResult({ error: e.message })
+    } finally {
+      setBackfillLoading(false)
+    }
+  }
+
   const handleAdminDocUpload = async (contractorId, docType, col, file) => {
     if (!file) return
     setAdminDocUploading(`${contractorId}-${docType}`)
@@ -487,6 +507,43 @@ export default function AdminDashboard() {
               </Card>
             </div>
 
+            {isAdmin && (() => {
+              const unknownIds = stripeRevenue?.unknown_price_ids
+              const hasUnknown = unknownIds && Object.keys(unknownIds).length > 0
+              return (hasUnknown || backfillResult) && (
+                <Card style={{ padding: 20, marginBottom: 20, borderColor: S.amber }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      {hasUnknown && (
+                        <>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: S.amber, marginBottom: 6 }}>Revenue data warning</div>
+                          <div style={{ fontSize: 12, color: S.muted, marginBottom: 8 }}>
+                            {Object.keys(unknownIds).length} Stripe price ID{Object.keys(unknownIds).length > 1 ? 's' : ''} not in the tier mapping — bucketed as Contractor. Run backfill to fix MRR by tier.
+                          </div>
+                          <div style={{ fontSize: 11, color: S.muted, fontFamily: 'monospace' }}>
+                            {Object.entries(unknownIds).map(([id, info]) => `${id} · $${(info.unit_amount / 100).toFixed(2)} · ${info.count} sub${info.count > 1 ? 's' : ''}`).join('  •  ')}
+                          </div>
+                        </>
+                      )}
+                      {backfillResult && (
+                        <div style={{ fontSize: 12, color: backfillResult.error ? S.danger : S.green, marginTop: hasUnknown ? 10 : 0 }}>
+                          {backfillResult.error
+                            ? `Backfill error: ${backfillResult.error}`
+                            : `Backfill complete: ${backfillResult.backfilled} fixed, ${backfillResult.not_found} no active sub found, ${backfillResult.errors} errors`}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleBackfill}
+                      disabled={backfillLoading}
+                      style={{ background: S.amber, color: '#0C0F0A', fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', cursor: backfillLoading ? 'not-allowed' : 'pointer', opacity: backfillLoading ? 0.6 : 1, flexShrink: 0 }}
+                    >
+                      {backfillLoading ? 'Running…' : 'Backfill subscriptions'}
+                    </button>
+                  </div>
+                </Card>
+              )
+            })()}
             {isAdmin && <RevenueChart supabase={supabase} />}
 
             {stripeRevenue?.lines?.length > 0 && (
@@ -714,7 +771,7 @@ export default function AdminDashboard() {
                                   {actionLoading === c.id ? '…' : 'Resend Invite'}
                                 </button>
                               )}
-                              {statusGroup === 'docs_signed' && (
+                              {(statusGroup === 'docs_signed' || statusGroup === 'approved') && (
                                 <button
                                   onClick={() => handleStatusUpdate(c.id, 'active')}
                                   disabled={actionLoading === c.id}
