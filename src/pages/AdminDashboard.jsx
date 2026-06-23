@@ -566,25 +566,6 @@ export default function AdminDashboard() {
             })()}
             {isAdmin && <RevenueChart supabase={supabase} />}
 
-            {stripeRevenue?.lines?.length > 0 && (
-              <Card style={{ padding: 24, marginBottom: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 16 }}>Active Subscriptions — What's counted in ARR</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {stripeRevenue.lines.map((l, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: S.surface, borderRadius: 8 }}>
-                      <div>
-                        <span style={{ fontSize: 13, color: S.offwhite, marginRight: 10 }}>{l.customer}</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: l.label === 'Contractor' ? S.blue : S.green, background: (l.label === 'Contractor' ? S.blue : S.green) + '22', padding: '2px 8px', borderRadius: 100 }}>{l.label}</span>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: 13, color: S.offwhite }}>${l.annual.toLocaleString()}/yr</span>
-                        <span style={{ fontSize: 11, color: S.muted, marginLeft: 8 }}>${(l.unit_amount / 100).toFixed(2)}/{l.interval}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
 
             <Card style={{ padding: 24 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 16 }}>Network Overview</div>
