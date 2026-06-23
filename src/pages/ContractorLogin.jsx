@@ -21,7 +21,9 @@ const appearance = {
   elements: {
     rootBox: { width: '100%' },
     card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0, width: '100%' },
-    header: { display: 'none' },
+    header: { paddingBottom: '4px' },
+    headerTitle: { color: '#F0EEE8', fontSize: '18px', fontWeight: 700 },
+    headerSubtitle: { color: '#8A9088', fontSize: '13px' },
     footer: { display: 'none' },
     socialButtonsRoot: { display: 'none' },
     socialButtonsBlockButton: { display: 'none' },
@@ -104,7 +106,6 @@ export default function ContractorLogin() {
               <span style={{ color: S.green, fontSize: 12, fontWeight: 600 }}>Contractor Portal</span>
             </div>
             <div style={{ fontFamily: C.display, fontSize: 34, color: S.offwhite, marginBottom: 8 }}>Partner sign in.</div>
-            <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Sign in with your email or phone number.</p>
           </div>
 
           <div className="contractor-login-card" style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16 }}>

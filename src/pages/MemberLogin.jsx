@@ -20,7 +20,9 @@ const appearance = {
   elements: {
     rootBox: { width: '100%' },
     card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0, width: '100%' },
-    header: { display: 'none' },
+    header: { paddingBottom: '4px' },
+    headerTitle: { color: '#F0EEE8', fontSize: '18px', fontWeight: 700 },
+    headerSubtitle: { color: '#8A9088', fontSize: '13px' },
     socialButtonsRoot: { display: 'none' },
     socialButtonsBlockButton: { display: 'none' },
     socialButtonsBlockButtonText: { display: 'none' },
@@ -87,9 +89,6 @@ export default function MemberLogin() {
           <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite, marginBottom: 8 }}>
             {isSignUp ? 'Join SUBS.' : 'Welcome back.'}
           </div>
-          <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>
-            Sign in with your email or phone number.
-          </p>
         </div>
 
         <div className="member-login-card" style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16 }}>
