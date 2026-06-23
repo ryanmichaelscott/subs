@@ -19,8 +19,8 @@ const appearance = {
     fontSize: '15px',
   },
   elements: {
-    card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0, width: '100%' },
     rootBox: { width: '100%' },
+    card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0, width: '100%' },
     header: { display: 'none' },
     footer: { display: 'none' },
     socialButtonsRoot: { display: 'none' },
@@ -31,6 +31,8 @@ const appearance = {
       border: '1px solid #252A23',
       color: '#F0EEE8',
       borderRadius: '10px',
+      width: '100%',
+      boxSizing: 'border-box',
     },
     otpCodeFieldInput: {
       background: '#2E3828',
@@ -38,14 +40,14 @@ const appearance = {
       color: '#F0EEE8',
       borderRadius: '8px',
     },
-    formFieldLabel: { color: '#8A9088', fontWeight: 500, overflow: 'visible' },
-    formFieldInputGroup: { overflow: 'visible' },
-    formFieldRow: { overflow: 'visible', marginBottom: '4px' },
+    formFieldLabel: { color: '#8A9088', fontWeight: 500 },
     formButtonPrimary: {
       background: '#5DFF8A',
       color: '#0C0F0A',
       fontWeight: 700,
       borderRadius: '10px',
+      width: '100%',
+      boxSizing: 'border-box',
     },
     formButtonSecondary: {
       background: 'transparent',
@@ -88,23 +90,24 @@ export default function ContractorLogin() {
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', width: '100%' }}>
+      <style>{`.contractor-login-card { padding: 28px; } @media (max-width: 480px) { .contractor-login-card { padding: 20px 16px; } }`}</style>
+      <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', width: '100%', boxSizing: 'border-box' }}>
         <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
         <Link to="/login" style={{ fontSize: 13, color: S.muted }}>Homeowner? Member login</Link>
       </nav>
 
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 40px' }}>
-        <div style={{ width: '100%', maxWidth: 400 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', maxWidth: 420 }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.surface, border: `1px solid ${S.border}`, borderRadius: 100, padding: '6px 16px', marginBottom: 20 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: S.green, display: 'inline-block' }} />
               <span style={{ color: S.green, fontSize: 12, fontWeight: 600 }}>Contractor Portal</span>
             </div>
             <div style={{ fontFamily: C.display, fontSize: 34, color: S.offwhite, marginBottom: 8 }}>Partner sign in.</div>
-            <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Enter your email — we'll send a verification code.</p>
+            <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Enter your email or phone — we'll send a verification code.</p>
           </div>
 
-          <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, overflow: 'hidden' }}>
+          <div className="contractor-login-card" style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16 }}>
             <SignIn
               routing="virtual"
               fallbackRedirectUrl="/contractor/dashboard"
