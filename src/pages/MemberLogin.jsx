@@ -18,7 +18,8 @@ const appearance = {
     fontSize: '15px',
   },
   elements: {
-    card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0 },
+    card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0, width: '100%' },
+    rootBox: { width: '100%' },
     header: { display: 'none' },
     socialButtonsRoot: { display: 'none' },
     socialButtonsBlockButton: { display: 'none' },
@@ -89,7 +90,7 @@ export default function MemberLogin() {
           </p>
         </div>
 
-        <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, overflow: 'hidden' }}>
           {isSignUp ? (
             <SignUp
               routing="virtual"

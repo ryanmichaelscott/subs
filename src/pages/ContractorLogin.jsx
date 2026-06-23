@@ -19,7 +19,8 @@ const appearance = {
     fontSize: '15px',
   },
   elements: {
-    card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0 },
+    card: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0, margin: 0, width: '100%' },
+    rootBox: { width: '100%' },
     header: { display: 'none' },
     footer: { display: 'none' },
     socialButtonsRoot: { display: 'none' },
@@ -103,7 +104,7 @@ export default function ContractorLogin() {
             <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Enter your email — we'll send a verification code.</p>
           </div>
 
-          <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, display: 'flex', justifyContent: 'center' }}>
+          <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, padding: 28, overflow: 'hidden' }}>
             <SignIn
               routing="virtual"
               fallbackRedirectUrl="/contractor/dashboard"
