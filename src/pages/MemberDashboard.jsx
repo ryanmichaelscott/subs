@@ -13,7 +13,7 @@ const TRADES = [
   'Insulation', 'Interior Painting', 'Kitchen Remodel', 'Landscaping', 'Lawn Care',
   'Fire, Mold & Flood Restoration', 'Mold Detection', 'Pest Control', 'Plumbing', 'Pool Service', 'Roofing',
   'Siding & Stucco', 'Smart Home / AV', 'Solar', 'Tree Service', 'Water Filtration',
-  'Waterproofing', 'Window Cleaning', 'Window Install', 'Windows & Doors',
+  'Waterproofing', 'Window Cleaning', 'Window Install', 'Window Treatments / Blinds', 'Windows & Doors',
 ]
 
 const US_STATES = [
