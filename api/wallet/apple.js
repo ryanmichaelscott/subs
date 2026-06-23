@@ -3,13 +3,7 @@ import { Template } from '@walletpass/pass-js'
 import { deflateSync } from 'node:zlib'
 import { createClient } from '@supabase/supabase-js'
 
-const TIER_LABEL_COLOR = {
-  'Member':  'rgb(93,255,138)',
-  'Member+': 'rgb(91,141,239)',
-  'Elite':   'rgb(192,132,252)',
-}
-
-const TIER_ACCENT_RGB = {
+const TIER_STRIP_RGB = {
   'Member':  [93, 255, 138],
   'Member+': [91, 141, 239],
   'Elite':   [192, 132, 252],
@@ -196,14 +190,19 @@ export default async function handler(req, res) {
 
     console.log('[wallet/apple] building pass, tier:', tier, 'memberId:', memberId)
 
-    const BG = [12, 15, 10]
-    const accent = TIER_ACCENT_RGB[tier] || [93, 255, 138]
+    const BG     = [12, 15, 10]       // #0C0F0A
+    const GREEN  = [93, 255, 138]     // #5DFF8A — always-green logo
+    const strip  = TIER_STRIP_RGB[tier] || GREEN
 
-    const icon1x = makeSolidPNG(29, 29, ...BG)
-    const icon2x = makeSolidPNG(58, 58, ...BG)
-    const icon3x = makeSolidPNG(87, 87, ...BG)
-    const logo1x = makeSolidPNG(160, 50, ...accent)
-    const logo2x = makeSolidPNG(320, 100, ...accent)
+    const icon1x  = makeSolidPNG(29,   29,  ...BG)
+    const icon2x  = makeSolidPNG(58,   58,  ...BG)
+    const icon3x  = makeSolidPNG(87,   87,  ...BG)
+    const logo1x  = makeSolidPNG(160,  50,  ...GREEN)
+    const logo2x  = makeSolidPNG(320,  100, ...GREEN)
+    const logo3x  = makeSolidPNG(480,  150, ...GREEN)
+    const strip1x = makeSolidPNG(375,  123, ...strip)
+    const strip2x = makeSolidPNG(750,  246, ...strip)
+    const strip3x = makeSolidPNG(1125, 369, ...strip)
 
     const template = new Template('storeCard', {
       passTypeIdentifier: passTypeId,
@@ -211,8 +210,8 @@ export default async function handler(req, res) {
       organizationName: 'SUBS',
       description: 'SUBS Membership Card',
       backgroundColor: 'rgb(12,15,10)',
-      labelColor: TIER_LABEL_COLOR[tier] || 'rgb(93,255,138)',
-      foregroundColor: 'rgb(240,238,232)',
+      labelColor: 'rgb(255,255,255)',
+      foregroundColor: 'rgb(255,255,255)',
       logoText: 'SUBS',
     })
 
@@ -221,11 +220,15 @@ export default async function handler(req, res) {
 
     const pass = template.createPass({ serialNumber: memberId })
 
-    await pass.images.add('icon', icon1x, '1x')
-    await pass.images.add('icon', icon2x, '2x')
-    await pass.images.add('icon', icon3x, '3x')
-    await pass.images.add('logo', logo1x, '1x')
-    await pass.images.add('logo', logo2x, '2x')
+    await pass.images.add('icon',  icon1x,  '1x')
+    await pass.images.add('icon',  icon2x,  '2x')
+    await pass.images.add('icon',  icon3x,  '3x')
+    await pass.images.add('logo',  logo1x,  '1x')
+    await pass.images.add('logo',  logo2x,  '2x')
+    await pass.images.add('logo',  logo3x,  '3x')
+    await pass.images.add('strip', strip1x, '1x')
+    await pass.images.add('strip', strip2x, '2x')
+    await pass.images.add('strip', strip3x, '3x')
 
     pass.primaryFields.add({ key: 'name', label: 'MEMBER', value: name || email })
     pass.secondaryFields.add({ key: 'tier', label: 'TIER', value: tier })
