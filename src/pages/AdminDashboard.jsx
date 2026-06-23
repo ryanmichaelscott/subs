@@ -243,10 +243,24 @@ export default function AdminDashboard() {
   const handleSendCard = async (m) => {
     setSendingCard(m.id)
     try {
+      // Fetch Google Wallet URL first so the email includes both wallet buttons
+      let googleWalletUrl = null
+      try {
+        const gRes = await fetch('/api/wallet/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member' }),
+        })
+        if (gRes.ok) {
+          const gData = await gRes.json()
+          googleWalletUrl = gData.google_wallet_url || null
+        }
+      } catch {}
+
       const res = await fetch('/api/wallet/apple', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member', mode: 'email' }),
+        body: JSON.stringify({ clerk_user_id: m.clerk_user_id, name: m.name, email: m.email, tier: m.tier || 'Member', mode: 'email', google_wallet_url: googleWalletUrl }),
       })
       const text = await res.text()
       let data
