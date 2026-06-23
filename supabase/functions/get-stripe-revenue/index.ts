@@ -7,11 +7,12 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Known member price IDs → tier label
+// Known price IDs → tier label
 const MEMBER_PRICE_TIERS: Record<string, string> = {
   'price_1TiRPcAYDs9oVarWLWpp0wLZ': 'Member',
   'price_1TjQ8TAYDs9oVarWqCQyxLM5': 'Member+',
   'price_1TjQ7DAYDs9oVarWbJONkQ1P': 'Elite',
+  'price_1TicGZAYDs9oVarWmVWT27wz': 'Contractor', // contractor annual plan
 }
 
 serve(async (req) => {
