@@ -257,13 +257,14 @@ export default async function handler(req, res) {
     // ── Step 4: Add fields ────────────────────────────────────────────────────
     console.log('[wallet/apple] step 4: adding fields')
     const displayName = name || email
-    // Trailing \n creates visual separation between the name value and the MEMBER label below it
-    pass.primaryFields.add({ key: 'name', label: 'MEMBER', value: displayName + '\n' })
-    pass.secondaryFields.add({ key: 'tier', label: 'TIER', value: tier })
-    pass.secondaryFields.add({ key: 'member_id', label: 'MEMBER ID', value: memberId })
-    pass.auxiliaryFields.add({ key: 'expires', label: 'VALID THROUGH', value: expiryStr })
+    // Tier in the header (upper-right corner) — standard membership card pattern
+    pass.headerFields.add({ key: 'tier_header', label: 'PLAN', value: tier })
+    // Name in primary with no label — avoids the label text overlapping large primary text
+    pass.primaryFields.add({ key: 'name', label: '', value: displayName })
+    // MEMBER + member ID in secondary row — properly spaced below the name
+    pass.secondaryFields.add({ key: 'member_label', label: 'MEMBER ID', value: memberId })
+    pass.secondaryFields.add({ key: 'expires', label: 'VALID THROUGH', value: expiryStr })
     pass.auxiliaryFields.add({ key: 'concierge', label: 'CONCIERGE', value: '1-888-454-3019' })
-    pass.backFields.add({ key: 'full_name', label: 'FULL NAME', value: displayName })
     pass.backFields.add({ key: 'website', label: 'WEBSITE', value: 'subs.app' })
     pass.backFields.add({ key: 'email_support', label: 'EMAIL', value: 'support@subs.app' })
     pass.backFields.add({ key: 'usage', label: 'HOW TO USE', value: 'Show this card to receive member pricing on all home services' })
