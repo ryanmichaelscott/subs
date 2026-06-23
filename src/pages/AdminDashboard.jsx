@@ -112,21 +112,33 @@ export default function AdminDashboard() {
     setActionError(null)
     setActionLoading(id)
     try {
-      const fnName = action === 'approved' ? 'approve-contractor' : 'reject-contractor'
-      const { data, error } = await supabase.functions.invoke(fnName, { body: { contractor_id: id } })
-      if (error) {
-        let detail = error.message
-        try {
-          // error.context is the raw Response object in supabase-js v2
-          const body = error.context?.json ? await error.context.json() : error.context
-          const base = body?.error || body?.message || error.message
-          const extra = body?.details ? ': ' + JSON.stringify(body.details) : ''
-          detail = base + extra
-        } catch {}
-        setActionError(`${fnName} failed: ${detail}`)
-        return
+      if (action === 'approved') {
+        const res = await fetch('/api/admin/approve-contractor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contractor_id: id }),
+        })
+        const data = await res.json()
+        if (!res.ok || data.error) {
+          setActionError(`approve-contractor failed: ${data.error || res.statusText}`)
+          return
+        }
+        if (data.warning) console.warn('approve-contractor warning:', data.warning)
+      } else {
+        const { data, error } = await supabase.functions.invoke('reject-contractor', { body: { contractor_id: id } })
+        if (error) {
+          let detail = error.message
+          try {
+            const body = error.context?.json ? await error.context.json() : error.context
+            const base = body?.error || body?.message || error.message
+            const extra = body?.details ? ': ' + JSON.stringify(body.details) : ''
+            detail = base + extra
+          } catch {}
+          setActionError(`reject-contractor failed: ${detail}`)
+          return
+        }
+        if (data?.error) { setActionError(`reject-contractor: ${data.error}`); return }
       }
-      if (data?.error) { setActionError(`${fnName}: ${data.error}${data.details ? ' — ' + JSON.stringify(data.details) : ''}`); return }
       setContractors(cs => cs.map(c => c.id === id ? { ...c, status: action } : c))
     } catch (e) {
       setActionError(`Unexpected error: ${e.message}`)
@@ -599,9 +611,9 @@ export default function AdminDashboard() {
                       {actionLoading === c.id ? '…' : 'Delete'}
                     </button>
                     <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100,
-                      background: c.status === 'active' ? S.green + '22' : c.status === 'approved' ? S.blue + '22' : S.danger + '22',
-                      color: c.status === 'active' ? S.green : c.status === 'approved' ? S.blue : S.danger }}>
-                      {c.status === 'active' ? '✓ Active' : c.status === 'approved' ? '⏳ Approved' : '✗ Rejected'}
+                      background: c.status === 'active' ? S.green + '22' : c.status === 'docs_signed' ? S.amber + '22' : c.status === 'approved' ? S.blue + '22' : S.danger + '22',
+                      color: c.status === 'active' ? S.green : c.status === 'docs_signed' ? S.amber : c.status === 'approved' ? S.blue : S.danger }}>
+                      {c.status === 'active' ? '✓ Active' : c.status === 'docs_signed' ? '✍ Docs Signed' : c.status === 'approved' ? '⏳ Approved' : '✗ Rejected'}
                     </span>
                   </div>
                 </Card>
@@ -619,11 +631,11 @@ export default function AdminDashboard() {
                 <button onClick={() => setActionError(null)} style={{ background: 'none', border: 'none', color: S.danger, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
               </div>
             )}
-            {['active', 'approved', 'rejected'].map(statusGroup => {
+            {['active', 'docs_signed', 'approved', 'rejected'].map(statusGroup => {
               const group = contractors.filter(c => c.status === statusGroup)
               if (!group.length) return null
-              const groupLabel = statusGroup === 'active' ? '✓ Active Partners' : statusGroup === 'approved' ? '⏳ Approved — Awaiting Payment' : '✗ Removed'
-              const groupColor = statusGroup === 'active' ? S.green : statusGroup === 'approved' ? S.amber : S.muted
+              const groupLabel = statusGroup === 'active' ? '✓ Active Partners' : statusGroup === 'docs_signed' ? '✍ Docs Signed — Awaiting Payment' : statusGroup === 'approved' ? '⏳ Approved — Awaiting Signature' : '✗ Removed'
+              const groupColor = statusGroup === 'active' ? S.green : statusGroup === 'docs_signed' ? S.amber : statusGroup === 'approved' ? S.blue : S.muted
               return (
                 <div key={statusGroup} style={{ marginBottom: 28 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: groupColor, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
@@ -657,13 +669,22 @@ export default function AdminDashboard() {
                               <button onClick={() => handleImpersonate(c.name, c.contact_email, 'contractor', c)} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer' }}>
                                 Impersonate
                               </button>
-                              {statusGroup === 'approved' && (
+                              {(statusGroup === 'approved' || statusGroup === 'docs_signed') && (
                                 <button
                                   onClick={() => handleResendInvitation(c.id)}
                                   disabled={actionLoading === c.id}
                                   style={{ background: 'transparent', border: `1px solid ${S.blue}66`, color: S.blue, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
                                 >
                                   {actionLoading === c.id ? '…' : 'Resend Invite'}
+                                </button>
+                              )}
+                              {statusGroup === 'docs_signed' && (
+                                <button
+                                  onClick={() => handleStatusUpdate(c.id, 'active')}
+                                  disabled={actionLoading === c.id}
+                                  style={{ background: 'transparent', border: `1px solid ${S.green}66`, color: S.green, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: actionLoading === c.id ? 'not-allowed' : 'pointer', opacity: actionLoading === c.id ? 0.5 : 1 }}
+                                >
+                                  {actionLoading === c.id ? '…' : 'Mark Active'}
                                 </button>
                               )}
                               {statusGroup !== 'rejected' ? (
