@@ -82,7 +82,7 @@ function extractPemFromP12(p12Buffer, password) {
   return { certPem, keyPem }
 }
 
-function emailHtml(name, tier, memberId, expiryStr) {
+function emailHtml(name, tier, memberId, expiryStr, googleWalletUrl = null) {
   const badgeColor = { Member: '#5DFF8A', 'Member+': '#5B8DEF', Elite: '#C084FC' }[tier] || '#5DFF8A'
   const firstName = name ? name.split(' ')[0] : null
   const expiryDisplay = new Date(expiryStr + 'T00:00:00').toLocaleDateString('en-US', {
@@ -102,7 +102,7 @@ function emailHtml(name, tier, memberId, expiryStr) {
   </td></tr>
   <tr><td style="padding:28px 32px 16px;">
     <p style="margin:0 0 8px;font-size:24px;font-weight:700;color:#F0EEE8;line-height:1.2;">Your membership card is ready${firstName ? `, ${firstName}` : ''}.</p>
-    <p style="margin:0 0 24px;font-size:14px;color:#8A9088;line-height:1.7;">Open this email on your iPhone and tap the <strong style="color:#F0EEE8;">subs-membership.pkpass</strong> attachment to add your card to Apple Wallet instantly.</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#8A9088;line-height:1.7;">${googleWalletUrl ? 'On iPhone, tap the <strong style="color:#F0EEE8;">subs-membership.pkpass</strong> attachment below to add to Apple Wallet. On Android, use the Google Wallet button below.' : 'Open this email on your iPhone and tap the <strong style="color:#F0EEE8;">subs-membership.pkpass</strong> attachment to add your card to Apple Wallet instantly.'}</p>
   </td></tr>
   <tr><td style="padding:0 32px 24px;">
     <div style="background:#141814;border:1px solid #252A23;border-left:3px solid #5DFF8A;border-radius:8px;padding:14px 16px;">
@@ -129,8 +129,12 @@ function emailHtml(name, tier, memberId, expiryStr) {
       </tr>
     </table>
   </td></tr>
+  ${googleWalletUrl ? `<tr><td style="padding:0 32px 16px;">
+    <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#8A9088;text-transform:uppercase;letter-spacing:.08em;">Android / Google Wallet</p>
+    <a href="${googleWalletUrl}" style="display:inline-block;background:#4285F4;color:#ffffff;font-size:14px;font-weight:600;padding:13px 24px;border-radius:8px;text-decoration:none;">Add to Google Wallet &#x2192;</a>
+  </td></tr>` : ''}
   <tr><td style="padding:0 32px 28px;">
-    <a href="https://subs.app/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:13px 24px;border-radius:8px;text-decoration:none;">Go to my dashboard &#x2192;</a>
+    <a href="https://getsubs.co/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:13px 24px;border-radius:8px;text-decoration:none;">Go to my dashboard &#x2192;</a>
   </td></tr>
   <tr><td style="padding:20px 32px;border-top:1px solid #252A23;">
     <p style="margin:0;font-size:12px;color:#8A9088;">Questions? Call or text <a href="tel:18884543019" style="color:#8A9088;">1-888-454-3019</a> or email <a href="mailto:support@subs.app" style="color:#8A9088;">support@subs.app</a></p>
@@ -150,7 +154,7 @@ export default async function handler(req, res) {
   console.log('[wallet/apple] invoked, logo sizes (1x/2x/3x):', LOGO_1X.length, LOGO_2X.length, LOGO_3X.length)
 
   try {
-    const { clerk_user_id, name, email, tier, mode = 'email' } = req.body || {}
+    const { clerk_user_id, name, email, tier, mode = 'email', google_wallet_url } = req.body || {}
     if (!clerk_user_id || !email || !tier) {
       return res.status(400).json({ error: 'clerk_user_id, email, and tier are required' })
     }
@@ -304,7 +308,7 @@ export default async function handler(req, res) {
           from: 'SUBS <hello@subs.app>',
           to: email,
           subject: `Your SUBS ${tier} membership card`,
-          html: emailHtml(name || email, tier, memberId, expiryStr),
+          html: emailHtml(name || email, tier, memberId, expiryStr, google_wallet_url),
           attachments: [{
             filename: 'subs-membership.pkpass',
             content: passBuffer.toString('base64'),
