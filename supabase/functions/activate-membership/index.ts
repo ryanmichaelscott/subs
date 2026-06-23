@@ -299,7 +299,7 @@ serve(async (req) => {
 
         const { data: referrer } = await supabase
           .from('members')
-          .select('stripe_subscription_id, email, name')
+          .select('stripe_subscription_id, email, name, referral_code')
           .eq('id', referral.referrer_member_id)
           .single()
 
@@ -329,51 +329,238 @@ serve(async (req) => {
           const firstName = referrer.name?.split(' ')[0] || 'there'
           const referredName = member?.name?.split(' ')[0] || 'Someone'
           const isFreeYear = count === 3
-          const isFirstMilestone = count === 1
+          const refLink = referrer.referral_code ? `https://subs.app/?ref=${referrer.referral_code}` : 'https://subs.app/dashboard'
 
-          const subject = isFreeYear
-            ? `Your next year of SUBS is on us!`
-            : isFirstMilestone
-              ? `$20 off earned — ${referredName} just joined SUBS!`
-              : `${referredName} just joined — ${count} of 3 referrals`
+          let subject: string
+          let html: string
 
-          const rewardMessage = isFreeYear
-            ? `You've referred 3 paying members — your next renewal is completely free. The 100% discount has been applied automatically.`
-            : isFirstMilestone
-              ? `We've applied <strong style="color:#5DFF8A">$20 off</strong> your next renewal automatically. 2 more paying referrals = a free year.`
-              : count === 2
-                ? `1 more paying referral and your next renewal is <strong style="color:#5DFF8A">completely free</strong>.`
-                : `Keep sharing your link — 1 paying referral = $20 off, 3 = a free year.`
+          if (isFreeYear) {
+            subject = `Your next year of SUBS is free, ${firstName}!`
+            html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0C0F0A;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0C0F0A;">
+<tr><td align="center" style="padding:40px 16px 48px;">
+<table cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
+  <tr><td style="padding-bottom:24px;">
+    <div style="font-size:20px;font-weight:800;color:#5DFF8A;letter-spacing:0.08em;">SUBS</div>
+    <div style="height:1px;background:#252A23;margin-top:16px;"></div>
+  </td></tr>
+  <tr><td style="padding-bottom:28px;">
+    <div style="font-size:11px;font-weight:800;color:#5DFF8A;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Referral Goal Reached</div>
+    <h1 style="font-size:28px;font-weight:800;color:#F0EEE8;margin:0 0 14px;line-height:1.2;">Your next year is on us, ${firstName}.</h1>
+    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0;">You referred 3 paying members. That's the goal — and your reward is a 100% discount on your next annual renewal. It's been applied automatically. No action needed.</p>
+  </td></tr>
+  <tr><td style="padding-bottom:24px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0A1A0F;border:1px solid #1A3A20;border-radius:14px;">
+      <tr><td style="padding:22px 26px;">
+        <div style="font-size:11px;font-weight:800;color:#5DFF8A;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;">Your reward</div>
+        <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px;">Free year</div>
+        <div style="font-size:13px;color:#8A9088;">100% off your next annual renewal — applied automatically</div>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding-bottom:32px;">
+    <a href="https://subs.app/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:800;padding:13px 28px;border-radius:10px;text-decoration:none;">View your dashboard →</a>
+  </td></tr>
+  <tr><td><div style="height:1px;background:#252A23;"></div></td></tr>
+  <tr><td style="padding-top:20px;">
+    <div style="font-size:12px;color:#8A9088;line-height:1.8;">Questions? Call or text <span style="color:#F0EEE8;">1-888-454-3019</span> or visit <a href="https://subs.app" style="color:#5DFF8A;text-decoration:none;">subs.app</a></div>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`
+          } else if (count === 1) {
+            subject = `${referredName} just joined! You've earned $20 off your renewal.`
+            html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0C0F0A;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0C0F0A;">
+<tr><td align="center" style="padding:40px 16px 48px;">
+<table cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
+  <tr><td style="padding-bottom:24px;">
+    <div style="font-size:20px;font-weight:800;color:#5DFF8A;letter-spacing:0.08em;">SUBS</div>
+    <div style="height:1px;background:#252A23;margin-top:16px;"></div>
+  </td></tr>
+  <tr><td style="padding-bottom:28px;">
+    <div style="font-size:11px;font-weight:800;color:#5DFF8A;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Referral Reward</div>
+    <h1 style="font-size:28px;font-weight:800;color:#F0EEE8;margin:0 0 14px;line-height:1.2;">${referredName} just joined SUBS, ${firstName}.</h1>
+    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0;">You earned <strong style="color:#5DFF8A;">$20 off</strong> your next annual renewal — it's been applied to your account automatically. Keep going: refer 2 more members and your entire next year of SUBS is on us.</p>
+  </td></tr>
+  <tr><td style="padding-bottom:24px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#141814;border:1px solid #252A23;border-radius:14px;">
+      <tr><td style="padding:20px 24px;">
+        <div style="font-size:11px;font-weight:800;color:#8A9088;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:14px;">Your progress</div>
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+          <td width="33%" align="center" style="padding:0 6px 0 0;">
+            <div style="background:#0A1A0F;border:2px solid #5DFF8A;border-radius:10px;padding:14px 10px;">
+              <div style="font-size:22px;font-weight:800;color:#5DFF8A;">1</div>
+              <div style="font-size:11px;color:#5DFF8A;font-weight:700;margin-top:4px;">Referral</div>
+              <div style="font-size:10px;color:#8A9088;margin-top:2px;">$20 off ✓</div>
+            </div>
+          </td>
+          <td width="33%" align="center" style="padding:0 3px;">
+            <div style="background:#0D100D;border:1px solid #252A23;border-radius:10px;padding:14px 10px;opacity:0.5;">
+              <div style="font-size:22px;font-weight:800;color:#3A3E38;">2</div>
+              <div style="font-size:11px;color:#3A3E38;font-weight:700;margin-top:4px;">Referrals</div>
+              <div style="font-size:10px;color:#3A3E38;margin-top:2px;">pending</div>
+            </div>
+          </td>
+          <td width="33%" align="center" style="padding:0 0 0 6px;">
+            <div style="background:#0D100D;border:1px solid #252A23;border-radius:10px;padding:14px 10px;opacity:0.5;">
+              <div style="font-size:22px;font-weight:800;color:#3A3E38;">3</div>
+              <div style="font-size:11px;color:#3A3E38;font-weight:700;margin-top:4px;">Referrals</div>
+              <div style="font-size:10px;color:#3A3E38;margin-top:2px;">Free year</div>
+            </div>
+          </td>
+        </tr></table>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding-bottom:20px;">
+    <div style="background:#0C1A18;border:1px solid #1A2E2A;border-radius:12px;padding:18px 22px;">
+      <div style="font-size:11px;font-weight:700;color:#8A9088;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Your referral link</div>
+      <div style="font-size:13px;color:#5DFF8A;word-break:break-all;margin-bottom:14px;">${refLink}</div>
+      <a href="${refLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:13px;font-weight:800;padding:11px 22px;border-radius:9px;text-decoration:none;">Share my link →</a>
+    </div>
+  </td></tr>
+  <tr><td style="padding-bottom:32px;">
+    <a href="https://subs.app/dashboard" style="font-size:13px;color:#8A9088;text-decoration:none;">View dashboard →</a>
+  </td></tr>
+  <tr><td><div style="height:1px;background:#252A23;"></div></td></tr>
+  <tr><td style="padding-top:20px;">
+    <div style="font-size:12px;color:#8A9088;line-height:1.8;">Questions? Call or text <span style="color:#F0EEE8;">1-888-454-3019</span> or visit <a href="https://subs.app" style="color:#5DFF8A;text-decoration:none;">subs.app</a></div>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`
+          } else {
+            subject = count === 2
+              ? `${referredName} joined — 1 more referral = a free year!`
+              : `${referredName} joined — ${count} of 3 referrals`
+            html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0C0F0A;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0C0F0A;">
+<tr><td align="center" style="padding:40px 16px 48px;">
+<table cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
+  <tr><td style="padding-bottom:24px;">
+    <div style="font-size:20px;font-weight:800;color:#5DFF8A;letter-spacing:0.08em;">SUBS</div>
+    <div style="height:1px;background:#252A23;margin-top:16px;"></div>
+  </td></tr>
+  <tr><td style="padding-bottom:28px;">
+    <div style="font-size:11px;font-weight:800;color:#5DFF8A;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Referral Update</div>
+    <h1 style="font-size:28px;font-weight:800;color:#F0EEE8;margin:0 0 14px;line-height:1.2;">${referredName} just joined, ${firstName}.</h1>
+    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0;">${count === 2 ? `You're one referral away from a <strong style="color:#5DFF8A;">completely free</strong> year of SUBS. Share your link one more time.` : `You're at ${count} of 3 paying referrals. Keep going — 3 total unlocks a free year.`}</p>
+  </td></tr>
+  <tr><td style="padding-bottom:24px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#141814;border:1px solid #252A23;border-radius:12px;">
+      <tr><td style="padding:18px 22px;">
+        <div style="font-size:13px;color:#8A9088;margin-bottom:6px;">Your progress</div>
+        <div style="font-size:17px;font-weight:700;color:#F0EEE8;">${count} of 3 paying referrals</div>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding-bottom:32px;">
+    <a href="${refLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:800;padding:13px 28px;border-radius:10px;text-decoration:none;">Share my referral link →</a>
+  </td></tr>
+  <tr><td><div style="height:1px;background:#252A23;"></div></td></tr>
+  <tr><td style="padding-top:20px;">
+    <div style="font-size:12px;color:#8A9088;line-height:1.8;">Questions? Call or text <span style="color:#F0EEE8;">1-888-454-3019</span> or visit <a href="https://subs.app" style="color:#5DFF8A;text-decoration:none;">subs.app</a></div>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`
+          }
 
           await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              from: 'SUBS <noreply@subs.app>',
-              to: referrer.email,
-              subject,
-              html: `
-                <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#0C0F0A;color:#F0EEE8">
-                  <div style="font-size:22px;font-weight:800;color:#5DFF8A;letter-spacing:0.06em;margin-bottom:24px">SUBS</div>
-                  <h2 style="font-size:20px;font-weight:700;margin:0 0 12px">
-                    ${isFreeYear ? `Your next year is free, ${firstName}!` : `${referredName} just joined SUBS, ${firstName}!`}
-                  </h2>
-                  <p style="color:#8A9088;line-height:1.6;margin:0 0 20px">${rewardMessage}</p>
-                  <div style="background:#141814;border:1px solid #252A23;border-radius:10px;padding:14px 18px;margin-bottom:24px">
-                    <div style="font-size:12px;color:#8A9088;margin-bottom:6px">YOUR PROGRESS</div>
-                    <div style="font-size:14px;color:#F0EEE8">${count} of 3 paying referrals${count >= 3 ? ' — 🎉 goal reached!' : ''}</div>
-                  </div>
-                  <a href="https://subs.app/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none">
-                    View your referrals →
-                  </a>
-                </div>
-              `,
-            }),
+            body: JSON.stringify({ from: 'SUBS <hello@subs.app>', to: referrer.email, subject, html }),
           })
         }
       }
     } catch (refErr) {
       console.error('Referral reward error:', refErr)
+    }
+
+    // Schedule 24h referral nudge email for new activations (non-critical)
+    try {
+      const isFirstActivation = !existing || existing.status !== 'Active'
+      const resendKey = Deno.env.get('RESEND_API_KEY')
+      if (isFirstActivation && resendKey && member?.email && member?.referral_code) {
+        const firstName = (member.name || session.customer_details?.name || '').split(' ')[0] || 'there'
+        const refLink = `https://subs.app/?ref=${member.referral_code}`
+        const sendAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'SUBS <hello@subs.app>',
+            to: member.email,
+            subject: 'Know a homeowner? Share SUBS and earn $20 — or a free year.',
+            scheduled_at: sendAt,
+            html: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0C0F0A;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0C0F0A;">
+<tr><td align="center" style="padding:40px 16px 48px;">
+<table cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
+  <tr><td style="padding-bottom:24px;">
+    <div style="font-size:20px;font-weight:800;color:#5DFF8A;letter-spacing:0.08em;">SUBS</div>
+    <div style="height:1px;background:#252A23;margin-top:16px;"></div>
+  </td></tr>
+  <tr><td style="padding-bottom:28px;">
+    <div style="font-size:11px;font-weight:800;color:#5DFF8A;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">Member Referral Program</div>
+    <h1 style="font-size:28px;font-weight:800;color:#F0EEE8;margin:0 0 14px;line-height:1.2;">Know a homeowner, ${firstName}?</h1>
+    <p style="font-size:15px;color:#8A9088;line-height:1.7;margin:0;">Share SUBS with neighbors and friends. Every time someone joins using your link, you earn a reward — automatically, no tracking required.</p>
+  </td></tr>
+  <tr><td style="padding-bottom:24px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #252A23;border-radius:14px;overflow:hidden;">
+      <tr><td style="background:#141814;padding:20px 24px;border-bottom:1px solid #252A23;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+          <td width="40" style="vertical-align:top;padding-top:2px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#0A1A0F;border:1px solid #1A3A20;display:flex;align-items:center;justify-content:center;font-size:16px;">1</div>
+          </td>
+          <td style="padding-left:14px;vertical-align:top;">
+            <div style="font-size:15px;font-weight:700;color:#F0EEE8;margin-bottom:4px;">1 paying referral</div>
+            <div style="font-size:13px;color:#8A9088;line-height:1.5;"><strong style="color:#5DFF8A;">$20 off</strong> your next annual renewal — applied automatically</div>
+          </td>
+        </tr></table>
+      </td></tr>
+      <tr><td style="background:#0A1A0F;padding:20px 24px;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+          <td width="40" style="vertical-align:top;padding-top:2px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#0C1A0F;border:1px solid #2A4A30;display:flex;align-items:center;justify-content:center;font-size:16px;color:#5DFF8A;font-weight:700;">3</div>
+          </td>
+          <td style="padding-left:14px;vertical-align:top;">
+            <div style="font-size:15px;font-weight:700;color:#F0EEE8;margin-bottom:4px;">3 paying referrals</div>
+            <div style="font-size:13px;color:#8A9088;line-height:1.5;">Your <strong style="color:#5DFF8A;">next annual renewal is completely free</strong> — 100% off, automatic</div>
+          </td>
+        </tr></table>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding-bottom:24px;">
+    <div style="background:#0C1A18;border:1px solid #1A2E2A;border-radius:12px;padding:20px 24px;">
+      <div style="font-size:11px;font-weight:700;color:#8A9088;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Your referral link</div>
+      <div style="font-size:13px;color:#5DFF8A;word-break:break-all;margin-bottom:16px;">${refLink}</div>
+      <a href="${refLink}" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:800;padding:13px 26px;border-radius:10px;text-decoration:none;">Share my link →</a>
+    </div>
+  </td></tr>
+  <tr><td style="padding-bottom:10px;">
+    <p style="font-size:13px;color:#8A9088;line-height:1.7;margin:0;">Track your referrals anytime from your <a href="https://subs.app/dashboard" style="color:#5DFF8A;text-decoration:none;">member dashboard</a>. Rewards are applied automatically when a referred member completes their first payment — no codes, no claiming.</p>
+  </td></tr>
+  <tr><td style="height:24px;"></td></tr>
+  <tr><td><div style="height:1px;background:#252A23;"></div></td></tr>
+  <tr><td style="padding-top:20px;">
+    <div style="font-size:12px;color:#8A9088;line-height:1.8;">Questions? Call or text <span style="color:#F0EEE8;">1-888-454-3019</span> or visit <a href="https://subs.app" style="color:#5DFF8A;text-decoration:none;">subs.app</a></div>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`,
+          }),
+        })
+      }
+    } catch (nudgeErr) {
+      console.error('Referral nudge email error:', nudgeErr)
     }
 
     return new Response(JSON.stringify({ member }), {
