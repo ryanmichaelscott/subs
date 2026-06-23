@@ -18,7 +18,7 @@ const BASE_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : 'https://getsubs.co'
 
-async function createClerkUser({ email, firstName, lastName, role }) {
+async function findOrCreateClerkUser({ email, firstName, lastName, role }) {
   const clerkKey = process.env.CLERK_SECRET_KEY
   if (!clerkKey) throw new Error('CLERK_SECRET_KEY not configured')
 
@@ -26,12 +26,9 @@ async function createClerkUser({ email, firstName, lastName, role }) {
   const first = nameParts[0] || ''
   const last = lastName || nameParts.slice(1).join(' ') || ''
 
-  const res = await fetch('https://api.clerk.com/v1/users', {
+  const createRes = await fetch('https://api.clerk.com/v1/users', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${clerkKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email_address: [email],
       first_name: first,
@@ -42,12 +39,41 @@ async function createClerkUser({ email, firstName, lastName, role }) {
     }),
   })
 
-  const data = await res.json()
-  if (!res.ok) {
-    const msg = data?.errors?.[0]?.long_message || data?.errors?.[0]?.message || JSON.stringify(data)
+  const createData = await createRes.json()
+
+  if (createRes.ok) {
+    return { clerkUserId: createData.id, existed: false }
+  }
+
+  // If email is already taken, look up the existing user and reuse their account
+  const isEmailTaken = createData?.errors?.some(e =>
+    e.code === 'form_identifier_exists' ||
+    (e.long_message || e.message || '').toLowerCase().includes('taken')
+  )
+
+  if (!isEmailTaken) {
+    const msg = createData?.errors?.[0]?.long_message || createData?.errors?.[0]?.message || JSON.stringify(createData)
     throw new Error(`Clerk error: ${msg}`)
   }
-  return data.id
+
+  const lookupRes = await fetch(`https://api.clerk.com/v1/users?email_address[]=${encodeURIComponent(email)}`, {
+    headers: { 'Authorization': `Bearer ${clerkKey}` },
+  })
+  const lookupData = await lookupRes.json()
+
+  const existing = Array.isArray(lookupData) ? lookupData[0] : null
+  if (!existing) throw new Error(`Account already exists for ${email} but could not be retrieved`)
+
+  // Update their role if it differs
+  if (existing.public_metadata?.role !== role) {
+    await fetch(`https://api.clerk.com/v1/users/${existing.id}/metadata`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ public_metadata: { ...existing.public_metadata, role, admin_created: true } }),
+    })
+  }
+
+  return { clerkUserId: existing.id, existed: true }
 }
 
 async function sendEmail({ to, subject, html }) {
@@ -76,6 +102,10 @@ export default async function handler(req, res) {
     const stripeKey   = process.env.STRIPE_SECRET_KEY
 
     const supabase = createClient(supabaseUrl, supabaseKey)
+
+    if (stripeKey && !stripeKey.startsWith('sk_')) {
+      console.error('[admin/create-account] STRIPE_SECRET_KEY looks like a publishable key (starts with pk_). Stripe calls will fail.')
+    }
     const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: '2023-10-16' }) : null
 
     // ── HOMEOWNER (Member) ──────────────────────────────────────────────────
@@ -86,7 +116,7 @@ export default async function handler(req, res) {
       const priceId = MEMBER_PRICE_IDS[tier]
       if (!priceId) return res.status(400).json({ error: `Unknown tier: ${tier}` })
 
-      const clerkUserId = await createClerkUser({ email, firstName: full_name, role: 'member' })
+      const { clerkUserId, existed: memberExisted } = await findOrCreateClerkUser({ email, firstName: full_name, role: 'member' })
 
       const { data: member } = await supabase.from('members').insert({
         clerk_user_id: clerkUserId,
@@ -131,7 +161,7 @@ export default async function handler(req, res) {
         }
       }
 
-      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, full_name, email, tier_label: tier === 'member' ? 'Member' : tier === 'plus' ? 'Member+' : 'Elite', message: `Member account created.` })
+      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, full_name, email, tier_label: tier === 'member' ? 'Member' : tier === 'plus' ? 'Member+' : 'Elite', message: memberExisted ? `Existing account found — linked successfully.` : `Member account created.` })
     }
 
     // ── CONTRACTOR ──────────────────────────────────────────────────────────
@@ -139,7 +169,7 @@ export default async function handler(req, res) {
       const { full_name, business_name, email, phone, trade, service_city, service_state } = fields
       if (!full_name || !email) return res.status(400).json({ error: 'full_name and email required' })
 
-      const clerkUserId = await createClerkUser({ email, firstName: full_name, role: 'contractor' })
+      const { clerkUserId, existed: contractorExisted } = await findOrCreateClerkUser({ email, firstName: full_name, role: 'contractor' })
 
       await supabase.from('contractors').insert({
         clerk_user_id: clerkUserId,
@@ -155,34 +185,59 @@ export default async function handler(req, res) {
       })
 
       let checkoutUrl = null
+      let stripeError = null
+
       if (stripe) {
-        const customer = await stripe.customers.create({ email, name: business_name || full_name, metadata: { clerk_user_id: clerkUserId, type: 'contractor' } })
-
-        const session = await stripe.checkout.sessions.create({
-          customer: customer.id,
-          mode: 'subscription',
-          line_items: [{ price: CONTRACTOR_PRICE_ID, quantity: 1 }],
-          success_url: `${BASE_URL}/contractor/dashboard`,
-          cancel_url: `${BASE_URL}/contractor/apply`,
-          metadata: { clerk_user_id: clerkUserId, admin_created: 'true' },
-        })
-        checkoutUrl = session.url
-
-        if (send_email) {
-          await sendEmail({
-            to: email,
-            subject: 'Welcome to SUBS — activate your contractor account',
-            html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0C0F0A;color:#F0EEE8;padding:32px;border-radius:12px">
-              <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px">SUBS</div>
-              <h2 style="font-size:20px;margin:16px 0 8px">Hi ${full_name.split(' ')[0]}, welcome.</h2>
-              <p style="color:#8A9088;font-size:14px;line-height:1.6">Your contractor account is ready. Complete your subscription to start receiving job requests from SUBS members.</p>
-              <a href="${checkoutUrl}" style="display:inline-block;margin-top:20px;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none">Activate Account →</a>
-            </div>`,
+        try {
+          console.log('[create-account/contractor] creating Stripe customer for', email)
+          const customer = await stripe.customers.create({
+            email,
+            name: business_name || full_name,
+            metadata: { clerk_user_id: clerkUserId, type: 'contractor' },
           })
+          console.log('[create-account/contractor] Stripe customer created:', customer.id)
+
+          console.log('[create-account/contractor] creating checkout session, price:', CONTRACTOR_PRICE_ID)
+          const session = await stripe.checkout.sessions.create({
+            customer: customer.id,
+            mode: 'subscription',
+            line_items: [{ price: CONTRACTOR_PRICE_ID, quantity: 1 }],
+            success_url: `${BASE_URL}/contractor/dashboard`,
+            cancel_url: `${BASE_URL}/contractor/apply`,
+            metadata: { clerk_user_id: clerkUserId, admin_created: 'true' },
+          })
+          checkoutUrl = session.url
+          console.log('[create-account/contractor] checkout session created:', session.id)
+
+          if (send_email && checkoutUrl) {
+            await sendEmail({
+              to: email,
+              subject: 'Welcome to SUBS — activate your contractor account',
+              html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0C0F0A;color:#F0EEE8;padding:32px;border-radius:12px">
+                <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px">SUBS</div>
+                <h2 style="font-size:20px;margin:16px 0 8px">Hi ${full_name.split(' ')[0]}, welcome.</h2>
+                <p style="color:#8A9088;font-size:14px;line-height:1.6">Your contractor account is ready. Complete your subscription to start receiving job requests from SUBS members.</p>
+                <a href="${checkoutUrl}" style="display:inline-block;margin-top:20px;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none">Activate Account →</a>
+              </div>`,
+            })
+          }
+        } catch (stripeErr) {
+          // Log exact error so we can diagnose — but don't fail the whole request.
+          // The contractor record is saved; admin can follow up manually.
+          console.error('[create-account/contractor] Stripe error:', stripeErr?.message, stripeErr?.type, stripeErr?.code)
+          stripeError = stripeErr?.message || 'Stripe call failed'
+
+          // Mark as pending_payment so it's not lost
+          await supabase.from('contractors').update({ status: 'pending_payment' })
+            .eq('clerk_user_id', clerkUserId)
         }
       }
 
-      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, full_name, email, tier_label: 'Contractor', message: `Contractor account created.` })
+      const message = contractorExisted
+        ? `Existing account found — linked successfully.${stripeError ? ` (Payment link failed: ${stripeError} — follow up manually)` : ''}`
+        : `Contractor account created.${stripeError ? ` Payment link failed: ${stripeError} — follow up manually.` : ''}`
+
+      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, full_name, email, tier_label: 'Contractor', stripe_error: stripeError || undefined, message })
     }
 
     // ── PROPERTY MANAGER ────────────────────────────────────────────────────
@@ -190,7 +245,7 @@ export default async function handler(req, res) {
       const { full_name, company_name, email, phone, unit_count, plan } = fields
       if (!full_name || !email || !plan) return res.status(400).json({ error: 'full_name, email, plan required' })
 
-      const clerkUserId = await createClerkUser({ email, firstName: full_name, role: 'enterprise' })
+      const { clerkUserId } = await findOrCreateClerkUser({ email, firstName: full_name, role: 'enterprise' })
 
       const { data: entMember } = await supabase.from('enterprise_members').insert({
         clerk_user_id: clerkUserId,
@@ -267,7 +322,7 @@ export default async function handler(req, res) {
       const annualCents = Math.round(parseFloat(negotiated_price) * 100)
       if (isNaN(annualCents) || annualCents < 100) return res.status(400).json({ error: 'negotiated_price must be a positive number' })
 
-      const clerkUserId = await createClerkUser({ email, firstName: full_name, role: 'enterprise' })
+      const { clerkUserId } = await findOrCreateClerkUser({ email, firstName: full_name, role: 'enterprise' })
 
       const { data: entMember } = await supabase.from('enterprise_members').insert({
         clerk_user_id: clerkUserId,

@@ -201,10 +201,10 @@ create index if not exists reviews_contractor_id_idx on reviews (contractor_id);
 alter table contractors add column if not exists dropbox_sign_request_id text;
 create index if not exists contractors_dropbox_sign_request_id_idx on contractors (dropbox_sign_request_id);
 
--- Add docs_signed status for contractors who have signed their agreement
+-- Add docs_signed and pending_payment statuses for contractors
 alter table contractors drop constraint if exists contractors_status_check;
 alter table contractors add constraint contractors_status_check
-  check (status in ('pending', 'approved', 'docs_signed', 'active', 'rejected'));
+  check (status in ('pending', 'approved', 'docs_signed', 'pending_payment', 'active', 'rejected'));
 
 -- Staff members (admin-invited users with restricted dashboard access)
 create table if not exists staff_members (
