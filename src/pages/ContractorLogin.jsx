@@ -104,7 +104,7 @@ export default function ContractorLogin() {
               <span style={{ color: S.green, fontSize: 12, fontWeight: 600 }}>Contractor Portal</span>
             </div>
             <div style={{ fontFamily: C.display, fontSize: 34, color: S.offwhite, marginBottom: 8 }}>Partner sign in.</div>
-            <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Enter your email or phone — we'll send a verification code.</p>
+            <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>Sign in with your email or phone number.</p>
           </div>
 
           <div className="contractor-login-card" style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16 }}>

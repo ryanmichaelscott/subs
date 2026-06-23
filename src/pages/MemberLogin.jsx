@@ -88,7 +88,7 @@ export default function MemberLogin() {
             {isSignUp ? 'Join SUBS.' : 'Welcome back.'}
           </div>
           <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>
-            Enter your email or phone — we'll send a verification code.
+            Sign in with your email or phone number.
           </p>
         </div>
 
