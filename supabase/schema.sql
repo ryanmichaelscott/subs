@@ -220,3 +220,5 @@ create table if not exists staff_members (
 );
 create index if not exists staff_members_email_idx on staff_members (email);
 create index if not exists staff_members_clerk_user_id_idx on staff_members (clerk_user_id);
+
+alter table members add column if not exists apple_pass_url text;

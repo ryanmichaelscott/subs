@@ -12,10 +12,10 @@ serve(async (req) => {
     const body = await req.json()
     const vercelUrl = Deno.env.get('VERCEL_APP_URL') || 'https://getsubs.co'
 
-    const res = await fetch(`${vercelUrl}/api/passkit/issue`, {
+    const res = await fetch(`${vercelUrl}/api/wallet/apple`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, mode: 'email' }),
     })
 
     const data = await res.json()
