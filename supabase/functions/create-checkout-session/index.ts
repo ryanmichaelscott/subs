@@ -27,9 +27,14 @@ serve(async (req) => {
     })
   }
 
+  // Append with & if success_url already has query params, otherwise use ?
+  const sessionSuccessUrl = success_url.includes('?')
+    ? `${success_url}&checkout_session_id={CHECKOUT_SESSION_ID}`
+    : `${success_url}?checkout_session_id={CHECKOUT_SESSION_ID}`
+
   const params = new URLSearchParams({
     mode: 'subscription',
-    success_url: `${success_url}?checkout_session_id={CHECKOUT_SESSION_ID}`,
+    success_url: sessionSuccessUrl,
     cancel_url,
     'line_items[0][price]': price_id,
     'line_items[0][quantity]': '1',
