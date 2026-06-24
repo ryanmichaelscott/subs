@@ -154,7 +154,7 @@ export default function MemberDashboard() {
   const displayName = user?.fullName || user?.firstName || 'Member'
   const displayEmail = user?.primaryEmailAddress?.emailAddress || 'ryan@neumi.com'
 
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const impersonating = (() => { try { return JSON.parse(localStorage.getItem('subs_impersonating') || 'null') } catch { return null } })()
   const isImpersonating = impersonating?.role === 'member'
   const [member, setMember] = useState(null)
@@ -468,6 +468,21 @@ export default function MemberDashboard() {
     if (sessionStorage.getItem('subs_phone_prompt_dismissed') === '1') return
     setShowPhonePopup(true)
   }, [member?.clerk_user_id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (searchParams.get('conversion') !== '1') return
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'conversion', {
+        send_to: 'AW-18267284940',
+        value: 99.0,
+        currency: 'USD',
+      })
+    }
+    // Remove the param so a page refresh doesn't fire it again
+    const next = new URLSearchParams(searchParams)
+    next.delete('conversion')
+    setSearchParams(next, { replace: true })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmitReview = async (job) => {
     if (!reviewForm.rating) return

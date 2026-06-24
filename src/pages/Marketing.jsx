@@ -372,7 +372,7 @@ function Membership() {
           price_id: tier.priceId,
           clerk_user_id: user.id,
           email: user.primaryEmailAddress?.emailAddress,
-          success_url: `${window.location.origin}/dashboard`,
+          success_url: `${window.location.origin}/dashboard?conversion=1`,
           cancel_url: `${window.location.origin}/signup`,
         },
       })
