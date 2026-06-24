@@ -8,14 +8,14 @@ export default function ContractorPaymentSuccess() {
   const { user, isLoaded } = useUser()
   const [searchParams] = useSearchParams()
   const sessionId = searchParams.get('session_id')
-  const [status, setStatus] = useState('loading') // loading | success | error
+  const [status, setStatus] = useState('loading') // loading | success | error | pending
 
   useEffect(() => {
     if (!isLoaded) return
     if (!sessionId) { setStatus('error'); return }
 
-    // email is optional — the edge function will resolve it from the Stripe session
-    // if the contractor isn't signed in yet (common for admin-sent payment links)
+    // Only run once when Clerk finishes loading. email is optional — the edge function
+    // resolves it from the Stripe session for contractors who pay without being signed in.
     const email = user?.primaryEmailAddress?.emailAddress
 
     supabase.functions.invoke('confirm-contractor-subscription', {
@@ -25,10 +25,18 @@ export default function ContractorPaymentSuccess() {
         setStatus('success')
       } else {
         console.error('confirm-contractor-subscription error:', error || data?.error)
-        setStatus('error')
+        // Retry once after a short delay — handles cold-start timeouts
+        setTimeout(() => {
+          supabase.functions.invoke('confirm-contractor-subscription', {
+            body: { session_id: sessionId, ...(email ? { email } : {}) },
+          }).then(({ data: d2 }) => {
+            setStatus(d2?.success ? 'success' : 'pending')
+          }).catch(() => setStatus('pending'))
+        }, 2500)
       }
     })
-  }, [isLoaded, user, sessionId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, sessionId])
 
   if (status === 'loading') {
     return (
@@ -42,16 +50,40 @@ export default function ContractorPaymentSuccess() {
     )
   }
 
-  if (status === 'error') {
+  if (status === 'error' || status === 'pending') {
     return (
-      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div style={{ maxWidth: 420, textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
-          <div style={{ fontFamily: C.display, fontSize: 28, color: S.offwhite, marginBottom: 12 }}>Payment received</div>
-          <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.7, marginBottom: 28 }}>
-            Your payment went through but we had trouble activating your account automatically. Contact us at{' '}
-            <a href="mailto:hello@subs.app" style={{ color: S.green }}>hello@subs.app</a> and we'll get you set up right away.
-          </p>
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px' }}>
+          <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em', textDecoration: 'none' }}>SUBS</Link>
+        </nav>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
+          <div style={{ maxWidth: 420, textAlign: 'center' }}>
+            <div style={{
+              width: 72, height: 72, borderRadius: '50%',
+              background: S.green + '22', border: `2px solid ${S.green}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 28px', fontSize: 32,
+            }}>
+              ✓
+            </div>
+            <div style={{ fontFamily: C.display, fontSize: 36, color: S.offwhite, marginBottom: 12 }}>Payment confirmed.</div>
+            <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.8, marginBottom: 32 }}>
+              Your membership is being activated — it'll be ready in just a moment. Head to your dashboard to get started.
+            </p>
+            <Link
+              to="/contractor/dashboard"
+              style={{
+                display: 'inline-block', background: S.green, color: S.black,
+                fontFamily: C.body, fontSize: 15, fontWeight: 700,
+                padding: '14px 36px', borderRadius: 10, textDecoration: 'none',
+              }}
+            >
+              Go to Dashboard →
+            </Link>
+            <p style={{ fontSize: 12, color: S.muted, marginTop: 20 }}>
+              Questions? <a href="mailto:hello@subs.app" style={{ color: S.green }}>hello@subs.app</a>
+            </p>
+          </div>
         </div>
       </div>
     )

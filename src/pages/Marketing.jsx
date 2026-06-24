@@ -178,15 +178,28 @@ function Nav({ setSection }) {
   )
 }
 
-const HERO_TRADES = [
-  { name: 'HVAC', discount: '15–25% off' },
-  { name: 'Plumbing', discount: '30–40% off' },
+const HERO_EVERYDAY = [
+  { name: 'Lawn Care & Landscaping', discount: '15–25% off' },
+  { name: 'Pest Control', discount: '20–35% off' },
+  { name: 'Window Washing', discount: '15–25% off' },
+  { name: 'House Cleaning', discount: '15–20% off' },
+  { name: 'Gutter Cleaning', discount: '15–25% off' },
+]
+
+const HERO_BIG_TICKET = [
+  { name: 'HVAC Tune-Up & Repair', discount: '15–25% off' },
+  { name: 'Plumbing', discount: '20–30% off' },
   { name: 'Roofing', discount: '10–20% off' },
-  { name: 'Electrical', discount: '20–35% off' },
-  { name: 'Lawn Care', discount: 'contractor rate' },
-  { name: 'Windows & Doors', discount: '38–45% off' },
-  { name: 'Painting', discount: '25–35% off' },
-  { name: 'Landscaping', discount: '20–30% off' },
+  { name: 'Electrical', discount: '15–25% off' },
+  { name: 'Painting & Drywall', discount: '10–20% off' },
+]
+
+const SAVINGS_DATA = [
+  { service: 'Lawn Care', freq: '12×', retail: 85, member: 65, saved: 240 },
+  { service: 'Pest Control', freq: '4×', retail: 120, member: 85, saved: 140 },
+  { service: 'HVAC Tune-Up', freq: '1×', retail: 280, member: 165, saved: 115 },
+  { service: 'Window Washing', freq: '2×', retail: 180, member: 120, saved: 120 },
+  { service: 'Plumbing (1 call)', freq: '1×', retail: 340, member: 190, saved: 150 },
 ]
 
 function Hero() {
@@ -219,7 +232,7 @@ function Hero() {
               Wholesale pricing<br />on every home service.
             </h1>
             <p style={{ fontSize: 16, color: S.muted, margin: 0, lineHeight: 1.65 }}>
-              One membership. Pays for itself the first time you use it.
+              From weekly lawn care to emergency plumbing — one membership covers every home service at wholesale pricing.
             </p>
           </div>
 
@@ -254,22 +267,112 @@ function Hero() {
 
         {/* Right column — covered trades */}
         <div className="hero-trades-card" style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{ padding: '18px 28px', borderBottom: `1px solid ${S.border}`, textAlign: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: S.green, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Covered Trades</span>
+          <div style={{ padding: '14px 24px', borderBottom: `1px solid ${S.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: S.green, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Member Pricing</span>
+            <span style={{ fontSize: 11, color: S.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Typical savings</span>
           </div>
-          {HERO_TRADES.map((trade, i) => (
+
+          {/* Everyday services */}
+          <div style={{ padding: '8px 24px 4px', borderBottom: `1px solid ${S.border}22` }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: S.muted, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Recurring Services</span>
+          </div>
+          {HERO_EVERYDAY.map((trade, i) => (
             <div key={i} style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '13px 28px',
-              borderBottom: i < HERO_TRADES.length - 1 ? `1px solid ${S.border}` : 'none',
+              padding: '10px 24px',
+              background: i % 2 === 1 ? S.surface + '66' : 'transparent',
             }}>
-              <span style={{ fontSize: 14, color: S.offwhite }}>{trade.name}</span>
-              <span style={{ fontSize: 13, color: S.green }}>{trade.discount}</span>
+              <span style={{ fontSize: 13, color: S.offwhite }}>{trade.name}</span>
+              <span style={{ fontSize: 12, color: S.green, fontWeight: 600 }}>{trade.discount}</span>
             </div>
           ))}
-          <div style={{ padding: '14px 28px', borderTop: `1px solid ${S.border}`, textAlign: 'center' }}>
-            <span style={{ fontSize: 12, color: S.muted }}>+ 22 more trades at member rates</span>
+
+          {/* Bigger ticket */}
+          <div style={{ padding: '8px 24px 4px', borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}22` }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: S.muted, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Big Ticket Services</span>
           </div>
+          {HERO_BIG_TICKET.map((trade, i) => (
+            <div key={i} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '10px 24px',
+              background: i % 2 === 1 ? S.surface + '66' : 'transparent',
+            }}>
+              <span style={{ fontSize: 13, color: S.offwhite }}>{trade.name}</span>
+              <span style={{ fontSize: 12, color: S.green, fontWeight: 600 }}>{trade.discount}</span>
+            </div>
+          ))}
+
+          <div style={{ padding: '12px 24px', borderTop: `1px solid ${S.border}`, textAlign: 'center' }}>
+            <span style={{ fontSize: 12, color: S.muted }}>+ 20 more trades at member rates</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function SavingsCalculator() {
+  const total = SAVINGS_DATA.reduce((sum, r) => sum + r.saved, 0)
+  return (
+    <section style={{ background: S.surface, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '80px 20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 12 }}>Member Savings</div>
+          <h2 style={{ fontFamily: C.display, fontSize: 'clamp(28px, 4vw, 48px)', color: S.offwhite, fontWeight: 400, margin: '0 0 16px', lineHeight: 1.1 }}>
+            What SUBS members save<br />in a year
+          </h2>
+          <p style={{ fontSize: 15, color: S.muted, maxWidth: 520, margin: '0 auto', lineHeight: 1.6 }}>
+            Real services. Real usage. Real savings — on a $99 membership.
+          </p>
+        </div>
+
+        <div style={{ overflowX: 'auto', borderRadius: 14, border: `1px solid ${S.border}` }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
+            <thead>
+              <tr style={{ background: S.black, borderBottom: `1px solid ${S.border}` }}>
+                {['Service', 'Times / Year', 'Avg Retail', 'Member Price', 'Annual Savings'].map((col, i) => (
+                  <th key={col} style={{
+                    padding: '14px 20px',
+                    fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+                    color: i === 4 ? S.green : S.muted,
+                    textAlign: i === 0 ? 'left' : 'right',
+                    whiteSpace: 'nowrap',
+                  }}>{col}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SAVINGS_DATA.map((row, i) => (
+                <tr key={row.service} style={{ background: i % 2 === 0 ? S.card : S.surface, borderBottom: `1px solid ${S.border}` }}>
+                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, fontWeight: 500 }}>{row.service}</td>
+                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right' }}>{row.freq}</td>
+                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right', textDecoration: 'line-through' }}>${row.retail}</td>
+                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, textAlign: 'right', fontWeight: 600 }}>${row.member}</td>
+                  <td style={{ padding: '15px 20px', fontSize: 14, color: '#5DFF8A', textAlign: 'right', fontWeight: 700 }}>−${row.saved}</td>
+                </tr>
+              ))}
+              <tr style={{ background: S.black, borderTop: `2px solid ${S.border}` }}>
+                <td colSpan={4} style={{ padding: '18px 20px', fontSize: 15, fontWeight: 700, color: S.offwhite }}>
+                  Total Annual Savings
+                </td>
+                <td style={{ padding: '18px 20px', fontSize: 18, fontWeight: 800, color: '#5DFF8A', textAlign: 'right' }}>
+                  −${total}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{
+          marginTop: 24, background: '#0A1C0E', border: `1px solid ${S.green}44`,
+          borderRadius: 12, padding: '20px 28px', textAlign: 'center',
+        }}>
+          <span style={{ fontSize: 15, color: S.offwhite, fontWeight: 600 }}>
+            Your SUBS membership pays for itself on the very first service call.
+          </span>
+          <span style={{ fontSize: 14, color: S.muted, display: 'block', marginTop: 6 }}>
+            $99/year — less than the tip on most contractor visits.
+          </span>
         </div>
       </div>
     </section>
@@ -805,6 +908,7 @@ export default function Marketing() {
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
       <Nav setSection={scrollTo} />
       <div id="section-home"><Hero /></div>
+      <SavingsCalculator />
       <div id="section-how"><HowItWorks /></div>
       <ContractorQuality />
       <div id="section-membership"><Membership /></div>

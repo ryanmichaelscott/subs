@@ -33,66 +33,60 @@ serve(async (req) => {
       })
     }
 
-    // Resolve email: prefer client-provided (signed-in user), fall back to Stripe session
-    const sessionEmail = session.customer_details?.email
-      || (session.metadata as Record<string, string> | null)?.email
-      || ''
-    const email = clientEmail?.toLowerCase().trim() || sessionEmail?.toLowerCase().trim()
-
-    if (!email) {
-      return new Response(JSON.stringify({ error: 'Could not determine contractor email from session.' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    console.log(`[confirm-contractor-subscription] session ${session_id}, resolving email: client="${clientEmail}" session="${sessionEmail}" using="${email}"`)
-
     const updatePayload = {
       status: 'active',
       stripe_customer_id: session.customer as string | null,
       stripe_subscription_id: session.subscription as string | null,
     }
 
-    // 1) Match by client-provided email
-    let matched = false
-    if (clientEmail?.trim()) {
-      const { error, count } = await supabase
+    // Collect all candidate emails to try
+    const sessionEmail = session.customer_details?.email || (session.metadata as Record<string, string> | null)?.email || ''
+    const candidates = [...new Set(
+      [clientEmail, sessionEmail].filter(Boolean).map(e => e.toLowerCase().trim())
+    )]
+
+    console.log(`[confirm-contractor-subscription] session=${session_id} candidates=${JSON.stringify(candidates)}`)
+
+    // SELECT first, then UPDATE — more reliable than checking update row count
+    let contractor: { id: string } | null = null
+
+    for (const email of candidates) {
+      const { data } = await supabase
         .from('contractors')
-        .update(updatePayload)
-        .eq('contact_email', clientEmail.toLowerCase().trim())
-        .select('id', { count: 'exact', head: true })
-      if (error) throw new Error(`DB update failed: ${error.message}`)
-      if (count && count > 0) matched = true
+        .select('id')
+        .eq('contact_email', email)
+        .maybeSingle()
+      if (data) { contractor = data; console.log(`[confirm-contractor-subscription] matched by email "${email}"`); break }
     }
 
-    // 2) Match by session email (covers contractors who paid without being signed in)
-    if (!matched && sessionEmail) {
-      const { error, count } = await supabase
-        .from('contractors')
-        .update(updatePayload)
-        .eq('contact_email', sessionEmail.toLowerCase().trim())
-        .select('id', { count: 'exact', head: true })
-      if (error) throw new Error(`DB update failed (session email): ${error.message}`)
-      if (count && count > 0) { matched = true; console.log(`[confirm-contractor-subscription] matched by session email "${sessionEmail}"`) }
-    }
-
-    // 3) Match by company name in Stripe metadata
-    if (!matched) {
+    // Fall back: match by company name in Stripe metadata
+    if (!contractor) {
       const companyName = (session.metadata as Record<string, string> | null)?.company_name
       if (companyName) {
-        const { error, count } = await supabase
+        const { data } = await supabase
           .from('contractors')
-          .update(updatePayload)
+          .select('id')
           .ilike('name', companyName.trim())
-          .select('id', { count: 'exact', head: true })
-        if (error) throw new Error(`DB update failed (company name): ${error.message}`)
-        if (count && count > 0) { matched = true; console.log(`[confirm-contractor-subscription] matched by company name "${companyName}"`) }
+          .maybeSingle()
+        if (data) { contractor = data; console.log(`[confirm-contractor-subscription] matched by company name "${companyName}"`) }
       }
     }
 
-    if (!matched) {
-      throw new Error(`No contractor found for email "${email}"${sessionEmail !== email ? ` or session email "${sessionEmail}"` : ''}`)
+    if (!contractor) {
+      console.error(`[confirm-contractor-subscription] no contractor found for candidates=${JSON.stringify(candidates)}`)
+      return new Response(JSON.stringify({ error: `No contractor found. Candidates tried: ${candidates.join(', ')}` }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
+
+    const { error: updateError } = await supabase
+      .from('contractors')
+      .update(updatePayload)
+      .eq('id', contractor.id)
+
+    if (updateError) throw new Error(`DB update failed: ${updateError.message}`)
+
+    console.log(`[confirm-contractor-subscription] activated contractor id=${contractor.id}`)
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
