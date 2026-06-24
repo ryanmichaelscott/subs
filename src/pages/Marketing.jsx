@@ -326,38 +326,31 @@ function SavingsCalculator() {
           </p>
         </div>
 
-        <div style={{ overflowX: 'auto', borderRadius: 14, border: `1px solid ${S.border}` }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
+        <style>{`.calc-retail { display: table-cell } @media (max-width: 600px) { .calc-retail { display: none } }`}</style>
+        <div style={{ borderRadius: 14, border: `1px solid ${S.border}`, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: S.black, borderBottom: `1px solid ${S.border}` }}>
-                {['Service', 'Times / Year', 'Avg Retail', 'Member Price', 'Annual Savings'].map((col, i) => (
-                  <th key={col} style={{
-                    padding: '14px 20px',
-                    fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
-                    color: i === 4 ? S.green : S.muted,
-                    textAlign: i === 0 ? 'left' : 'right',
-                    whiteSpace: 'nowrap',
-                  }}>{col}</th>
-                ))}
+                <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'left' }}>Service</th>
+                <th className="calc-retail" style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Avg Retail</th>
+                <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Member Price</th>
+                <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.green, textAlign: 'right', whiteSpace: 'nowrap' }}>You Save</th>
               </tr>
             </thead>
             <tbody>
               {SAVINGS_DATA.map((row, i) => (
                 <tr key={row.service} style={{ background: i % 2 === 0 ? S.card : S.surface, borderBottom: `1px solid ${S.border}` }}>
                   <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, fontWeight: 500 }}>{row.service}</td>
-                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right' }}>{row.freq}</td>
-                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right', textDecoration: 'line-through' }}>${row.retail}</td>
+                  <td className="calc-retail" style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right', textDecoration: 'line-through' }}>${row.retail}</td>
                   <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, textAlign: 'right', fontWeight: 600 }}>${row.member}</td>
-                  <td style={{ padding: '15px 20px', fontSize: 14, color: '#5DFF8A', textAlign: 'right', fontWeight: 700 }}>−${row.saved}</td>
+                  <td style={{ padding: '15px 20px', fontSize: 14, color: '#5DFF8A', textAlign: 'right', fontWeight: 700 }}>−${row.saved}/yr</td>
                 </tr>
               ))}
               <tr style={{ background: S.black, borderTop: `2px solid ${S.border}` }}>
-                <td colSpan={4} style={{ padding: '18px 20px', fontSize: 15, fontWeight: 700, color: S.offwhite }}>
-                  Total Annual Savings
-                </td>
-                <td style={{ padding: '18px 20px', fontSize: 18, fontWeight: 800, color: '#5DFF8A', textAlign: 'right' }}>
-                  −${total}
-                </td>
+                <td style={{ padding: '18px 20px', fontSize: 15, fontWeight: 700, color: S.offwhite }}>Total Annual Savings</td>
+                <td className="calc-retail" />
+                <td />
+                <td style={{ padding: '18px 20px', fontSize: 18, fontWeight: 800, color: '#5DFF8A', textAlign: 'right' }}>−${total}/yr</td>
               </tr>
             </tbody>
           </table>
