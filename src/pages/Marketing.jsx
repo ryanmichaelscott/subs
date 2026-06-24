@@ -326,12 +326,13 @@ function SavingsCalculator() {
           </p>
         </div>
 
+        <style>{`@media (max-width: 600px) { .hide-mobile { display: none; } }`}</style>
         <div style={{ borderRadius: 14, border: `1px solid ${S.border}`, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: S.black, borderBottom: `1px solid ${S.border}` }}>
                 <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'left' }}>Service</th>
-                <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Avg Retail</th>
+                <th className="hide-mobile" style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Avg Retail</th>
                 <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Avg Discount</th>
                 <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.green, textAlign: 'right', whiteSpace: 'nowrap' }}>Est. Savings</th>
               </tr>
@@ -340,13 +341,14 @@ function SavingsCalculator() {
               {SAVINGS_DATA.map((row, i) => (
                 <tr key={row.service} style={{ background: i % 2 === 0 ? S.card : S.surface, borderBottom: `1px solid ${S.border}` }}>
                   <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, fontWeight: 500 }}>{row.service}</td>
-                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right' }}>${row.retail}</td>
+                  <td className="hide-mobile" style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right' }}>${row.retail}</td>
                   <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, textAlign: 'right', fontWeight: 600 }}>{row.discount}</td>
                   <td style={{ padding: '15px 20px', fontSize: 14, color: '#5DFF8A', textAlign: 'right', fontWeight: 700 }}>{row.estSaved}</td>
                 </tr>
               ))}
               <tr style={{ background: S.black, borderTop: `2px solid ${S.border}` }}>
-                <td colSpan={3} style={{ padding: '18px 20px', fontSize: 15, fontWeight: 700, color: S.offwhite }}>Total Annual Savings</td>
+                <td colSpan={2} style={{ padding: '18px 20px', fontSize: 15, fontWeight: 700, color: S.offwhite }}>Total Annual Savings</td>
+                <td className="hide-mobile" />
                 <td style={{ padding: '18px 20px', fontSize: 18, fontWeight: 800, color: '#5DFF8A', textAlign: 'right' }}>~${total}+/yr</td>
               </tr>
             </tbody>
