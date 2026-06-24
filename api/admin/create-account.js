@@ -185,7 +185,7 @@ export default async function handler(req, res) {
         phone: phone || null,
         trade: trade || null,
         service_area: serviceAreaParts.length ? serviceAreaParts.join(' · ') : null,
-        status: 'pending',
+        status: 'approved',
         submitted_at: new Date().toISOString(),
       })
 
