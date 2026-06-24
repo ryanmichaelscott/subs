@@ -140,7 +140,17 @@ serve(async (req) => {
     const clerkUserId = sub.metadata?.clerk_user_id
     const customerId = sub.customer
     const tier = tierFromSubscription(sub)
-    const status = sub.status === 'active' ? 'Active' : sub.status === 'trialing' ? 'Trial' : 'Churned'
+
+    // Ignore trialing/incomplete — checkout.session.completed already sets Active.
+    // We only act on active (trial→paid conversion) and hard cancellations.
+    const status = sub.status === 'active' ? 'Active'
+      : (sub.status === 'canceled' || sub.status === 'unpaid') ? 'Churned'
+      : null
+
+    if (status === null) {
+      console.log(`[stripe-webhook] subscription.updated: ignoring status="${sub.status}"`)
+      return new Response(JSON.stringify({ received: true }), { status: 200 })
+    }
 
     const filter = clerkUserId
       ? supabase.from('members').update({ tier: tier || 'Member', status }).eq('clerk_user_id', clerkUserId)
