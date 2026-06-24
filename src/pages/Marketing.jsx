@@ -195,11 +195,11 @@ const HERO_BIG_TICKET = [
 ]
 
 const SAVINGS_DATA = [
-  { service: 'Lawn Care', freq: '12×', retail: 85, member: 65, saved: 240 },
-  { service: 'Pest Control', freq: '4×', retail: 120, member: 85, saved: 140 },
-  { service: 'HVAC Tune-Up', freq: '1×', retail: 280, member: 165, saved: 115 },
-  { service: 'Window Washing', freq: '2×', retail: 180, member: 120, saved: 120 },
-  { service: 'Plumbing (1 call)', freq: '1×', retail: 340, member: 190, saved: 150 },
+  { service: 'Lawn Care',        freq: '12×', retail: 85,  member: 65,  saved: 240, discount: '15–25% off', estSaved: '~$200–300/yr' },
+  { service: 'Pest Control',     freq: '4×',  retail: 120, member: 85,  saved: 140, discount: '20–35% off', estSaved: '~$100–180/yr' },
+  { service: 'HVAC Tune-Up',     freq: '1×',  retail: 280, member: 165, saved: 115, discount: '35–45% off', estSaved: '~$90–140/yr'  },
+  { service: 'Window Washing',   freq: '2×',  retail: 180, member: 120, saved: 120, discount: '25–35% off', estSaved: '~$100–150/yr' },
+  { service: 'Plumbing (1 call)',freq: '1×',  retail: 340, member: 190, saved: 150, discount: '35–45% off', estSaved: '~$120–200/yr' },
 ]
 
 function Hero() {
@@ -326,31 +326,50 @@ function SavingsCalculator() {
           </p>
         </div>
 
-        <style>{`.calc-retail { display: table-cell } @media (max-width: 600px) { .calc-retail { display: none } }`}</style>
+        <style>{`
+          .cd { display: table-cell; }
+          .cm { display: none; }
+          @media (max-width: 600px) {
+            .cd { display: none; }
+            .cm { display: table-cell; }
+          }
+        `}</style>
         <div style={{ borderRadius: 14, border: `1px solid ${S.border}`, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: S.black, borderBottom: `1px solid ${S.border}` }}>
+                {/* Always visible */}
                 <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'left' }}>Service</th>
-                <th className="calc-retail" style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Avg Retail</th>
-                <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Member Price</th>
-                <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.green, textAlign: 'right', whiteSpace: 'nowrap' }}>You Save</th>
+                {/* Desktop only */}
+                <th className="cd" style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Times / Year</th>
+                <th className="cd" style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Avg Retail</th>
+                <th className="cd" style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Member Price</th>
+                <th className="cd" style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.green, textAlign: 'right', whiteSpace: 'nowrap' }}>Annual Savings</th>
+                {/* Mobile only */}
+                <th className="cm" style={{ padding: '14px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Member Discount</th>
+                <th className="cm" style={{ padding: '14px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.green, textAlign: 'right', whiteSpace: 'nowrap' }}>Est. Savings</th>
               </tr>
             </thead>
             <tbody>
               {SAVINGS_DATA.map((row, i) => (
                 <tr key={row.service} style={{ background: i % 2 === 0 ? S.card : S.surface, borderBottom: `1px solid ${S.border}` }}>
                   <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, fontWeight: 500 }}>{row.service}</td>
-                  <td className="calc-retail" style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right', textDecoration: 'line-through' }}>${row.retail}</td>
-                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, textAlign: 'right', fontWeight: 600 }}>${row.member}</td>
-                  <td style={{ padding: '15px 20px', fontSize: 14, color: '#5DFF8A', textAlign: 'right', fontWeight: 700 }}>−${row.saved}/yr</td>
+                  {/* Desktop cells */}
+                  <td className="cd" style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right' }}>{row.freq}</td>
+                  <td className="cd" style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right', textDecoration: 'line-through' }}>${row.retail}</td>
+                  <td className="cd" style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, textAlign: 'right', fontWeight: 600 }}>${row.member}</td>
+                  <td className="cd" style={{ padding: '15px 20px', fontSize: 14, color: '#5DFF8A', textAlign: 'right', fontWeight: 700 }}>−${row.saved}/yr</td>
+                  {/* Mobile cells */}
+                  <td className="cm" style={{ padding: '15px 16px', fontSize: 13, color: S.offwhite, textAlign: 'right', fontWeight: 600 }}>{row.discount}</td>
+                  <td className="cm" style={{ padding: '15px 16px', fontSize: 13, color: '#5DFF8A', textAlign: 'right', fontWeight: 700 }}>{row.estSaved}</td>
                 </tr>
               ))}
               <tr style={{ background: S.black, borderTop: `2px solid ${S.border}` }}>
                 <td style={{ padding: '18px 20px', fontSize: 15, fontWeight: 700, color: S.offwhite }}>Total Annual Savings</td>
-                <td className="calc-retail" />
-                <td />
-                <td style={{ padding: '18px 20px', fontSize: 18, fontWeight: 800, color: '#5DFF8A', textAlign: 'right' }}>−${total}/yr</td>
+                <td className="cd" /><td className="cd" /><td className="cd" />
+                <td className="cd" style={{ padding: '18px 20px', fontSize: 18, fontWeight: 800, color: '#5DFF8A', textAlign: 'right' }}>−${total}/yr</td>
+                <td className="cm" />
+                <td className="cm" style={{ padding: '18px 16px', fontSize: 16, fontWeight: 800, color: '#5DFF8A', textAlign: 'right' }}>~$${total}+/yr</td>
               </tr>
             </tbody>
           </table>
