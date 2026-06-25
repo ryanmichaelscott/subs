@@ -133,7 +133,7 @@ export default function CheckoutPage() {
         price_id: tier.priceId,
         clerk_user_id: user.id,
         email: user.primaryEmailAddress?.emailAddress,
-        success_url: `${window.location.origin}/dashboard?conversion=1`,
+        success_url: `${window.location.origin}/dashboard?conversion=1&checkout_session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/checkout`,
       },
     })

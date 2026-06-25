@@ -494,7 +494,7 @@ export default function MemberDashboard() {
     const snoozedUntil = localStorage.getItem(snoozeKey)
     if (snoozedUntil && Date.now() < parseInt(snoozedUntil, 10)) return
     setShowPhonePopup(true)
-  }, [member?.clerk_user_id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [member?.clerk_user_id, member?.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (searchParams.get('conversion') !== '1') return
