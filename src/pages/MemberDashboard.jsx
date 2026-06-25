@@ -662,6 +662,92 @@ export default function MemberDashboard() {
                 </div>
               ))}
             </Card>
+
+            {/* Refer a Friend */}
+            {referralStats && (() => {
+              const { referral_code, converted, referrals } = referralStats
+              const refLink = `https://subs.app/?ref=${referral_code}`
+              const progressMsg = converted >= 3
+                ? '🎉 You\'ve earned a free year — it\'ll be applied at renewal.'
+                : converted === 2
+                ? '1 more paying referral = a free year!'
+                : converted === 1
+                ? `2 more paying referrals = a free year. You've already earned $20 off.`
+                : `Refer 1 friend = $20 off. Refer 3 = a free year.`
+              return (
+                <Card style={{ padding: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite }}>Refer a Friend</div>
+                    {converted > 0 && (
+                      <span style={{ fontSize: 11, fontWeight: 700, background: S.green + '22', color: S.green, padding: '3px 10px', borderRadius: 100 }}>
+                        {converted} paid referral{converted !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: 12, color: S.muted, margin: '0 0 14px', lineHeight: 1.6 }}>{progressMsg}</p>
+
+                  {/* Progress bar */}
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: S.muted, marginBottom: 6 }}>
+                      <span>{converted} of 3 paying referrals</span>
+                      <span>Free year at 3</span>
+                    </div>
+                    <div style={{ height: 6, background: S.border, borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min(100, (converted / 3) * 100)}%`, background: S.green, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                      {[{ n: 1, label: '$20 off' }, { n: 3, label: 'Free year' }].map(({ n, label }) => (
+                        <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
+                          <div style={{ width: 10, height: 10, borderRadius: '50%', background: converted >= n ? S.green : S.border, border: `2px solid ${converted >= n ? S.green : S.muted}`, flexShrink: 0 }} />
+                          <span style={{ color: converted >= n ? S.green : S.muted, fontWeight: converted >= n ? 700 : 400 }}>{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Referral link */}
+                  <div style={{ marginBottom: referrals.length > 0 ? 14 : 0 }}>
+                    <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Your referral link</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        readOnly
+                        value={refLink}
+                        style={{ ...inp, flex: 1, fontSize: 12, color: S.muted, cursor: 'default' }}
+                        onFocus={e => e.target.select()}
+                      />
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(refLink); setRefLinkCopied(true); setTimeout(() => setRefLinkCopied(false), 2000) }}
+                        style={{ background: refLinkCopied ? S.green + '22' : S.surface, border: `1px solid ${refLinkCopied ? S.green : S.border}`, color: refLinkCopied ? S.green : S.offwhite, fontSize: 13, fontWeight: 600, padding: '0 16px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+                      >
+                        {refLinkCopied ? '✓ Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Referral list */}
+                  {referrals.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>People you've referred</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {referrals.map((r, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: S.surface, borderRadius: 8 }}>
+                            <span style={{ fontSize: 13, color: S.offwhite }}>{r.referred_email}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              {r.reward_applied && (
+                                <span style={{ fontSize: 11, color: S.green, fontWeight: 600 }}>{r.reward_applied === 'free_year' ? '🎉 Free year' : '💚 $20 off'}</span>
+                              )}
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: r.status === 'converted' ? S.green + '22' : S.amber + '22', color: r.status === 'converted' ? S.green : S.amber }}>
+                                {r.status === 'converted' ? 'Paid' : 'Signed up'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              )
+            })()}
           </div>
 
           {/* Main */}
@@ -1034,93 +1120,6 @@ export default function MemberDashboard() {
                   </div>
                 )}
 
-                {/* Referral Program */}
-                {referralStats && (() => {
-                  const { referral_code, converted, total, referrals } = referralStats
-                  const refLink = `https://subs.app/?ref=${referral_code}`
-                  const nextMilestone = converted >= 3 ? null : converted >= 1 ? 3 : 1
-                  const reward = converted >= 3 ? 'free year' : converted >= 1 ? '$20 off' : null
-                  const progressMsg = converted >= 3
-                    ? '🎉 You\'ve earned a free year — it\'ll be applied at renewal.'
-                    : converted === 2
-                    ? '1 more paying referral = a free year!'
-                    : converted === 1
-                    ? `2 more paying referrals = a free year. You've already earned $20 off.`
-                    : `Refer 1 friend = $20 off. Refer 3 = a free year.`
-                  return (
-                    <Card style={{ padding: 28 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite }}>Refer a Friend</div>
-                        {converted > 0 && (
-                          <span style={{ fontSize: 11, fontWeight: 700, background: S.green + '22', color: S.green, padding: '3px 10px', borderRadius: 100 }}>
-                            {converted} paid referral{converted !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ fontSize: 13, color: S.muted, margin: '0 0 20px', lineHeight: 1.6 }}>{progressMsg}</p>
-
-                      {/* Progress bar */}
-                      <div style={{ marginBottom: 20 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: S.muted, marginBottom: 6 }}>
-                          <span>{converted} of 3 paying referrals</span>
-                          <span>Free year at 3</span>
-                        </div>
-                        <div style={{ height: 6, background: S.border, borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${Math.min(100, (converted / 3) * 100)}%`, background: S.green, borderRadius: 3, transition: 'width 0.4s ease' }} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                          {[{ n: 1, label: '$20 off' }, { n: 3, label: 'Free year' }].map(({ n, label }) => (
-                            <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-                              <div style={{ width: 10, height: 10, borderRadius: '50%', background: converted >= n ? S.green : S.border, border: `2px solid ${converted >= n ? S.green : S.muted}`, flexShrink: 0 }} />
-                              <span style={{ color: converted >= n ? S.green : S.muted, fontWeight: converted >= n ? 700 : 400 }}>{label}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Referral link */}
-                      <div style={{ marginBottom: 20 }}>
-                        <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Your referral link</label>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input
-                            readOnly
-                            value={refLink}
-                            style={{ ...inp, flex: 1, fontSize: 12, color: S.muted, cursor: 'default' }}
-                            onFocus={e => e.target.select()}
-                          />
-                          <button
-                            onClick={() => { navigator.clipboard.writeText(refLink); setRefLinkCopied(true); setTimeout(() => setRefLinkCopied(false), 2000) }}
-                            style={{ background: refLinkCopied ? S.green + '22' : S.surface, border: `1px solid ${refLinkCopied ? S.green : S.border}`, color: refLinkCopied ? S.green : S.offwhite, fontSize: 13, fontWeight: 600, padding: '0 16px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
-                          >
-                            {refLinkCopied ? '✓ Copied' : 'Copy'}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Referral list */}
-                      {referrals.length > 0 && (
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>People you've referred</div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            {referrals.map((r, i) => (
-                              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: S.surface, borderRadius: 8 }}>
-                                <span style={{ fontSize: 13, color: S.offwhite }}>{r.referred_email}</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  {r.reward_applied && (
-                                    <span style={{ fontSize: 11, color: S.green, fontWeight: 600 }}>{r.reward_applied === 'free_year' ? '🎉 Free year' : '💚 $20 off'}</span>
-                                  )}
-                                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 100, background: r.status === 'converted' ? S.green + '22' : S.amber + '22', color: r.status === 'converted' ? S.green : S.amber }}>
-                                    {r.status === 'converted' ? 'Paid' : 'Signed up'}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </Card>
-                  )
-                })()}
 
                 {/* Contact info */}
                 <Card style={{ padding: 28 }}>
