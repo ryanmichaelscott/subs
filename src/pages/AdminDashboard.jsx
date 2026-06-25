@@ -63,6 +63,7 @@ export default function AdminDashboard() {
   const [staffFormError, setStaffFormError] = useState(null)
   const [staffFormLoading, setStaffFormLoading] = useState(false)
   const [changingStaffRole, setChangingStaffRole] = useState(null)
+  const [resendingInvite, setResendingInvite] = useState(null)
   const [backfillLoading, setBackfillLoading] = useState(false)
   const [backfillResult, setBackfillResult] = useState(null)
   const [dismissedPriceIds, setDismissedPriceIds] = useState(() => {
@@ -1142,6 +1143,19 @@ export default function AdminDashboard() {
             if (res.ok) setStaffMembers(prev => prev.filter(s => s.id !== id))
           }
 
+          const handleResendInvite = async (id) => {
+            setResendingInvite(id)
+            try {
+              await fetch('/api/admin/staff', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id }),
+              })
+            } finally {
+              setResendingInvite(null)
+            }
+          }
+
           return (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
@@ -1221,6 +1235,15 @@ export default function AdminDashboard() {
                           <option value="staff">Staff</option>
                           <option value="admin">Admin</option>
                         </select>
+                        {s.status === 'invited' && (
+                          <button
+                            onClick={() => handleResendInvite(s.id)}
+                            disabled={resendingInvite === s.id}
+                            style={{ background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 12, padding: '5px 10px', borderRadius: 6, cursor: resendingInvite === s.id ? 'not-allowed' : 'pointer', opacity: resendingInvite === s.id ? 0.6 : 1 }}
+                          >
+                            {resendingInvite === s.id ? 'Sending…' : 'Resend Invite'}
+                          </button>
+                        )}
                         <button onClick={() => handleRemoveStaff(s.id)}
                           style={{ background: S.danger + '22', border: `1px solid ${S.danger}44`, color: S.danger, fontSize: 12, padding: '5px 10px', borderRadius: 6, cursor: 'pointer' }}>
                           Remove
