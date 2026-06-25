@@ -103,7 +103,6 @@ export default function CheckoutPage() {
   }, [isLoaded, isSignedIn])
 
   const [agreed, setAgreed] = useState(false)
-  const [smsConsent, setSmsConsent] = useState(false)
 
   const handleSelect = async (tier) => {
     if (loadingId) return
@@ -113,10 +112,6 @@ export default function CheckoutPage() {
     }
     if (!agreed) {
       setError('Please agree to the Member Agreement and Terms of Service to continue.')
-      return
-    }
-    if (!smsConsent) {
-      setError('Please consent to SMS communications to continue.')
       return
     }
     setError(null)
@@ -226,19 +221,6 @@ export default function CheckoutPage() {
             />
           </div>
         </div>
-
-        {/* SMS consent checkbox */}
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', maxWidth: 400, width: '100%', marginBottom: 16 }}>
-          <input
-            type="checkbox"
-            checked={smsConsent}
-            onChange={e => setSmsConsent(e.target.checked)}
-            style={{ marginTop: 3, width: 16, height: 16, accentColor: S.green, flexShrink: 0, cursor: 'pointer' }}
-          />
-          <span style={{ fontSize: 11, color: S.muted, lineHeight: 1.65 }}>
-            By providing your phone number and checking this box, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, contractor updates, and promotional offers. Message and data rates may apply. Message frequency varies. Reply STOP to opt out at any time. Reply HELP for help. View our <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: S.green, textDecoration: 'none' }}>Privacy Policy</a> at subs.app/privacy and <a href="/sms-consent" target="_blank" rel="noreferrer" style={{ color: S.green, textDecoration: 'none' }}>SMS Consent Policy</a> at subs.app/sms-consent.
-          </span>
-        </label>
 
         {/* Agreement checkbox */}
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', maxWidth: 400, width: '100%', marginBottom: 24 }}>
