@@ -237,16 +237,6 @@ export default function MemberDashboard() {
         setProfileSmsConsent(!!memberRow.sms_consent)
       }
 
-      // Send welcome email for brand-new members
-      if (upsertData?.created) {
-        const createdAt = user.createdAt ? new Date(user.createdAt).getTime() : 0
-        if (Date.now() - createdAt < 5 * 60 * 1000) {
-          supabase.functions.invoke('send-welcome-email', {
-            body: { email, name: user.firstName || name || 'there' },
-          })
-        }
-      }
-
       // Handle pending plan (pre-login checkout flow via localStorage)
       const pendingPlan = localStorage.getItem('subs_pending_plan') || searchParams.get('plan')
       const priceId = pendingPlan ? PLAN_PRICE_IDS[pendingPlan] : null
@@ -303,7 +293,7 @@ export default function MemberDashboard() {
 
       // Subscription gate: redirect to /checkout if no active Stripe subscription
       if (!memberRow?.stripe_subscription_id) {
-        navigate('/checkout')
+        navigate('/checkout?unpaid=1')
         return
       }
 

@@ -28,7 +28,7 @@ async function sendSms(to: string, body: string) {
       'Authorization': 'Basic ' + btoa(`${sid}:${token}`),
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({ From: from, To: toFormatted, Body: body, StatusCallback: 'https://getsubs.co/api/twilio/status' }).toString(),
+    body: new URLSearchParams({ From: from, To: toFormatted, Body: body, StatusCallback: 'https://subs.app/api/twilio/status' }).toString(),
   })
   if (!res.ok) {
     const err = await res.text()
@@ -84,7 +84,7 @@ const leadEmail = (contractorName: string, lead: {
         </tr>
       </table>
     </div>
-    <a href="https://getsubs.co/contractor/dashboard" style="display: inline-block; background: #5DFF8A; color: #0C0F0A; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 10px; text-decoration: none;">
+    <a href="https://subs.app/contractor/dashboard" style="display: inline-block; background: #5DFF8A; color: #0C0F0A; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 10px; text-decoration: none;">
       View lead in portal →
     </a>
     <p style="font-size: 13px; color: #999; margin-top: 32px; line-height: 1.5;">
@@ -188,7 +188,7 @@ serve(async (req) => {
   if (contractorPhone) {
     await sendSms(
       contractorPhone,
-      `SUBS: New lead — ${lead.service} in ${lead.address}. Member rate: ${lead.rate}. Log in to accept: https://getsubs.co/contractor/dashboard\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app\n\nReply STOP to opt out.`,
+      `SUBS: New lead — ${lead.service} in ${lead.address}. Member rate: ${lead.rate}. Log in to accept: https://subs.app/contractor/dashboard\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app\n\nReply STOP to opt out.`,
     )
   }
 

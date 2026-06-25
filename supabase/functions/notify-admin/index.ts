@@ -79,7 +79,7 @@ function memberEmailHtml(name: string, email: string, tier: string): string {
 
         <!-- CTA -->
         <tr><td style="padding:0 32px 28px;">
-          <a href="https://getsubs.co/admin/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:12px 24px;border-radius:8px;text-decoration:none;">View Admin Dashboard →</a>
+          <a href="https://subs.app/admin/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:12px 24px;border-radius:8px;text-decoration:none;">View Admin Dashboard →</a>
         </td></tr>
 
         <!-- Footer -->
@@ -146,7 +146,7 @@ function contractorEmailHtml(companyName: string, contactName: string, email: st
 
         <!-- CTA -->
         <tr><td style="padding:0 32px 28px;">
-          <a href="https://getsubs.co/admin/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:12px 24px;border-radius:8px;text-decoration:none;">Review Application →</a>
+          <a href="https://subs.app/admin/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:12px 24px;border-radius:8px;text-decoration:none;">Review Application →</a>
         </td></tr>
 
         <!-- Footer -->

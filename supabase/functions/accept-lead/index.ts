@@ -23,7 +23,7 @@ async function sendSms(to: string, body: string) {
       'Authorization': `Basic ${btoa(`${sid}:${auth}`)}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({ From: from, To: toFormatted, Body: body, StatusCallback: 'https://getsubs.co/api/twilio/status' }).toString(),
+    body: new URLSearchParams({ From: from, To: toFormatted, Body: body, StatusCallback: 'https://subs.app/api/twilio/status' }).toString(),
   })
   if (!res.ok) {
     const err = await res.text()
@@ -102,7 +102,7 @@ serve(async (req) => {
     }
 
     const resendKey = Deno.env.get('RESEND_API_KEY')
-    const appUrl = Deno.env.get('APP_URL') || 'https://getsubs.co'
+    const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
     const contractorName = contractor?.name || contractor?.contact_name || 'Your SUBS contractor'
     const contractorPhone = contractor?.phone || ''
     const contractorEmail = contractor?.contact_email || ''

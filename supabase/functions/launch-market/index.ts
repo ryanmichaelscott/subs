@@ -54,7 +54,7 @@ serve(async (req) => {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            from: 'SUBS <noreply@getsubs.co>',
+            from: 'SUBS <noreply@subs.app>',
             to: entry.email,
             subject: `SUBS is now live in ${stateName}`,
             html: `
@@ -67,7 +67,7 @@ serve(async (req) => {
                 <p style="color:#8A9088;line-height:1.7;margin-bottom:28px;">
                   Vetted, licensed, insured contractors. Contractor-rate pricing on every home service. One membership pays for itself the first job you book.
                 </p>
-                <a href="https://getsubs.co/login" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;margin-bottom:28px;">
+                <a href="https://subs.app/login" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:15px;padding:14px 28px;border-radius:10px;text-decoration:none;margin-bottom:28px;">
                   Sign up now →
                 </a>
                 <p style="font-size:13px;color:#8A9088;">— The SUBS Team</p>

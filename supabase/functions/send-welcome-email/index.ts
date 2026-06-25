@@ -27,7 +27,7 @@ const welcomeEmail = (name: string) => `
     <p style="font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 28px;">
       To book a service, log into your member dashboard and request a job — we'll match you with a vetted contractor in your area at your member rate.
     </p>
-    <a href="https://getsubs.co/dashboard" style="display: inline-block; background: #5DFF8A; color: #0C0F0A; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 10px; text-decoration: none;">
+    <a href="https://subs.app/dashboard" style="display: inline-block; background: #5DFF8A; color: #0C0F0A; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 10px; text-decoration: none;">
       Go to my dashboard →
     </a>
     <p style="font-size: 13px; color: #999; margin-top: 40px;">

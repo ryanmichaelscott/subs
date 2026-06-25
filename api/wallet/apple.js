@@ -134,7 +134,7 @@ function emailHtml(name, tier, memberId, expiryStr, googleWalletUrl = null) {
     <a href="${googleWalletUrl}" style="display:inline-block;background:#4285F4;color:#ffffff;font-size:14px;font-weight:600;padding:13px 24px;border-radius:8px;text-decoration:none;">Add to Google Wallet &#x2192;</a>
   </td></tr>` : ''}
   <tr><td style="padding:0 32px 28px;">
-    <a href="https://getsubs.co/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:13px 24px;border-radius:8px;text-decoration:none;">Go to my dashboard &#x2192;</a>
+    <a href="https://subs.app/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:13px 24px;border-radius:8px;text-decoration:none;">Go to my dashboard &#x2192;</a>
   </td></tr>
   <tr><td style="padding:20px 32px;border-top:1px solid #252A23;">
     <p style="margin:0;font-size:12px;color:#8A9088;">Questions? Call or text <a href="tel:18884543019" style="color:#8A9088;">1-888-454-3019</a> or email <a href="mailto:support@subs.app" style="color:#8A9088;">support@subs.app</a></p>

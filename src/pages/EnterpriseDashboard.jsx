@@ -718,13 +718,13 @@ export default function EnterpriseDashboard() {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
                     readOnly
-                    value={`https://getsubs.co/property-managers?ref=${member.id}`}
+                    value={`https://subs.app/property-managers?ref=${member.id}`}
                     style={{ ...inp, flex: 1, fontSize: 12, color: S.muted, cursor: 'default' }}
                     onFocus={e => e.target.select()}
                   />
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`https://getsubs.co/property-managers?ref=${member.id}`)
+                      navigator.clipboard.writeText(`https://subs.app/property-managers?ref=${member.id}`)
                       setRefLinkCopied(true)
                       setTimeout(() => setRefLinkCopied(false), 2500)
                     }}

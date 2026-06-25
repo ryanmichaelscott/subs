@@ -16,7 +16,7 @@ const ENTERPRISE_PRICE_IDS = {
 
 const BASE_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : 'https://getsubs.co'
+  : 'https://subs.app'
 
 async function findOrCreateClerkUser({ email, firstName, lastName, role }) {
   const clerkKey = process.env.CLERK_SECRET_KEY
@@ -380,7 +380,7 @@ export default async function handler(req, res) {
         html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0C0F0A;color:#F0EEE8;padding:32px;border-radius:12px">
           <div style="font-size:22px;font-weight:800;color:#5DFF8A;margin-bottom:4px">SUBS</div>
           <h2 style="font-size:20px;margin:16px 0 8px">Hi ${full_name.split(' ')[0]}, welcome to SUBS Enterprise.</h2>
-          <p style="color:#8A9088;font-size:14px;line-height:1.6">Your enterprise account is active. Sign in at getsubs.co to get started.</p>
+          <p style="color:#8A9088;font-size:14px;line-height:1.6">Your enterprise account is active. Sign in at subs.app to get started.</p>
           <a href="${BASE_URL}/login" style="display:inline-block;margin-top:20px;background:#5DFF8A;color:#0C0F0A;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none">Sign In →</a>
         </div>`,
       })

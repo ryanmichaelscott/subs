@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
@@ -74,6 +74,8 @@ export default function CheckoutPage() {
   const { user, isLoaded, isSignedIn } = useUser()
   const { signOut } = useClerk()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const showUnpaidBanner = searchParams.get('unpaid') === '1'
   const [checking, setChecking] = useState(true)
   const [loadingId, setLoadingId] = useState(null)
   const [error, setError] = useState(null)
@@ -178,6 +180,12 @@ export default function CheckoutPage() {
       </nav>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
+        {showUnpaidBanner && (
+          <div style={{ background: '#1A2410', border: `1px solid ${S.green}`, borderRadius: 10, padding: '12px 20px', marginBottom: 28, maxWidth: 480, width: '100%', textAlign: 'center' }}>
+            <span style={{ fontSize: 14, color: S.green, fontWeight: 600 }}>Complete your membership to access your dashboard.</span>
+          </div>
+        )}
+
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{ fontFamily: C.display, fontSize: 38, color: S.offwhite, marginBottom: 12 }}>Choose your plan.</div>
           <p style={{ fontSize: 15, color: S.muted, margin: 0 }}>

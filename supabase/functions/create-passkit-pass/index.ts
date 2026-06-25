@@ -10,7 +10,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json()
-    const vercelUrl = Deno.env.get('VERCEL_APP_URL') || 'https://getsubs.co'
+    const vercelUrl = Deno.env.get('VERCEL_APP_URL') || 'https://subs.app'
 
     // Generate Google Wallet pass first so the email can include both buttons
     let googleWalletUrl: string | null = null

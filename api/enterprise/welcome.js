@@ -39,7 +39,7 @@ export default async function handler(req, res) {
           </div>
         </td></tr>
         <tr><td style="padding:0 32px 28px;">
-          <a href="https://getsubs.co/enterprise/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:13px 24px;border-radius:8px;text-decoration:none;">Go to my dashboard →</a>
+          <a href="https://subs.app/enterprise/dashboard" style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:14px;font-weight:700;padding:13px 24px;border-radius:8px;text-decoration:none;">Go to my dashboard →</a>
         </td></tr>
         <tr><td style="padding:20px 32px;border-top:1px solid #252A23;">
           <p style="margin:0;font-size:12px;color:#8A9088;">Questions? Call or text <a href="tel:18884543019" style="color:#8A9088;">1-888-454-3019</a> or reply to this email</p>

@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' })
     const session = await stripe.billingPortal.sessions.create({
       customer: member.stripe_customer_id,
-      return_url: 'https://getsubs.co/enterprise/dashboard',
+      return_url: 'https://subs.app/enterprise/dashboard',
     })
 
     return res.status(200).json({ url: session.url })

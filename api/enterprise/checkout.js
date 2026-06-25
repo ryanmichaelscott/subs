@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
-      : 'https://getsubs.co'
+      : 'https://subs.app'
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',

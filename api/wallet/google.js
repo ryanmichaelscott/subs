@@ -12,7 +12,7 @@ function makeGoogleWalletUrl({ serviceAccount, issuerId, classId, memberId, name
     genericType: 'GENERIC_TYPE_UNSPECIFIED',
     hexBackgroundColor: '#0C0F0A',
     logo: {
-      sourceUri: { uri: 'https://getsubs.co/subs_logo.png' },
+      sourceUri: { uri: 'https://subs.app/subs_logo.png' },
       contentDescription: { defaultValue: { language: 'en-US', value: 'SUBS' } },
     },
     cardTitle: { defaultValue: { language: 'en-US', value: 'SUBS' } },
@@ -35,7 +35,7 @@ function makeGoogleWalletUrl({ serviceAccount, issuerId, classId, memberId, name
       genericClasses: [{ id: `${issuerId}.${classId}` }],
       genericObjects: [passObject],
     },
-    origins: ['https://getsubs.co'],
+    origins: ['https://subs.app'],
   }
 
   const header  = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url')

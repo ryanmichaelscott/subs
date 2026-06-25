@@ -38,7 +38,7 @@ serve(async (req) => {
       })
     }
 
-    if (contractor.status !== 'approved') {
+    if (!['approved', 'docs_signed'].includes(contractor.status)) {
       return new Response(JSON.stringify({ error: 'Your application must be approved before subscribing.' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })

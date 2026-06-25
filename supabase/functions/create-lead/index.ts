@@ -20,7 +20,7 @@ async function sendSms(to: string, body: string) {
       'Authorization': `Basic ${btoa(`${sid}:${auth}`)}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({ From: from, To: toFormatted, Body: body, StatusCallback: 'https://getsubs.co/api/twilio/status' }).toString(),
+    body: new URLSearchParams({ From: from, To: toFormatted, Body: body, StatusCallback: 'https://subs.app/api/twilio/status' }).toString(),
   })
 }
 
@@ -109,7 +109,7 @@ serve(async (req) => {
 
     // Email each contractor
     const resendKey = Deno.env.get('RESEND_API_KEY')
-    const appUrl = Deno.env.get('APP_URL') || 'https://getsubs.co'
+    const appUrl = Deno.env.get('APP_URL') || 'https://subs.app'
 
     if (resendKey) {
       const preferredDateStr = preferred_date
@@ -180,7 +180,7 @@ serve(async (req) => {
     // SMS each matched contractor
     await Promise.all(matched.map(c => {
       if (!c.phone) return Promise.resolve()
-      const msg = `New SUBS lead: ${trade} · Zip ${zip}${state ? `, ${state}` : ''}. Log in to accept: https://getsubs.co/contractor/dashboard\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app\n\nReply STOP to opt out.`
+      const msg = `New SUBS lead: ${trade} · Zip ${zip}${state ? `, ${state}` : ''}. Log in to accept: https://subs.app/contractor/dashboard\n\nQuestions? Call or text 1-888-454-3019 or visit subs.app\n\nReply STOP to opt out.`
       return sendSms(c.phone, msg)
     }))
 
