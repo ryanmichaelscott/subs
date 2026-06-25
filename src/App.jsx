@@ -78,6 +78,7 @@ export default function App() {
             <ProtectedRoute role="contractor"><ContractorDashboard /></ProtectedRoute>
           </DashboardErrorBoundary>
         } />
+        <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={
           <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>

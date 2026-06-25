@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           email_address: email,
           public_metadata: { role },
-          redirect_url: `${appUrl}/admin/dashboard`,
+          redirect_url: `${appUrl}/admin/login`,
         }),
       })
       const inviteData = await inviteRes.json()
@@ -117,7 +117,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         email_address: member.email,
         public_metadata: { role: member.role },
-        redirect_url: `${appUrl}/admin/dashboard`,
+        redirect_url: `${appUrl}/admin/login`,
       }),
     })
     const inviteData = await inviteRes.json()
