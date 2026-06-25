@@ -16,10 +16,10 @@ function formatPhone(phone: string): string | null {
 async function sendSms(to: string, body: string) {
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID')
   const token = Deno.env.get('TWILIO_AUTH_TOKEN')
-  const from = Deno.env.get('TWILIO_PHONE_NUMBER')
+  const messagingServiceSid = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID')
   const toFormatted = formatPhone(to)
-  if (!sid || !token || !from || !toFormatted) {
-    console.log('SMS skipped — missing config or invalid phone:', { sid: !!sid, token: !!token, from: !!from, toFormatted })
+  if (!sid || !token || !messagingServiceSid || !toFormatted) {
+    console.log('SMS skipped — missing config or invalid phone:', { sid: !!sid, token: !!token, messagingServiceSid: !!messagingServiceSid, toFormatted })
     return
   }
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
@@ -28,7 +28,7 @@ async function sendSms(to: string, body: string) {
       'Authorization': 'Basic ' + btoa(`${sid}:${token}`),
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({ From: from, To: toFormatted, Body: body, StatusCallback: 'https://subs.app/api/twilio/status' }).toString(),
+    body: new URLSearchParams({ MessagingServiceSid: messagingServiceSid, To: toFormatted, Body: body, StatusCallback: 'https://subs.app/api/twilio/status' }).toString(),
   })
   if (!res.ok) {
     const err = await res.text()

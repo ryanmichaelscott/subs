@@ -15,16 +15,16 @@ function formatPhone(phone: string): string | null {
 async function sendSms(to: string, body: string) {
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID')
   const auth = Deno.env.get('TWILIO_AUTH_TOKEN')
-  const from = Deno.env.get('TWILIO_PHONE_NUMBER')
+  const messagingServiceSid = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID')
   const toFormatted = formatPhone(to)
-  if (!sid || !auth || !from || !toFormatted) return
+  if (!sid || !auth || !messagingServiceSid || !toFormatted) return
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${btoa(`${sid}:${auth}`)}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({ From: from, To: toFormatted, Body: body }).toString(),
+    body: new URLSearchParams({ MessagingServiceSid: messagingServiceSid, To: toFormatted, Body: body }).toString(),
   })
   if (!res.ok) console.error('Twilio error:', res.status, await res.text())
 }
