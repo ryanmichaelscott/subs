@@ -174,6 +174,7 @@ export default function MemberDashboard() {
   const [profileForm, setProfileForm] = useState({ name: '', phone: '', zip: '' })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+  const [profileSmsConsent, setProfileSmsConsent] = useState(false)
   const [walletLoading, setWalletLoading] = useState(false)
   const [googleWalletLoading, setGoogleWalletLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
@@ -186,8 +187,8 @@ export default function MemberDashboard() {
   const [showPhonePopup, setShowPhonePopup] = useState(false)
   const [popupPhone, setPopupPhone] = useState('')
   const [popupConsent, setPopupConsent] = useState(false)
-  const [popupDontShow, setPopupDontShow] = useState(false)
   const [popupSaving, setPopupSaving] = useState(false)
+  const [phoneModalToast, setPhoneModalToast] = useState(null)
   const [filtered, setFiltered] = useState([])
   const [contractorPage, setContractorPage] = useState(0)
 
@@ -233,6 +234,7 @@ export default function MemberDashboard() {
           phone: memberRow.phone || '',
           zip: memberRow.zip || '',
         })
+        setProfileSmsConsent(!!memberRow.sms_consent)
       }
 
       // Send welcome email for brand-new members
@@ -336,28 +338,52 @@ export default function MemberDashboard() {
     })
     setMember(m => ({ ...m, phone: popupPhone.trim(), sms_consent: true }))
     setProfileForm(f => ({ ...f, phone: popupPhone.trim() }))
+    setProfileSmsConsent(true)
     setPopupSaving(false)
     setShowPhonePopup(false)
   }
 
+  const handlePhoneModalSnooze = () => {
+    const snoozeKey = `subs_phone_snooze_${member?.clerk_user_id}`
+    localStorage.setItem(snoozeKey, String(Date.now() + 48 * 60 * 60 * 1000))
+    setShowPhonePopup(false)
+  }
+
+  const handlePhoneModalDismiss = async () => {
+    setShowPhonePopup(false)
+    setPhoneModalToast("Got it — you'll only receive email updates. You can add your phone number anytime in Account Settings.")
+    setTimeout(() => setPhoneModalToast(null), 6000)
+    await supabase.functions.invoke('upsert-member', {
+      body: { clerk_user_id: isImpersonating ? (member?.clerk_user_id || '') : user?.id, phone_popup_dismissed: true },
+    })
+    setMember(m => ({ ...m, phone_popup_dismissed: true }))
+  }
+
   const handleSaveProfile = async () => {
+    if (profileForm.phone && !profileSmsConsent && !member?.sms_consent) {
+      setAccountError('Please check the SMS consent box to add your phone number.')
+      return
+    }
     setProfileSaving(true)
     setAccountError(null)
     setProfileSaved(false)
     const targetClerkId = isImpersonating ? member?.clerk_user_id : user.id
     const targetEmail = isImpersonating ? impersonating.email : (user.primaryEmailAddress?.emailAddress || '')
-    const { data, error } = await supabase.functions.invoke('upsert-member', {
-      body: {
-        clerk_user_id: targetClerkId,
-        email: targetEmail,
-        name: profileForm.name,
-        phone: profileForm.phone,
-        zip: profileForm.zip,
-      },
-    })
+    const body = {
+      clerk_user_id: targetClerkId,
+      email: targetEmail,
+      name: profileForm.name,
+      phone: profileForm.phone,
+      zip: profileForm.zip,
+    }
+    if (profileForm.phone && profileSmsConsent) {
+      body.sms_consent = true
+      body.sms_consent_at = new Date().toISOString()
+    }
+    const { data, error } = await supabase.functions.invoke('upsert-member', { body })
     setProfileSaving(false)
     if (error || !data?.member) { setAccountError('Failed to save. Please try again.'); return }
-    setMember(m => ({ ...m, name: profileForm.name, phone: profileForm.phone, zip: profileForm.zip }))
+    setMember(m => ({ ...m, name: profileForm.name, phone: profileForm.phone, zip: profileForm.zip, sms_consent: body.sms_consent ?? m.sms_consent }))
     setProfileSaved(true)
     setTimeout(() => setProfileSaved(false), 3000)
   }
@@ -469,11 +495,14 @@ export default function MemberDashboard() {
     return () => { cancelled = true }
   }, [contractors, tradeFilter, zipFilter])
 
-  // Show phone popup once when member loads without a phone number
+  // Show phone modal on first login after purchase (Active status, no phone on file)
   useEffect(() => {
     if (!member?.clerk_user_id) return
     if (member.phone || member.phone_popup_dismissed) return
-    if (sessionStorage.getItem('subs_phone_prompt_dismissed') === '1') return
+    if (member.status !== 'Active') return
+    const snoozeKey = `subs_phone_snooze_${member.clerk_user_id}`
+    const snoozedUntil = localStorage.getItem(snoozeKey)
+    if (snoozedUntil && Date.now() < parseInt(snoozedUntil, 10)) return
     setShowPhonePopup(true)
   }, [member?.clerk_user_id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1137,9 +1166,26 @@ export default function MemberDashboard() {
                     </div>
                     <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Phone</label>
+                        <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Phone number</label>
                         <input value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} placeholder="(801) 555-0100" style={inp} />
-                        <div style={{ fontSize: 11, color: S.muted, marginTop: 5, lineHeight: 1.65 }}>By providing your phone number and checking this box, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, contractor updates, and promotional offers. Message and data rates may apply. Message frequency varies. Reply STOP to opt out at any time. Reply HELP for help. View our <Link to="/privacy" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>Privacy Policy</Link> at subs.app/privacy and <Link to="/sms-consent" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>SMS Consent Policy</Link> at subs.app/sms-consent.</div>
+                        {member?.sms_consent
+                          ? <div style={{ fontSize: 11, color: S.green, marginTop: 5 }}>✓ SMS consent on file</div>
+                          : profileForm.phone
+                            ? (
+                              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 10, cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={profileSmsConsent}
+                                  onChange={e => setProfileSmsConsent(e.target.checked)}
+                                  style={{ marginTop: 2, accentColor: S.green, width: 14, height: 14, flexShrink: 0, cursor: 'pointer' }}
+                                />
+                                <span style={{ fontSize: 11, color: S.muted, lineHeight: 1.65 }}>
+                                  By providing your phone number, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, contractor assignments, and account alerts. Message and data rates may apply. Reply STOP to opt out at any time.
+                                </span>
+                              </label>
+                            )
+                            : null
+                        }
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: 12, color: S.muted, marginBottom: 6, fontWeight: 500 }}>Zip code</label>
@@ -1239,29 +1285,12 @@ export default function MemberDashboard() {
       {showPhonePopup && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300, padding: 20 }}>
           <div style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 18, padding: '32px 28px', maxWidth: 460, width: '100%' }}>
-            {/* Headline */}
-            <h2 style={{ fontFamily: C.display, fontSize: 32, fontWeight: 400, color: S.offwhite, margin: '0 0 10px', lineHeight: 1.1 }}>
-              Stay in the loop.
+            <h2 style={{ fontFamily: C.display, fontSize: 28, fontWeight: 400, color: S.offwhite, margin: '0 0 10px', lineHeight: 1.15 }}>
+              Get notified when your contractor is assigned
             </h2>
-            <p style={{ fontSize: 14, color: S.muted, margin: '0 0 22px', lineHeight: 1.6 }}>
-              Add your phone number to receive real-time updates on your service requests.
+            <p style={{ fontSize: 14, color: S.muted, margin: '0 0 24px', lineHeight: 1.6 }}>
+              Add your phone number to receive real-time job updates, contractor assignments, and membership alerts via text.
             </p>
-
-            {/* Why we collect it */}
-            <div style={{ background: S.surface, borderRadius: 12, padding: '14px 16px', marginBottom: 22 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>We use your number exclusively for:</div>
-              {[
-                'Booking confirmations when a contractor is assigned',
-                'Service reminders and scheduling updates',
-                'Support from our concierge team at 1-888-454-3019',
-                'Status updates when your job is accepted or completed',
-              ].map((item, i, arr) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: i < arr.length - 1 ? 7 : 0 }}>
-                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: S.green, flexShrink: 0, marginTop: 6 }} />
-                  <span style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.5 }}>{item}</span>
-                </div>
-              ))}
-            </div>
 
             {/* Phone input */}
             <input
@@ -1270,61 +1299,54 @@ export default function MemberDashboard() {
               value={popupPhone}
               onChange={e => setPopupPhone(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handlePhonePopupSave()}
-              style={{ width: '100%', boxSizing: 'border-box', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, padding: '13px 16px', color: S.offwhite, fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 10 }}
+              style={{ width: '100%', boxSizing: 'border-box', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, padding: '13px 16px', color: S.offwhite, fontSize: 15, outline: 'none', fontFamily: 'inherit', marginBottom: 14 }}
             />
 
             {/* SMS consent checkbox */}
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 20, cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 24, cursor: 'pointer', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, padding: '14px 16px' }}>
               <input
                 type="checkbox"
                 checked={popupConsent}
                 onChange={e => setPopupConsent(e.target.checked)}
-                style={{ marginTop: 3, accentColor: S.green, width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
+                style={{ marginTop: 2, accentColor: S.green, width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
               />
-              <span style={{ fontSize: 12, color: S.offwhite, lineHeight: 1.65 }}>
-                By providing your phone number, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, and account alerts. Reply STOP to opt out at any time.
+              <span style={{ fontSize: 12, color: S.offwhite, lineHeight: 1.7 }}>
+                By providing your phone number, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, contractor assignments, and account alerts. Message and data rates may apply. Reply STOP to opt out at any time.
               </span>
             </label>
 
-            {/* Save button */}
+            {/* Primary button */}
             <button
               onClick={handlePhonePopupSave}
               disabled={!popupPhone.trim() || !popupConsent || popupSaving}
-              style={{ width: '100%', background: (!popupPhone.trim() || !popupConsent) ? S.surface : S.green, border: `1px solid ${(!popupPhone.trim() || !popupConsent) ? S.border : S.green}`, borderRadius: 10, color: (!popupPhone.trim() || !popupConsent) ? S.muted : S.black, fontSize: 15, fontWeight: 700, padding: '14px 0', cursor: (!popupPhone.trim() || !popupConsent || popupSaving) ? 'not-allowed' : 'pointer', marginBottom: 10, transition: 'all 0.12s' }}
+              style={{ width: '100%', background: (!popupPhone.trim() || !popupConsent) ? S.surface : S.green, border: `1px solid ${(!popupPhone.trim() || !popupConsent) ? S.border : S.green}`, borderRadius: 10, color: (!popupPhone.trim() || !popupConsent) ? S.muted : S.black, fontSize: 15, fontWeight: 700, padding: '14px 0', cursor: (!popupPhone.trim() || !popupConsent || popupSaving) ? 'not-allowed' : 'pointer', marginBottom: 14, transition: 'all 0.12s' }}
             >
-              {popupSaving ? 'Saving…' : 'Save My Number'}
+              {popupSaving ? 'Saving…' : 'Add Phone Number'}
             </button>
 
-            {/* Remind me later */}
-            <button
-              onClick={() => { sessionStorage.setItem('subs_phone_prompt_dismissed', '1'); setShowPhonePopup(false) }}
-              style={{ width: '100%', background: 'transparent', border: 'none', color: S.muted, fontSize: 13, cursor: 'pointer', padding: '8px 0', marginBottom: 14 }}
-            >
-              Remind me later
-            </button>
-
-            {/* Don't show again */}
-            <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: 14 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={popupDontShow}
-                  onChange={async (e) => {
-                    setPopupDontShow(e.target.checked)
-                    if (e.target.checked) {
-                      setShowPhonePopup(false)
-                      await supabase.functions.invoke('upsert-member', {
-                        body: { clerk_user_id: isImpersonating ? (member?.clerk_user_id || '') : user?.id, phone_popup_dismissed: true },
-                      })
-                      setMember(m => ({ ...m, phone_popup_dismissed: true }))
-                    }
-                  }}
-                  style={{ accentColor: S.muted, width: 14, height: 14, flexShrink: 0, cursor: 'pointer' }}
-                />
-                <span style={{ fontSize: 12, color: S.muted }}>Don't show this again</span>
-              </label>
+            {/* Dismissal links */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <button
+                onClick={handlePhoneModalSnooze}
+                style={{ background: 'transparent', border: 'none', color: S.muted, fontSize: 13, cursor: 'pointer', padding: '4px 0' }}
+              >
+                Remind me in 48 hours
+              </button>
+              <button
+                onClick={handlePhoneModalDismiss}
+                style={{ background: 'transparent', border: 'none', color: S.muted, fontSize: 12, cursor: 'pointer', padding: '4px 0', textDecoration: 'underline' }}
+              >
+                Never remind me again
+              </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {phoneModalToast && (
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, padding: '14px 20px', maxWidth: 460, width: 'calc(100% - 48px)', zIndex: 400, fontSize: 13, color: S.offwhite, lineHeight: 1.5, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', textAlign: 'center' }}>
+          {phoneModalToast}
         </div>
       )}
 

@@ -78,7 +78,6 @@ export default function CheckoutPage() {
   const [loadingId, setLoadingId] = useState(null)
   const [error, setError] = useState(null)
   const [preselected] = useState(() => localStorage.getItem('subs_pending_plan'))
-  const [phone, setPhone] = useState('')
   const [memberState, setMemberState] = useState('')
 
   useEffect(() => {
@@ -96,23 +95,17 @@ export default function CheckoutPage() {
         navigate('/dashboard')
         return
       }
-      if (data?.member?.phone) setPhone(data.member.phone)
       setChecking(false)
     }
     check()
   }, [isLoaded, isSignedIn])
 
   const [agreed, setAgreed] = useState(false)
-  const [smsConsent, setSmsConsent] = useState(false)
 
   const handleSelect = async (tier) => {
     if (loadingId) return
     if (!memberState) {
       setError('Please select your state so we can confirm service availability in your area.')
-      return
-    }
-    if (!smsConsent) {
-      setError('Please consent to SMS communications to continue.')
       return
     }
     if (!agreed) {
@@ -133,9 +126,6 @@ export default function CheckoutPage() {
     }
 
     localStorage.removeItem('subs_pending_plan')
-    if (phone.trim()) {
-      await supabase.from('members').update({ phone: phone.trim() }).eq('clerk_user_id', user.id)
-    }
     const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
       body: {
         price_id: tier.priceId,
@@ -213,32 +203,7 @@ export default function CheckoutPage() {
               ))}
             </select>
           </div>
-          <div>
-            <label style={{ display: 'block', fontSize: 13, color: S.muted, marginBottom: 6 }}>
-              Mobile number <span style={{ fontWeight: 400 }}>(for SMS job updates)</span>
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="(801) 555-0100"
-              style={inp}
-            />
-          </div>
         </div>
-
-        {/* SMS consent checkbox */}
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', maxWidth: 400, width: '100%', marginBottom: 16 }}>
-          <input
-            type="checkbox"
-            checked={smsConsent}
-            onChange={e => setSmsConsent(e.target.checked)}
-            style={{ marginTop: 3, width: 16, height: 16, accentColor: S.green, flexShrink: 0, cursor: 'pointer' }}
-          />
-          <span style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.65 }}>
-            By providing your phone number, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, and account alerts. Reply STOP to opt out at any time.
-          </span>
-        </label>
 
         {/* Agreement checkbox */}
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', maxWidth: 400, width: '100%', marginBottom: 24 }}>
