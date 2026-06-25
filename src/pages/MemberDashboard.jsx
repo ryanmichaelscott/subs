@@ -1281,8 +1281,8 @@ export default function MemberDashboard() {
                 onChange={e => setPopupConsent(e.target.checked)}
                 style={{ marginTop: 3, accentColor: S.green, width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
               />
-              <span style={{ fontSize: 11, color: S.muted, lineHeight: 1.65 }}>
-                By providing your phone number and checking this box, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, contractor updates, and promotional offers. Message and data rates may apply. Message frequency varies. Reply STOP to opt out at any time. Reply HELP for help. View our <Link to="/privacy" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>Privacy Policy</Link> at subs.app/privacy and <Link to="/sms-consent" target="_blank" style={{ color: S.green, textDecoration: 'none' }}>SMS Consent Policy</Link> at subs.app/sms-consent.
+              <span style={{ fontSize: 12, color: S.offwhite, lineHeight: 1.65 }}>
+                By providing your phone number, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, and account alerts. Reply STOP to opt out at any time.
               </span>
             </label>
 

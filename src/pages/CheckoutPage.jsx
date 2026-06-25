@@ -103,11 +103,16 @@ export default function CheckoutPage() {
   }, [isLoaded, isSignedIn])
 
   const [agreed, setAgreed] = useState(false)
+  const [smsConsent, setSmsConsent] = useState(false)
 
   const handleSelect = async (tier) => {
     if (loadingId) return
     if (!memberState) {
       setError('Please select your state so we can confirm service availability in your area.')
+      return
+    }
+    if (!smsConsent) {
+      setError('Please consent to SMS communications to continue.')
       return
     }
     if (!agreed) {
@@ -221,6 +226,19 @@ export default function CheckoutPage() {
             />
           </div>
         </div>
+
+        {/* SMS consent checkbox */}
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', maxWidth: 400, width: '100%', marginBottom: 16 }}>
+          <input
+            type="checkbox"
+            checked={smsConsent}
+            onChange={e => setSmsConsent(e.target.checked)}
+            style={{ marginTop: 3, width: 16, height: 16, accentColor: S.green, flexShrink: 0, cursor: 'pointer' }}
+          />
+          <span style={{ fontSize: 13, color: S.offwhite, lineHeight: 1.65 }}>
+            By providing your phone number, you consent to receive SMS text messages from SUBS, Inc. regarding your membership, service updates, and account alerts. Reply STOP to opt out at any time.
+          </span>
+        </label>
 
         {/* Agreement checkbox */}
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', maxWidth: 400, width: '100%', marginBottom: 24 }}>
