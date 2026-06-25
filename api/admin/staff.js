@@ -61,7 +61,17 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PATCH') {
-    const { id, role } = req.body || {}
+    const { id, role, action, email, clerk_user_id } = req.body || {}
+
+    if (action === 'sync_login') {
+      if (!email) return res.status(400).json({ error: 'email required' })
+      const updates = { last_login: new Date().toISOString(), status: 'active' }
+      if (clerk_user_id) updates.clerk_user_id = clerk_user_id
+      const { error } = await supabase.from('staff_members').update(updates).eq('email', email).neq('status', 'removed')
+      if (error) return res.status(500).json({ error: error.message })
+      return res.status(200).json({ success: true })
+    }
+
     if (!id || !role) return res.status(400).json({ error: 'id and role required' })
     if (!['staff', 'admin'].includes(role)) return res.status(400).json({ error: 'invalid role' })
 

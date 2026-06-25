@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   const { signOut } = useClerk()
   const userRole = user?.publicMetadata?.role
   const isAdmin = userRole === 'admin'
-  const [tab, setTab] = useState('stats')
+  const [tab, setTab] = useState(isAdmin ? 'stats' : 'members')
   const [contractors, setContractors] = useState([])
   const [members, setMembers] = useState([])
   const [activity, setActivity] = useState([])
@@ -354,7 +354,26 @@ export default function AdminDashboard() {
       .finally(() => setStaffLoading(false))
   }, [tab, isAdmin])
 
-  const tabs = [['stats', '📊 Revenue'], ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'], ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist'], ['kpis', '📈 KPIs'], ['enterprise', '🏢 Enterprise'], ...(isAdmin ? [['staff', '👤 Staff']] : [])]
+  // Sync staff member record on login — updates last_login, clerk_user_id, status→active
+  useEffect(() => {
+    if (!user || userRole !== 'staff') return
+    const email = user.primaryEmailAddress?.emailAddress
+    if (!email) return
+    fetch('/api/admin/staff', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'sync_login', email, clerk_user_id: user.id }),
+    }).catch(() => {})
+  }, [user, userRole])
+
+  const tabs = [
+    ...(isAdmin ? [['stats', '📊 Revenue']] : []),
+    ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'],
+    ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist'],
+    ...(isAdmin ? [['kpis', '📈 KPIs']] : []),
+    ['enterprise', '🏢 Enterprise'],
+    ...(isAdmin ? [['staff', '👤 Staff']] : []),
+  ]
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
