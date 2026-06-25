@@ -189,6 +189,7 @@ export default function MemberDashboard() {
   const [popupDontShow, setPopupDontShow] = useState(false)
   const [popupSaving, setPopupSaving] = useState(false)
   const [filtered, setFiltered] = useState([])
+  const [contractorPage, setContractorPage] = useState(0)
 
   const PLAN_PRICE_IDS = {
     member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
@@ -437,12 +438,12 @@ export default function MemberDashboard() {
         return !tradeFilter || allTrades.includes(tradeFilter)
       })
       if (!zipFilter || !/^\d{5}$/.test(zipFilter)) {
-        if (!cancelled) setFiltered(byTrade)
+        if (!cancelled) { setFiltered(byTrade); setContractorPage(0) }
         return
       }
       const memberCoords = await fetchZipCoords(zipFilter)
       if (cancelled) return
-      if (!memberCoords) { setFiltered(byTrade); return }
+      if (!memberCoords) { setFiltered(byTrade); setContractorPage(0); return }
       const result = []
       for (const c of byTrade) {
         let sa = null
@@ -462,7 +463,7 @@ export default function MemberDashboard() {
           if ((c.service_area || '').toLowerCase().includes(zipFilter)) result.push(c)
         }
       }
-      if (!cancelled) setFiltered(result)
+      if (!cancelled) { setFiltered(result); setContractorPage(0) }
     }
     compute()
     return () => { cancelled = true }
@@ -686,7 +687,7 @@ export default function MemberDashboard() {
                   <button onClick={() => { setTradeFilter(''); setZipFilter('') }} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 13, padding: '10px 16px', borderRadius: 8, cursor: 'pointer' }}>Clear</button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {filtered.map((c) => (
+                  {filtered.slice(contractorPage * 10, contractorPage * 10 + 10).map((c) => (
                     <Card key={c.id} style={{ padding: 20, cursor: 'pointer', border: selectedContractor === c.id ? `1px solid ${S.green}` : `1px solid ${S.border}` }} onClick={() => setSelectedContractor(selectedContractor === c.id ? null : c.id)}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                         <div>
@@ -776,6 +777,27 @@ export default function MemberDashboard() {
                     <div style={{ textAlign: 'center', padding: '48px 0', color: S.muted }}>
                       <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
                       <div>{contractors.length === 0 ? 'No contractors in your area yet. More coming soon.' : 'No contractors match your filters.'}</div>
+                    </div>
+                  )}
+                  {filtered.length > 10 && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 4px 0' }}>
+                      <button
+                        onClick={() => { setContractorPage(p => p - 1); setSelectedContractor(null) }}
+                        disabled={contractorPage === 0}
+                        style={{ background: 'transparent', border: `1px solid ${S.border}`, color: contractorPage === 0 ? S.muted : S.offwhite, fontSize: 13, padding: '8px 16px', borderRadius: 8, cursor: contractorPage === 0 ? 'default' : 'pointer', opacity: contractorPage === 0 ? 0.4 : 1 }}
+                      >
+                        ← Prev
+                      </button>
+                      <span style={{ fontSize: 12, color: S.muted }}>
+                        {contractorPage * 10 + 1}–{Math.min(contractorPage * 10 + 10, filtered.length)} of {filtered.length}
+                      </span>
+                      <button
+                        onClick={() => { setContractorPage(p => p + 1); setSelectedContractor(null) }}
+                        disabled={contractorPage * 10 + 10 >= filtered.length}
+                        style={{ background: 'transparent', border: `1px solid ${S.border}`, color: contractorPage * 10 + 10 >= filtered.length ? S.muted : S.offwhite, fontSize: 13, padding: '8px 16px', borderRadius: 8, cursor: contractorPage * 10 + 10 >= filtered.length ? 'default' : 'pointer', opacity: contractorPage * 10 + 10 >= filtered.length ? 0.4 : 1 }}
+                      >
+                        Next →
+                      </button>
                     </div>
                   )}
                   {filtered.length > 0 && (
