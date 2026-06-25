@@ -267,8 +267,15 @@ export default function MemberDashboard() {
         return
       }
 
-      // Handle post-Stripe return: checkout_session_id in URL means user just paid
-      const checkoutSessionId = searchParams.get('checkout_session_id')
+      // Handle post-Stripe return: checkout_session_id in URL means user just paid.
+      // Also handle the legacy broken URL where ?conversion=1?checkout_session_id=cs_xxx
+      // was generated (double-? made URLSearchParams unable to parse the second param).
+      let checkoutSessionId = searchParams.get('checkout_session_id')
+      if (!checkoutSessionId) {
+        const convVal = searchParams.get('conversion') || ''
+        const m = convVal.match(/checkout_session_id=([^&]+)/)
+        if (m) checkoutSessionId = m[1]
+      }
       if (checkoutSessionId && !memberRow?.stripe_subscription_id) {
         setCheckoutMsg('Setting up your account…')
         setCheckoutLoading(true)

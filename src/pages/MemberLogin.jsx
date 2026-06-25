@@ -95,7 +95,7 @@ export default function MemberLogin() {
           {isSignUp ? (
             <SignUp
               routing="virtual"
-              fallbackRedirectUrl={afterUrl}
+              forceRedirectUrl={afterUrl}
               signInUrl="/login"
               appearance={appearance}
             />
