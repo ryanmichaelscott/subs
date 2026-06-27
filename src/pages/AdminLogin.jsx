@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
-import { SignIn } from '@clerk/clerk-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { SignIn, SignUp } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 
 const appearance = {
@@ -61,6 +61,10 @@ const appearance = {
 }
 
 export default function AdminLogin() {
+  const [searchParams] = useSearchParams()
+  // Invitation links include __clerk_ticket — these users need to sign UP, not sign in
+  const hasTicket = !!searchParams.get('__clerk_ticket')
+
   return (
     <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px' }}>
@@ -75,15 +79,27 @@ export default function AdminLogin() {
               <span style={{ fontSize: 12 }}>🔒</span>
               <span style={{ color: S.danger, fontSize: 12, fontWeight: 600 }}>Admin Access Only</span>
             </div>
-            <div style={{ fontFamily: C.display, fontSize: 34, color: S.offwhite, marginBottom: 0 }}>Admin login.</div>
+            <div style={{ fontFamily: C.display, fontSize: 34, color: S.offwhite, marginBottom: 0 }}>
+              {hasTicket ? 'Create your account.' : 'Admin login.'}
+            </div>
           </div>
 
           <div className="admin-login-card" style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16 }}>
-            <SignIn
-              routing="hash"
-              afterSignInUrl="/admin/dashboard"
-              appearance={appearance}
-            />
+            {hasTicket ? (
+              <SignUp
+                routing="virtual"
+                forceRedirectUrl="/admin/dashboard"
+                signInUrl="/admin/login"
+                appearance={appearance}
+              />
+            ) : (
+              <SignIn
+                routing="virtual"
+                fallbackRedirectUrl="/admin/dashboard"
+                signUpUrl="/admin/login"
+                appearance={appearance}
+              />
+            )}
           </div>
         </div>
       </div>

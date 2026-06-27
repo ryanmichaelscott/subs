@@ -40,6 +40,7 @@ export default async function handler(req, res) {
           email_address: email,
           public_metadata: { role },
           redirect_url: `${appUrl}/admin/login`,
+          ignore_existing: true,
         }),
       })
       const inviteData = await inviteRes.json()
@@ -128,6 +129,7 @@ export default async function handler(req, res) {
         email_address: member.email,
         public_metadata: { role: member.role },
         redirect_url: `${appUrl}/admin/login`,
+        ignore_existing: true,
       }),
     })
     const inviteData = await inviteRes.json()
