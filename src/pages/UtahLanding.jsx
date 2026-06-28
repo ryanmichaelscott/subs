@@ -266,12 +266,7 @@ export default function UtahLanding() {
   }, [])
 
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY
-      const pr = pricingRef.current?.getBoundingClientRect()
-      const nearPricing = pr && pr.top < window.innerHeight && pr.bottom > 0
-      setStickyVisible(y > 520 && !nearPricing)
-    }
+    const onScroll = () => { if (window.scrollY > 60) setStickyVisible(true) }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
