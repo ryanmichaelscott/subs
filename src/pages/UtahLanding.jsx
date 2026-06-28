@@ -373,27 +373,7 @@ export default function UtahLanding() {
           <div className="lab">Pick your membership.</div>
           <p className="section-sub">One flat yearly price unlocks member pricing across the SUBS contractor network. No monthly fees. Cancel anytime.</p>
 
-          <div className="price-grid">
-            {/* Member */}
-            <div className="plan">
-              <div className="tier">Member</div>
-              <h3>Get the member rate</h3>
-              <div className="price">
-                <span className="now">$99</span>
-                <span className="per">/ year</span>
-              </div>
-              <div className="price-note">Up to 5 service requests a year.</div>
-              <ul>
-                <li>{CHECK} <span><b>5 service requests</b> per year</span></li>
-                <li>{CHECK} <span>Member pricing across the SUBS contractor network</span></li>
-                <li>{CHECK} <span>Vetted, licensed &amp; insured Utah pros</span></li>
-                <li>{CHECK} <span>Money-back savings guarantee</span></li>
-                <li>{CHECK} <span>Call-or-text booking</span></li>
-              </ul>
-              <a className="btn btn-ghost" href="/checkout">Choose Member</a>
-            </div>
-
-            {/* Elite */}
+          <div style={{ maxWidth: 480, margin: '0 auto' }}>
             <div className="plan elite">
               <div className="badge">Founding price</div>
               <div className="tier">Elite</div>
@@ -406,16 +386,22 @@ export default function UtahLanding() {
               <div className="price-note">Neighborhood founding rate — locked the day you join.</div>
               <ul>
                 <li>{CHECK} <span><b>Unlimited service requests</b></span></li>
-                <li>{CHECK} <span><b>Everything in Member</b></span></li>
                 <li>{CHECK} <span>Maximum wholesale discounts — <b>20–35% off</b> every trade</span></li>
                 <li>{CHECK} <span>White-glove concierge — we line up the pro &amp; manage the job</span></li>
                 <li>{CHECK} <span>Priority scheduling</span></li>
+                <li>{CHECK} <span>Vetted, licensed &amp; insured Utah pros</span></li>
+                <li>{CHECK} <span>Money-back savings guarantee</span></li>
                 <li>{CHECK} <span>All 39 trades, one membership</span></li>
               </ul>
               <a className="btn btn-primary" href={CTA}>Claim founding price — $249</a>
             </div>
           </div>
-          <p className="price-note" style={{ marginTop: 16, textAlign: 'center' }}>Prices in USD. 3-day right to cancel. Savings vary by job scope &amp; contractor.</p>
+          <p className="price-note" style={{ marginTop: 20, textAlign: 'center' }}>
+            Prices in USD. 3-day right to cancel. Savings vary by job scope &amp; contractor.
+          </p>
+          <p className="price-note" style={{ marginTop: 8, textAlign: 'center', color: 'var(--ash-dim)' }}>
+            Member and Member+ plans also available — visit <a href="https://subs.app" style={{ color: 'var(--ash)' }}>subs.app</a>
+          </p>
         </section>
 
         {/* Trades */}

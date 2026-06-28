@@ -252,11 +252,11 @@ function Hero() {
 
           {/* CTAs */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Link to="/login?mode=signup">
+            <a href="/api/checkout?plan=elite">
               <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
-                Sign Up Today
+                Start saving today
               </button>
-            </Link>
+            </a>
             <Link to="/contractor/apply">
               <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
                 Join as a Partner
@@ -448,39 +448,6 @@ function ContractorQuality() {
 }
 
 function Membership() {
-  const { user } = useUser()
-  const navigate = useNavigate()
-  const [joiningId, setJoiningId] = useState(null)
-  const [joinError, setJoinError] = useState(null)
-
-  const handleJoin = async (tier) => {
-    setJoinError(null)
-    if (!user) {
-      localStorage.setItem('subs_pending_plan', tier.id)
-      navigate(`/login?mode=signup&plan=${tier.id}`)
-      return
-    }
-    setJoiningId(tier.id)
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: {
-          price_id: tier.priceId,
-          clerk_user_id: user.id,
-          email: user.primaryEmailAddress?.emailAddress,
-          success_url: `${window.location.origin}/dashboard?conversion=1`,
-          cancel_url: `${window.location.origin}/signup`,
-        },
-      })
-      if (error || !data?.url) {
-        setJoinError('Could not start checkout. Please try again.')
-        return
-      }
-      window.location.href = data.url
-    } finally {
-      setJoiningId(null)
-    }
-  }
-
   return (
     <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
       <div style={{ textAlign: 'center', marginBottom: 56 }}>
@@ -489,9 +456,6 @@ function Membership() {
         </h2>
         <p style={{ fontSize: 14, color: S.muted }}>Annual billing only. Cancel in the first 14 days for a full refund.</p>
       </div>
-      {joinError && (
-        <div style={{ textAlign: 'center', color: S.danger, fontSize: 13, marginBottom: 20 }}>{joinError}</div>
-      )}
       <div className="tier-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, alignItems: 'start' }}>
         {TIERS.map((tier) => (
           <div key={tier.id} style={{ background: S.card, border: `2px solid ${tier.popular ? tier.color : S.border}`, borderRadius: 16, padding: 28, position: 'relative' }}>
@@ -512,13 +476,11 @@ function Membership() {
                 </li>
               ))}
             </ul>
-            <button
-              onClick={() => handleJoin(tier)}
-              disabled={joiningId === tier.id}
-              style={{ width: '100%', background: tier.popular ? tier.color : S.surface, border: `1px solid ${tier.popular ? 'transparent' : S.border}`, color: tier.popular ? S.black : S.offwhite, fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: joiningId === tier.id ? 'not-allowed' : 'pointer', opacity: joiningId === tier.id ? 0.7 : 1 }}
-            >
-              {joiningId === tier.id ? 'Redirecting…' : `Join ${tier.name}`}
-            </button>
+            <a href={`/api/checkout?plan=${tier.id}`} style={{ textDecoration: 'none' }}>
+              <button style={{ width: '100%', background: tier.popular ? tier.color : S.surface, border: `1px solid ${tier.popular ? 'transparent' : S.border}`, color: tier.popular ? S.black : S.offwhite, fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: 'pointer' }}>
+                Join {tier.name}
+              </button>
+            </a>
           </div>
         ))}
       </div>
@@ -833,11 +795,11 @@ function BottomCTA() {
         <p style={{ fontSize: 15, color: '#A8C4A0', lineHeight: 1.7, marginBottom: 36 }}>
           One roof. One HVAC system. One plumbing job. At member discount rates, any single job saves more than a decade of membership fees.
         </p>
-        <Link to="/login?mode=signup">
+        <a href="/api/checkout?plan=elite">
           <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 16, fontWeight: 700, padding: '16px 32px', borderRadius: 12, cursor: 'pointer' }}>
-            See all plans →
+            Join today →
           </button>
-        </Link>
+        </a>
       </div>
     </section>
   )
@@ -874,7 +836,7 @@ function Footer() {
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase', marginBottom: 14 }}>Solutions</div>
-            <div style={{ marginBottom: 10 }}><Link to="/signup" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>For Homeowners</Link></div>
+            <div style={{ marginBottom: 10 }}><a href="/api/checkout?plan=member" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>For Homeowners</a></div>
             <div style={{ marginBottom: 10 }}><Link to="/contractor/apply" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>For Contractors</Link></div>
             <div style={{ marginBottom: 10 }}><Link to="/property-managers" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>For Property Managers</Link></div>
           </div>

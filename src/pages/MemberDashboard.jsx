@@ -161,8 +161,7 @@ export default function MemberDashboard() {
   const [contractors, setContractors] = useState([])
   const [jobRequests, setJobRequests] = useState([])
   const [tab, setTab] = useState('directory')
-  const [checkoutLoading, setCheckoutLoading] = useState(false)
-  const [checkoutMsg, setCheckoutMsg] = useState('Redirecting to checkout…')
+  const [memberStatus, setMemberStatus] = useState(null) // null=loading | 'active' | 'processing'
   const [tradeFilter, setTradeFilter] = useState('')
   const [zipFilter, setZipFilter] = useState('')
   const [selectedContractor, setSelectedContractor] = useState(null)
@@ -192,12 +191,6 @@ export default function MemberDashboard() {
   const [filtered, setFiltered] = useState([])
   const [contractorPage, setContractorPage] = useState(0)
 
-  const PLAN_PRICE_IDS = {
-    member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
-    plus: 'price_1TjQ8TAYDs9oVarWqCQyxLM5',
-    elite: 'price_1TjQ7DAYDs9oVarWbJONkQ1P',
-  }
-
   useEffect(() => {
     if (!user) return
     const init = async () => {
@@ -212,93 +205,36 @@ export default function MemberDashboard() {
         }
         const { data: contractorRows } = await supabase.from('contractors').select('*, contractor_rates(*)').eq('status', 'active').order('rating', { ascending: false })
         if (contractorRows) setContractors(contractorRows)
+        setMemberStatus('active')
         return
       }
 
-      const email = user.primaryEmailAddress?.emailAddress || ''
-      const name = user.fullName || user.firstName || ''
-      const phone = user.phoneNumbers?.[0]?.phoneNumber || null
-
-      // Upsert member via service role (bypasses RLS, preserves Stripe/tier fields on update)
-      const pendingRef = localStorage.getItem('subs_referral_code')
-      const { data: upsertData } = await supabase.functions.invoke('upsert-member', {
-        body: { clerk_user_id: user.id, email, name, ...(phone ? { phone } : {}), ...(pendingRef ? { referral_code: pendingRef } : {}) },
+      // Fetch member record — created by webhook after payment, never by dashboard
+      const { data: memberData } = await supabase.functions.invoke('admin-get-member', {
+        body: { clerk_user_id: user.id },
       })
-      if (pendingRef && upsertData?.created) localStorage.removeItem('subs_referral_code')
-      let memberRow = upsertData?.member
+      let memberRow = memberData?.member
 
       if (memberRow) {
         setMember(memberRow)
         setProfileForm({
-          name: memberRow.name || name,
+          name: memberRow.name || user.fullName || '',
           phone: memberRow.phone || '',
           zip: memberRow.zip || '',
         })
         setProfileSmsConsent(!!memberRow.sms_consent)
       }
 
-      // Handle pending plan (pre-login checkout flow via localStorage)
-      const pendingPlan = localStorage.getItem('subs_pending_plan') || searchParams.get('plan')
-      const priceId = pendingPlan ? PLAN_PRICE_IDS[pendingPlan] : null
-      if (priceId) {
-        localStorage.removeItem('subs_pending_plan')
-        setCheckoutLoading(true)
-        const { data } = await supabase.functions.invoke('create-checkout-session', {
-          body: {
-            price_id: priceId,
-            clerk_user_id: user.id,
-            email,
-            success_url: `${window.location.origin}/dashboard`,
-            cancel_url: `${window.location.origin}/checkout`,
-          },
-        })
-        if (data?.url) {
-          window.location.href = data.url
-        } else {
-          setCheckoutLoading(false)
-        }
+      // Gate: must be Active to see the full dashboard
+      if (!memberRow || memberRow.status !== 'Active') {
+        setMemberStatus('processing')
         return
       }
 
-      // Handle post-Stripe return: checkout_session_id in URL means user just paid.
-      // Also handle the legacy broken URL where ?conversion=1?checkout_session_id=cs_xxx
-      // was generated (double-? made URLSearchParams unable to parse the second param).
-      let checkoutSessionId = searchParams.get('checkout_session_id')
-      if (!checkoutSessionId) {
-        const convVal = searchParams.get('conversion') || ''
-        const m = convVal.match(/checkout_session_id=([^&]+)/)
-        if (m) checkoutSessionId = m[1]
-      }
-      if (checkoutSessionId && !memberRow?.stripe_subscription_id) {
-        setCheckoutMsg('Setting up your account…')
-        setCheckoutLoading(true)
-        const { data: activateData } = await supabase.functions.invoke('activate-membership', {
-          body: { checkout_session_id: checkoutSessionId, clerk_user_id: user.id },
-        })
-        setCheckoutLoading(false)
-        if (activateData?.member) {
-          memberRow = activateData.member
-          setMember(activateData.member)
-          setProfileForm({
-            name: activateData.member.name || name,
-            phone: activateData.member.phone || '',
-            zip: activateData.member.zip || '',
-          })
-          window.history.replaceState({}, '', '/dashboard')
-        } else {
-          navigate('/checkout')
-          return
-        }
-      }
+      setMemberStatus('active')
+      window.history.replaceState({}, '', '/dashboard')
 
-      // Subscription gate: redirect to /checkout if no active Stripe subscription
-      if (!memberRow?.stripe_subscription_id) {
-        navigate('/checkout?unpaid=1')
-        return
-      }
-
-      // Fetch real data — job_requests has RLS that requires a Clerk JWT the
-      // anon client doesn't send, so we use an edge function with service role
+      // Fetch real data
       const [{ data: contractorRows }, { data: jobData }, { data: refData }] = await Promise.all([
         supabase
           .from('contractors')
@@ -546,11 +482,29 @@ export default function MemberDashboard() {
   const inp = { width: '100%', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 14, outline: 'none', boxSizing: 'border-box' }
   const tabs = [['directory', '📋 Directory'], ['request', '➕ Request'], ['history', '🕐 History'], ['account', '⚙️ Account']]
 
-  if (checkoutLoading) {
+  if (memberStatus === null) {
     return (
-      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: S.offwhite }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: S.green, letterSpacing: '0.06em', marginBottom: 24 }}>SUBS</div>
-        <div style={{ fontSize: 15, color: S.muted }}>{checkoutMsg}</div>
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        <div style={{ width: 32, height: 32, border: `3px solid ${S.border}`, borderTopColor: S.green, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    )
+  }
+
+  if (memberStatus === 'processing') {
+    return (
+      <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: S.green, letterSpacing: '0.06em', marginBottom: 32 }}>SUBS</div>
+        <div style={{ fontFamily: C.display, fontSize: 28, color: S.offwhite, marginBottom: 12 }}>Payment processing.</div>
+        <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.6, maxWidth: 400, marginBottom: 24 }}>
+          Your payment is still being confirmed. Check your email — you'll receive your access link and membership details once it clears.
+        </p>
+        <p style={{ fontSize: 14, color: S.muted }}>
+          Bank transfers take 3–5 business days. Card payments are usually instant.
+        </p>
+        <p style={{ fontSize: 14, color: S.muted, marginTop: 20 }}>
+          Questions? Call <a href="tel:18884543019" style={{ color: S.green, textDecoration: 'none' }}>1-888-454-3019</a>
+        </p>
       </div>
     )
   }

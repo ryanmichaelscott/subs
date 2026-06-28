@@ -5,46 +5,87 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const welcomeEmail = (name: string) => `
-<!DOCTYPE html>
+const TIER_PERKS: Record<string, string[]> = {
+  Member: [
+    'Contractor-rate pricing on 39 trades (20–35% off)',
+    'Up to 5 service requests per year',
+    'Digital membership card (Apple & Google Wallet)',
+    'Concierge line — call or text us to book',
+    '30-day money-back guarantee',
+  ],
+  'Member+': [
+    'Unlimited service requests',
+    'Enhanced pricing + priority access',
+    'Priority concierge — skip the queue',
+    'Digital membership card (Apple & Google Wallet)',
+    'All 39 trades covered',
+  ],
+  Elite: [
+    'Unlimited service requests',
+    'Best available rates + VIP priority scheduling',
+    'White-glove concierge — we schedule everything, you do nothing',
+    'Same-week scheduling guaranteed',
+    'Dedicated SUBS home advisor',
+    'First access to top-rated contractors in your area',
+  ],
+}
+
+function buildEmail(name: string, tier: string, magicLink: string): string {
+  const perks = TIER_PERKS[tier] || TIER_PERKS['Member']
+  const perksHtml = perks.map(p =>
+    `<li style="font-size:15px;color:#444;line-height:1.9;list-style:none;padding:3px 0;">✓ ${p}</li>`
+  ).join('')
+
+  return `<!DOCTYPE html>
 <html>
-<body style="font-family: Inter, system-ui, sans-serif; background: #f5f5f5; padding: 40px 20px; margin: 0;">
-  <div style="max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 40px;">
-    <div style="font-size: 22px; font-weight: 800; color: #1a1a1a; letter-spacing: 0.06em; margin-bottom: 28px;">SUBS</div>
-    <p style="font-size: 16px; color: #1a1a1a; margin-bottom: 16px;">Hi ${name},</p>
-    <p style="font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 16px;">
-      Welcome to SUBS. Your membership is active and your contractor pricing is ready.
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Inter,system-ui,sans-serif;background:#f5f5f5;padding:40px 20px;margin:0;">
+  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:14px;padding:40px 36px;">
+    <div style="font-size:22px;font-weight:800;letter-spacing:0.06em;color:#1a1a1a;margin-bottom:28px;">SUBS.</div>
+
+    <p style="font-size:17px;font-weight:700;color:#1a1a1a;margin:0 0 8px;">Hi ${name} — welcome to SUBS.</p>
+    <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 20px;">
+      Your <strong>${tier} membership</strong> is active and your contractor pricing is ready.
     </p>
-    <p style="font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 24px;">
-      Here's what you now have access to:
+
+    <div style="background:#f9f9f9;border-radius:10px;padding:18px 20px;margin-bottom:28px;">
+      <p style="font-size:13px;font-weight:700;color:#1a1a1a;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.08em;">What's included</p>
+      <ul style="margin:0;padding:0;">
+        ${perksHtml}
+      </ul>
+    </div>
+
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${magicLink}"
+         style="display:inline-block;background:#5DFF8A;color:#0C0F0A;font-size:16px;font-weight:700;
+                padding:16px 40px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;">
+        Access my dashboard →
+      </a>
+      <p style="font-size:12px;color:#aaa;margin:10px 0 0;">This link signs you in automatically. Expires in 24 hours.</p>
+    </div>
+
+    <div style="border-top:1px solid #eee;padding-top:24px;margin-top:8px;">
+      <p style="font-size:14px;font-weight:600;color:#1a1a1a;margin:0 0 6px;">To book a service:</p>
+      <p style="font-size:14px;color:#555;line-height:1.6;margin:0;">
+        Call or text <strong><a href="tel:18884543019" style="color:#1a1a1a;text-decoration:none;">1-888-454-3019</a></strong>
+        and we'll match you with a vetted pro at your member rate.
+      </p>
+    </div>
+
+    <p style="font-size:13px;color:#aaa;margin-top:32px;">
+      — The SUBS Team · <a href="https://subs.app" style="color:#aaa;text-decoration:none;">subs.app</a>
     </p>
-    <ul style="padding-left: 20px; margin-bottom: 28px;">
-      <li style="font-size: 15px; color: #555; line-height: 1.8;">Contractor-rate pricing on 30+ trades</li>
-      <li style="font-size: 15px; color: #555; line-height: 1.8;">Your published member discount schedule</li>
-      <li style="font-size: 15px; color: #555; line-height: 1.8;">Priority dispatch across all vetted SUBS vendors</li>
-      <li style="font-size: 15px; color: #555; line-height: 1.8;">Free quote gut-check — text us any quote</li>
-    </ul>
-    <p style="font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 28px;">
-      To book a service, log into your member dashboard and request a job — we'll match you with a vetted contractor in your area at your member rate.
-    </p>
-    <a href="https://subs.app/dashboard" style="display: inline-block; background: #5DFF8A; color: #0C0F0A; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 10px; text-decoration: none;">
-      Go to my dashboard →
-    </a>
-    <p style="font-size: 13px; color: #999; margin-top: 40px;">
-      Questions? Reply to this email or text us. We respond fast.
-    </p>
-    <p style="font-size: 15px; color: #1a1a1a; margin-top: 8px;">— The SUBS Team</p>
   </div>
 </body>
-</html>
-`
+</html>`
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  const { email, name } = await req.json()
+  const { email, name, tier, magic_link } = await req.json()
   if (!email) {
     return new Response(JSON.stringify({ error: 'email required' }), {
       status: 400,
@@ -60,6 +101,10 @@ serve(async (req) => {
     })
   }
 
+  const dashboardLink = magic_link || 'https://subs.app/login'
+  const tierName = tier || 'Member'
+  const firstName = (name || 'there').split(' ')[0]
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -69,8 +114,8 @@ serve(async (req) => {
     body: JSON.stringify({
       from: 'SUBS <hello@subs.app>',
       to: email,
-      subject: 'Welcome to SUBS — your contractor pricing is ready',
-      html: welcomeEmail(name || 'there'),
+      subject: `Welcome to SUBS — you're in`,
+      html: buildEmail(firstName, tierName, dashboardLink),
     }),
   })
 

@@ -19,6 +19,7 @@ import EnterpriseDashboard from './pages/EnterpriseDashboard'
 import EnterpriseOnboarding from './pages/EnterpriseOnboarding'
 import LegalPage from './pages/LegalPage'
 import UtahLanding from './pages/UtahLanding'
+import WelcomePage from './pages/WelcomePage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 class DashboardErrorBoundary extends Component {
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="/signup" element={<Marketing />} />
         <Route path="/login" element={<MemberLogin />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/welcome" element={<WelcomePage />} />
         <Route path="/waitlist" element={<WaitlistPage />} />
         <Route path="/nps" element={<NpsPage />} />
         <Route path="/sms-consent" element={<SmsConsent />} />
