@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
-const CTA = '/checkout?plan=elite&coupon=DOOR100'
+const CTA = '/api/checkout?plan=elite&coupon=DOOR100'
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
