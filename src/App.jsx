@@ -18,6 +18,7 @@ import PropertyManagers from './pages/PropertyManagers'
 import EnterpriseDashboard from './pages/EnterpriseDashboard'
 import EnterpriseOnboarding from './pages/EnterpriseOnboarding'
 import LegalPage from './pages/LegalPage'
+import UtahLanding from './pages/UtahLanding'
 import ProtectedRoute from './components/ProtectedRoute'
 
 class DashboardErrorBoundary extends Component {
@@ -104,6 +105,7 @@ export default function App() {
             <ProtectedRoute role="enterprise"><EnterpriseDashboard /></ProtectedRoute>
           </DashboardErrorBoundary>
         } />
+        <Route path="/utah" element={<UtahLanding />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

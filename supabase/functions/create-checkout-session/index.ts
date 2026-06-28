@@ -10,7 +10,7 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  const { price_id, clerk_user_id, email, success_url, cancel_url } = await req.json()
+  const { price_id, clerk_user_id, email, success_url, cancel_url, promotion_code_id } = await req.json()
 
   if (!price_id || !clerk_user_id || !success_url || !cancel_url) {
     return new Response(JSON.stringify({ error: 'price_id, clerk_user_id, success_url, cancel_url are required' }), {
@@ -45,6 +45,10 @@ serve(async (req) => {
 
   if (email) {
     params.set('customer_email', email)
+  }
+
+  if (promotion_code_id) {
+    params.set('discounts[0][promotion_code]', promotion_code_id)
   }
 
   const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {

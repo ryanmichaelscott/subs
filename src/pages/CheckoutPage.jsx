@@ -76,6 +76,8 @@ export default function CheckoutPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const showUnpaidBanner = searchParams.get('unpaid') === '1'
+  const couponCode = searchParams.get('coupon')
+  const DOOR100_PROMO_ID = 'promo_1TnP7jAYDs9oVarWbKGY7Rr4'
   const [checking, setChecking] = useState(true)
   const [loadingId, setLoadingId] = useState(null)
   const [error, setError] = useState(null)
@@ -128,14 +130,18 @@ export default function CheckoutPage() {
     }
 
     localStorage.removeItem('subs_pending_plan')
+    const checkoutBody = {
+      price_id: tier.priceId,
+      clerk_user_id: user.id,
+      email: user.primaryEmailAddress?.emailAddress,
+      success_url: `${window.location.origin}/dashboard?conversion=1&checkout_session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${window.location.origin}/checkout`,
+    }
+    if (couponCode === 'DOOR100' && tier.id === 'elite') {
+      checkoutBody.promotion_code_id = DOOR100_PROMO_ID
+    }
     const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
-      body: {
-        price_id: tier.priceId,
-        clerk_user_id: user.id,
-        email: user.primaryEmailAddress?.emailAddress,
-        success_url: `${window.location.origin}/dashboard?conversion=1&checkout_session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${window.location.origin}/checkout`,
-      },
+      body: checkoutBody,
     })
     if (data?.url) {
       window.location.href = data.url
@@ -261,10 +267,21 @@ export default function CheckoutPage() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: tier.color, letterSpacing: '0.06em', marginBottom: 8 }}>
                   {tier.name.toUpperCase()}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
-                  <span style={{ fontFamily: C.display, fontSize: 40, color: S.offwhite }}>${tier.price}</span>
-                  <span style={{ fontSize: 14, color: S.muted }}>/yr</span>
-                </div>
+                {tier.id === 'elite' && couponCode === 'DOOR100' ? (
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <span style={{ fontFamily: C.display, fontSize: 40, color: S.green }}>$249</span>
+                      <span style={{ fontFamily: C.display, fontSize: 22, color: S.muted, textDecoration: 'line-through' }}>$349</span>
+                      <span style={{ fontSize: 14, color: S.muted }}>/yr</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: S.green, fontWeight: 700, marginTop: 4 }}>DOOR100 ✓ — $100 off</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
+                    <span style={{ fontFamily: C.display, fontSize: 40, color: S.offwhite }}>${tier.price}</span>
+                    <span style={{ fontSize: 14, color: S.muted }}>/yr</span>
+                  </div>
+                )}
                 <p style={{ fontSize: 13, color: S.muted, margin: '0 0 20px', lineHeight: 1.5 }}>{tier.tagline}</p>
                 <div style={{ flex: 1, marginBottom: 24 }}>
                   {tier.perks.map((perk) => (
