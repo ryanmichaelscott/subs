@@ -246,16 +246,17 @@ export default function UtahLanding() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: 'elite', coupon: 'DOOR100' }),
       })
-      const data = await res.json()
+      const text = await res.text()
+      let data
+      try { data = JSON.parse(text) } catch { throw new Error('Non-JSON response: ' + text.slice(0, 200)) }
       if (data.url) {
         window.location.href = data.url
       } else {
-        throw new Error(data.error || 'Checkout failed')
+        throw new Error(data.error || 'No URL returned')
       }
-    } catch {
+    } catch (err) {
       setCheckoutLoading(false)
-      window.location.href = 'tel:+18884543019'
-      alert('Something went wrong. Please call or text us at 1-888-454-3019 and we\'ll get you set up.')
+      alert('Checkout error: ' + err.message)
     }
   }
 
