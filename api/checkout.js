@@ -31,9 +31,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Stripe not configured' })
   }
 
-  const BASE = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : (process.env.VITE_APP_URL || 'https://subs.app')
+  const BASE = process.env.APP_URL || 'https://subs.app'
 
   const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' })
 

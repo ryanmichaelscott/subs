@@ -14,9 +14,7 @@ const ENTERPRISE_PRICE_IDS = {
   professional: process.env.STRIPE_ENTERPRISE_PROFESSIONAL_PRICE_ID || 'price_1TkX1hAYDs9oVarWI99Q2FP4',
 }
 
-const BASE_URL = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : 'https://subs.app'
+const BASE_URL = process.env.APP_URL || 'https://subs.app'
 
 async function findOrCreateClerkUser({ email, firstName, lastName, role }) {
   const clerkKey = process.env.CLERK_SECRET_KEY

@@ -73,6 +73,7 @@ serve(async (req) => {
 
     // Create Clerk user account — enables OTP login immediately
     const clerkKey = Deno.env.get('CLERK_SECRET_KEY')
+    console.log('[contractor] CLERK_SECRET_KEY prefix:', clerkKey ? clerkKey.slice(0, 10) + '...' : 'NOT SET')
     let clerkCreated = false
     if (clerkKey) {
       const nameParts = (contact_name || company_name || '').trim().split(/\s+/)

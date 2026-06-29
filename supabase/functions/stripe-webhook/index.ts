@@ -121,6 +121,7 @@ serve(async (req) => {
   const event     = JSON.parse(payload)
   const supabase  = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
   const clerkKey  = Deno.env.get('CLERK_SECRET_KEY') || ''
+  console.log('[webhook] CLERK_SECRET_KEY prefix:', clerkKey ? clerkKey.slice(0, 10) + '...' : 'NOT SET')
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
   const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 

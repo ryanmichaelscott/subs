@@ -22,9 +22,7 @@ export default async function handler(req, res) {
 
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' })
 
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'https://subs.app'
+    const baseUrl = process.env.APP_URL || 'https://subs.app'
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',

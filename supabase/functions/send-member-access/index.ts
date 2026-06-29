@@ -21,6 +21,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
     const clerkKey = Deno.env.get('CLERK_SECRET_KEY')
+    console.log('[send-member-access] CLERK_SECRET_KEY prefix:', clerkKey ? clerkKey.slice(0, 10) + '...' : 'NOT SET')
     if (!clerkKey) return err('CLERK_SECRET_KEY not set in Supabase secrets')
 
     // Look up member

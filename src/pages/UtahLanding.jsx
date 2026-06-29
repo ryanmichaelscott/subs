@@ -257,7 +257,7 @@ export default function UtahLanding() {
       }
     } catch (err) {
       setCheckoutLoading(false)
-      alert('Checkout error: ' + err.message)
+      alert('Something went wrong. Please call or text us at (888) 454-3019 and we\'ll get you set up right away.')
     }
   }
 
