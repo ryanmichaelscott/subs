@@ -50,25 +50,25 @@ const css = `
 .utah-page .logo { font-family:var(--disp); font-size:22px; letter-spacing:.06em; color:var(--bone); }
 .utah-page .logo b { color:var(--green); }
 
-.utah-page section { padding:64px 0; position:relative; }
+.utah-page section { padding:80px 0; position:relative; }
 .utah-page h1, .utah-page h2, .utah-page h3 { font-family:var(--disp); font-weight:400; line-height:1.02; letter-spacing:-.01em; }
 
-.utah-page .hero { padding-top:54px; padding-bottom:40px; }
-.utah-page .hero h1 { font-size:clamp(2.5rem,9vw,4.6rem); margin:18px 0 0; }
+.utah-page .hero { padding-top:64px; padding-bottom:64px; }
+.utah-page .hero h1 { font-size:clamp(2.5rem,9vw,4.6rem); margin:20px 0 0; }
 .utah-page .hero h1 .g { color:var(--green); }
-.utah-page .hero .lede { font-size:clamp(1.05rem,2.6vw,1.3rem); color:var(--ash); max-width:34ch; margin:20px 0 0; }
+.utah-page .hero .lede { font-size:clamp(1.05rem,2.6vw,1.3rem); color:var(--ash); max-width:34ch; margin:24px 0 0; }
 .utah-page .hero .lede b { color:var(--bone); font-weight:600; }
-.utah-page .hero-cta { display:flex; flex-wrap:wrap; gap:12px; margin-top:30px; }
+.utah-page .hero-cta { display:flex; flex-wrap:wrap; gap:12px; margin-top:36px; }
 .utah-page .hero-cta .btn { flex:1 1 auto; min-width:200px; }
-.utah-page .trust { display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:28px; font-family:var(--mono); font-size:12.5px; color:var(--ash); letter-spacing:.02em; }
+.utah-page .trust { display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:32px; font-family:var(--mono); font-size:12.5px; color:var(--ash); letter-spacing:.02em; }
 .utah-page .trust span { display:inline-flex; align-items:center; gap:8px; }
 .utah-page .trust .dot { width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; }
 
-.utah-page .lab { font-family:var(--disp); font-size:clamp(1.7rem,5.5vw,2.6rem); line-height:1.05; }
+.utah-page .lab { font-family:var(--disp); font-size:clamp(1.7rem,5.5vw,2.6rem); line-height:1.05; margin-top:12px; }
 .utah-page .section-head .eyebrow { display:block; margin-bottom:14px; }
-.utah-page .section-sub { color:var(--ash); font-size:1.05rem; max-width:54ch; margin-top:14px; }
+.utah-page .section-sub { color:var(--ash); font-size:1.05rem; max-width:54ch; margin-top:18px; }
 
-.utah-page .receipt-grid { display:grid; grid-template-columns:1fr; gap:16px; margin-top:30px; }
+.utah-page .receipt-grid { display:grid; grid-template-columns:1fr; gap:20px; margin-top:36px; }
 .utah-page .receipt { background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
 .utah-page .receipt.win { border-color:var(--green); box-shadow:0 0 0 1px rgba(93,255,138,.25),0 24px 60px rgba(0,0,0,.4); }
 .utah-page .r-head { padding:14px 18px; display:flex; justify-content:space-between; align-items:center; font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
@@ -92,8 +92,8 @@ const css = `
 .utah-page .save-callout p b { color:var(--bone); }
 
 .utah-page #pricing { background:linear-gradient(180deg,transparent,rgba(93,255,138,.03) 40%,transparent); }
-.utah-page .price-grid { display:grid; grid-template-columns:1fr; gap:18px; margin-top:34px; }
-.utah-page .plan { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:26px 22px; position:relative; }
+.utah-page .price-grid { display:grid; grid-template-columns:1fr; gap:22px; margin-top:40px; }
+.utah-page .plan { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:32px 28px; position:relative; }
 .utah-page .plan.elite { border-color:var(--green); box-shadow:0 0 0 1px rgba(93,255,138,.3),0 30px 70px rgba(0,0,0,.5); background:linear-gradient(180deg,#16201526,var(--card)); }
 .utah-page .plan .tier { font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ash); }
 .utah-page .plan.elite .tier { color:var(--green); }
@@ -105,7 +105,7 @@ const css = `
 .utah-page .price .was { font-family:var(--mono); font-size:1.4rem; }
 .utah-page .price .per { font-family:var(--mono); font-size:.95rem; color:var(--ash); padding-bottom:6px; }
 .utah-page .price-note { font-size:13px; color:var(--ash); min-height:18px; }
-.utah-page .plan ul { list-style:none; margin:20px 0 24px; display:flex; flex-direction:column; gap:11px; }
+.utah-page .plan ul { list-style:none; margin:24px 0 28px; display:flex; flex-direction:column; gap:13px; }
 .utah-page .plan li { display:flex; gap:11px; font-size:14.5px; color:#d4dace; align-items:flex-start; }
 .utah-page .plan li svg { flex:0 0 18px; margin-top:2px; }
 .utah-page .plan .btn { width:100%; }
@@ -123,24 +123,24 @@ const css = `
 }
 .shaker.go { animation:tagshake 3s ease-in-out infinite; }
 
-.utah-page .trades { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:28px; }
+.utah-page .trades { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:32px; }
 .utah-page .trade { background:var(--ink2); border:1px solid var(--line); border-radius:12px; padding:13px 14px; font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:9px; }
 .utah-page .trade .tk { width:7px; height:7px; border-radius:50%; background:var(--green); flex:0 0 auto; }
 .utah-page .more-trades { margin-top:14px; font-family:var(--mono); color:var(--green); font-size:14px; }
 
-.utah-page .steps { display:grid; grid-template-columns:1fr; gap:14px; margin-top:30px; }
-.utah-page .step { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; display:flex; gap:16px; align-items:flex-start; }
+.utah-page .steps { display:grid; grid-template-columns:1fr; gap:16px; margin-top:36px; }
+.utah-page .step { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:26px 24px; display:flex; gap:18px; align-items:flex-start; }
 .utah-page .step .n { font-family:var(--disp); color:#06210F; background:var(--green); width:38px; height:38px; flex:0 0 38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; }
 .utah-page .step h3 { font-size:1.15rem; }
 .utah-page .step p { color:var(--ash); font-size:14.5px; margin-top:6px; }
 
-.utah-page .guarantee { background:var(--green); color:#06210F; border-radius:22px; padding:34px 26px; text-align:center; }
+.utah-page .guarantee { background:var(--green); color:#06210F; border-radius:22px; padding:48px 32px; text-align:center; }
 .utah-page .guarantee .eyebrow { color:#06210F; opacity:.7; }
 .utah-page .guarantee h2 { font-size:clamp(1.6rem,6vw,2.4rem); margin:12px 0; color:#06210F; }
 .utah-page .guarantee p { font-size:1.05rem; max-width:46ch; margin:0 auto; font-weight:600; }
 .utah-page .guarantee .shield { width:54px; height:54px; margin:0 auto 6px; }
 
-.utah-page .faq { margin-top:28px; border-top:1px solid var(--line); }
+.utah-page .faq { margin-top:36px; border-top:1px solid var(--line); }
 .utah-page .qa { border-bottom:1px solid var(--line); }
 .utah-page .qa button { width:100%; background:none; border:none; color:var(--bone); font-family:var(--body); font-weight:700; font-size:1.05rem; text-align:left; padding:20px 40px 20px 0; cursor:pointer; position:relative; }
 .utah-page .qa button:focus-visible { outline:2px solid var(--green); outline-offset:3px; border-radius:6px; }
@@ -157,7 +157,7 @@ const css = `
 .utah-page .final .phone { margin-top:18px; font-family:var(--mono); font-size:1.1rem; }
 .utah-page .final .phone a { color:var(--green); }
 
-.utah-page footer { border-top:1px solid var(--line); padding:34px 0 120px; color:var(--ash-dim); font-size:12.5px; }
+.utah-page footer { border-top:1px solid var(--line); padding:48px 0 120px; color:var(--ash-dim); font-size:12.5px; }
 .utah-page footer .logo { font-size:18px; margin-bottom:10px; }
 .utah-page footer .fine { font-size:11.5px; line-height:1.6; max-width:70ch; margin-top:12px; }
 .utah-page footer a { color:var(--ash); }
@@ -183,14 +183,15 @@ const css = `
   .utah-page .rv { opacity:1; transform:none; transition:none; }
 }
 @media (min-width:760px) {
-  .utah-page .receipt-grid { grid-template-columns:1fr 1fr; }
-  .utah-page .save-callout { display:flex; align-items:center; gap:30px; }
+  .utah-page .receipt-grid { grid-template-columns:1fr 1fr; gap:24px; }
+  .utah-page .save-callout { display:flex; align-items:center; gap:36px; }
   .utah-page .save-callout .big { flex:0 0 auto; }
   .utah-page .price-grid { grid-template-columns:1fr 1fr; align-items:start; }
-  .utah-page .trades { grid-template-columns:repeat(3,1fr); }
-  .utah-page .steps { grid-template-columns:repeat(3,1fr); }
+  .utah-page .trades { grid-template-columns:repeat(3,1fr); gap:14px; }
+  .utah-page .steps { grid-template-columns:repeat(3,1fr); gap:20px; }
   .utah-page .stickybar { display:none; }
-  .utah-page section { padding:82px 0; }
+  .utah-page section { padding:100px 0; }
+  .utah-page .hero { padding-top:80px; padding-bottom:80px; }
   .utah-page .hero .lede { max-width:46ch; }
 }
 @media (min-width:1000px) {
