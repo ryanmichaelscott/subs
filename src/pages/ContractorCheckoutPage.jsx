@@ -14,10 +14,13 @@ export default function ContractorCheckoutPage() {
   const [contractor, setContractor] = useState(null)
   const [price, setPrice] = useState(null)
 
+  const impersonating = (() => { try { return JSON.parse(localStorage.getItem('subs_impersonating') || 'null') } catch { return null } })()
+  const isImpersonating = impersonating?.role === 'contractor'
+
   useEffect(() => {
     if (!isLoaded) return
     if (!isSignedIn) { navigate('/contractor/login'); return }
-    const email = user?.primaryEmailAddress?.emailAddress
+    const email = isImpersonating ? impersonating.email : user?.primaryEmailAddress?.emailAddress
     if (!email) return
 
     const init = async () => {
@@ -53,7 +56,7 @@ export default function ContractorCheckoutPage() {
   const handleCheckout = async () => {
     setError(null)
     setLoading(true)
-    const email = user?.primaryEmailAddress?.emailAddress
+    const email = isImpersonating ? impersonating.email : user?.primaryEmailAddress?.emailAddress
     const { data, error: fnError } = await supabase.functions.invoke('create-contractor-checkout-session', {
       body: {
         email,
