@@ -42,7 +42,6 @@ export default async function handler(req, res) {
     success_url: `${BASE}/welcome?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: BASE,
     billing_address_collection: 'auto',
-    customer_creation: 'always',
     metadata: { plan: plan || '', coupon: coupon || '' },
     subscription_data: { metadata: { plan: plan || '', coupon: coupon || '' } },
   }
