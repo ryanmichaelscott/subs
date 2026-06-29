@@ -22,7 +22,7 @@ const css = `
 .utah-page .mono { font-family:var(--mono); }
 .utah-page .strike { text-decoration:line-through; text-decoration-color:var(--slash); color:var(--slash); }
 
-.utah-page button.btn { -webkit-appearance:none; appearance:none; background:none; outline:none; }
+.utah-page button.btn { -webkit-appearance:none; appearance:none; outline:none; }
 .utah-page .btn {
   display:inline-flex; align-items:center; justify-content:center; gap:.5em;
   font-family:var(--body); font-weight:800; font-size:1rem; letter-spacing:.01em;
