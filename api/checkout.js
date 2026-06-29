@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 const PRICE_IDS = {
   member:        'price_1TiRPcAYDs9oVarWLWpp0wLZ',
   'member-plus': 'price_1TjQ8TAYDs9oVarWqCQyxLM5',
+  plus:          'price_1TjQ8TAYDs9oVarWqCQyxLM5',
   elite:         'price_1TjQ7DAYDs9oVarWbJONkQ1P',
 }
 

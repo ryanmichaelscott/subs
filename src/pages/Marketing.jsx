@@ -252,11 +252,9 @@ function Hero() {
 
           {/* CTAs */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <a href="/api/checkout?plan=elite">
-              <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
-                Start saving today
-              </button>
-            </a>
+            <button onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
+              Start saving today
+            </button>
             <Link to="/contractor/apply">
               <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
                 Join as a Partner
@@ -795,11 +793,9 @@ function BottomCTA() {
         <p style={{ fontSize: 15, color: '#A8C4A0', lineHeight: 1.7, marginBottom: 36 }}>
           One roof. One HVAC system. One plumbing job. At member discount rates, any single job saves more than a decade of membership fees.
         </p>
-        <a href="/api/checkout?plan=elite">
-          <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 16, fontWeight: 700, padding: '16px 32px', borderRadius: 12, cursor: 'pointer' }}>
-            Join today →
-          </button>
-        </a>
+        <button onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 16, fontWeight: 700, padding: '16px 32px', borderRadius: 12, cursor: 'pointer' }}>
+          Join today →
+        </button>
       </div>
     </section>
   )
