@@ -71,10 +71,9 @@ serve(async (req) => {
       })
     } catch (e) { console.error('Admin notify error:', e) }
 
-    // Create Clerk user account directly — enables OTP login immediately.
-    // Invitations only create a pending state; the contractor can't sign in via OTP
-    // until they have a real account. POST /v1/users creates it right away.
+    // Create Clerk user account — enables OTP login immediately
     const clerkKey = Deno.env.get('CLERK_SECRET_KEY')
+    let clerkCreated = false
     if (clerkKey) {
       const nameParts = (contact_name || company_name || '').trim().split(/\s+/)
       const firstName = nameParts[0] || 'Partner'
@@ -82,10 +81,7 @@ serve(async (req) => {
 
       const resp = await fetch('https://api.clerk.com/v1/users', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${clerkKey}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email_address: [normalizedEmail],
           first_name: firstName,
@@ -95,13 +91,23 @@ serve(async (req) => {
           skip_password_checks: true,
         }),
       })
-      if (!resp.ok) {
-        const body = await resp.json().catch(() => ({}))
+      const body = await resp.json().catch(() => ({}))
+      if (resp.ok) {
+        clerkCreated = true
+        console.log('[contractor] Clerk account created:', body.id)
+      } else {
         const alreadyExists = body?.errors?.some((e: any) =>
           e.code === 'form_identifier_exists' || e.code === 'duplicate_record'
         )
-        if (!alreadyExists) console.error('Clerk user creation error:', body)
+        if (alreadyExists) {
+          clerkCreated = true
+          console.log('[contractor] Clerk account already exists for', normalizedEmail)
+        } else {
+          console.error('[contractor] Clerk creation FAILED for', normalizedEmail, JSON.stringify(body))
+        }
       }
+    } else {
+      console.error('[contractor] CLERK_SECRET_KEY not set — cannot create login account')
     }
 
     // Send welcome email with login instructions via Resend
