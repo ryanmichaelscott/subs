@@ -91,10 +91,12 @@ serve(async (req) => {
           skip_password_checks: true,
         }),
       })
-      const body = await resp.json().catch(() => ({}))
+      const rawText = await resp.text()
+      let body: any = {}
+      try { body = JSON.parse(rawText) } catch { /* not JSON */ }
       if (resp.ok) {
         clerkCreated = true
-        console.log('[contractor] Clerk account created:', body.id)
+        console.log('[contractor] Clerk account created:', body.id, 'for', normalizedEmail)
       } else {
         const alreadyExists = body?.errors?.some((e: any) =>
           e.code === 'form_identifier_exists' || e.code === 'duplicate_record'
@@ -103,11 +105,11 @@ serve(async (req) => {
           clerkCreated = true
           console.log('[contractor] Clerk account already exists for', normalizedEmail)
         } else {
-          console.error('[contractor] Clerk creation FAILED for', normalizedEmail, JSON.stringify(body))
+          console.error('[contractor] Clerk FAILED', resp.status, normalizedEmail, rawText.slice(0, 800))
         }
       }
     } else {
-      console.error('[contractor] CLERK_SECRET_KEY not set — cannot create login account')
+      console.error('[contractor] CLERK_SECRET_KEY not set')
     }
 
     // Send welcome email with login instructions via Resend
