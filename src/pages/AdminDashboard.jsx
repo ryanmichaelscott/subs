@@ -49,6 +49,8 @@ export default function AdminDashboard() {
   const [kpiLoading, setKpiLoading] = useState(false)
   const [sendingCard, setSendingCard] = useState(null)
   const [cardSent, setCardSent] = useState({})
+  const [sendingAccess, setSendingAccess] = useState(null)
+  const [accessSent, setAccessSent] = useState({})
   const [enterpriseMembers, setEnterpriseMembers] = useState([])
   const [enterpriseLeads, setEnterpriseLeads] = useState([])
   const [enterpriseLeadFilter, setEnterpriseLeadFilter] = useState('all')
@@ -281,6 +283,25 @@ export default function AdminDashboard() {
     } catch (e) {
       setSendingCard(null)
       alert(`Failed to send card: ${e.message}`)
+    }
+  }
+
+  const handleSendAccess = async (m) => {
+    if (sendingAccess === m.id || accessSent[m.id]) return
+    setSendingAccess(m.id)
+    try {
+      const { data, error } = await supabase.functions.invoke('send-member-access', {
+        body: { email: m.email },
+      })
+      setSendingAccess(null)
+      if (error || data?.error) {
+        alert(`Failed to send access link: ${data?.error || error?.message}`)
+      } else {
+        setAccessSent(prev => ({ ...prev, [m.id]: true }))
+      }
+    } catch (e) {
+      setSendingAccess(null)
+      alert(`Failed to send access link: ${e.message}`)
     }
   }
 
@@ -633,6 +654,13 @@ export default function AdminDashboard() {
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
                     <button onClick={() => handleImpersonate(m.name, m.email, 'member')} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer' }}>
                       Impersonate
+                    </button>
+                    <button
+                      onClick={() => handleSendAccess(m)}
+                      disabled={sendingAccess === m.id || accessSent[m.id]}
+                      style={{ background: accessSent[m.id] ? S.green + '22' : 'transparent', border: `1px solid ${accessSent[m.id] ? S.green + '44' : S.border}`, color: accessSent[m.id] ? S.green : S.muted, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: sendingAccess === m.id || accessSent[m.id] ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      {sendingAccess === m.id ? '…' : accessSent[m.id] ? '✓ Link Sent' : 'Send Access Link'}
                     </button>
                     <button
                       onClick={() => handleSendCard(m)}
