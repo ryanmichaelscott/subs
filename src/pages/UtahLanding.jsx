@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 
-const CTA = '/api/checkout?plan=elite&coupon=DOOR100'
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
@@ -23,11 +22,13 @@ const css = `
 .utah-page .mono { font-family:var(--mono); }
 .utah-page .strike { text-decoration:line-through; text-decoration-color:var(--slash); color:var(--slash); }
 
+.utah-page button.btn { -webkit-appearance:none; appearance:none; background:none; outline:none; }
 .utah-page .btn {
   display:inline-flex; align-items:center; justify-content:center; gap:.5em;
   font-family:var(--body); font-weight:800; font-size:1rem; letter-spacing:.01em;
   padding:16px 26px; border-radius:14px; border:2px solid transparent; cursor:pointer;
   transition:transform .12s ease,box-shadow .2s ease,background .2s ease; text-align:center;
+  text-decoration:none;
 }
 .utah-page .btn-primary { background:var(--green); color:#06210F; box-shadow:0 10px 30px rgba(93,255,138,.22); }
 .utah-page .btn-primary:hover { transform:translateY(-2px); box-shadow:0 16px 40px rgba(93,255,138,.34); }
@@ -233,7 +234,30 @@ const faqs = [
 export default function UtahLanding() {
   const [openFaq, setOpenFaq] = useState(null)
   const [stickyVisible, setStickyVisible] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
   const pricingRef = useRef(null)
+
+  const handleCheckout = async () => {
+    if (checkoutLoading) return
+    setCheckoutLoading(true)
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: 'elite', coupon: 'DOOR100' }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error(data.error || 'Checkout failed')
+      }
+    } catch {
+      setCheckoutLoading(false)
+      window.location.href = 'tel:+18884543019'
+      alert('Something went wrong. Please call or text us at 1-888-454-3019 and we\'ll get you set up.')
+    }
+  }
 
   useEffect(() => {
     const prev = document.title
@@ -388,7 +412,7 @@ export default function UtahLanding() {
                 <li>{CHECK} <span>Money-back savings guarantee</span></li>
                 <li>{CHECK} <span>All 39 trades, one membership</span></li>
               </ul>
-              <a className="btn btn-primary" href={CTA}>Claim founding price — $249</a>
+              <button className="btn btn-primary" onClick={handleCheckout} disabled={checkoutLoading}>{checkoutLoading ? 'Loading…' : 'Claim founding price — $249'}</button>
             </div>
           </div>
           <p className="price-note" style={{ marginTop: 20, textAlign: 'center' }}>
@@ -462,7 +486,7 @@ export default function UtahLanding() {
           <span className="eyebrow">Founding member price</span>
           <h2>One membership.<br /><span className="g">Every trade, wholesale.</span></h2>
           <p className="section-sub" style={{ margin: '14px auto 0' }}>Join the first homes in your neighborhood at the founding rate.</p>
-          <div><a className="btn btn-primary" href={CTA}>Claim $249 founding price</a></div>
+          <div><button className="btn btn-primary" onClick={handleCheckout} disabled={checkoutLoading}>{checkoutLoading ? 'Loading…' : 'Claim $249 founding price'}</button></div>
           <div className="phone">or call / text <a href="tel:+18884543019">1-888-454-3019</a></div>
         </section>
 
@@ -480,7 +504,7 @@ export default function UtahLanding() {
             <div className="a">Founding member price</div>
             <div className="b"><span className="s">$349</span> <span className="g">$249</span>/yr</div>
           </div>
-          <a className="btn btn-primary" href={CTA}>Join</a>
+          <button className="btn btn-primary" onClick={handleCheckout} disabled={checkoutLoading}>{checkoutLoading ? 'Loading…' : 'Join'}</button>
         </div>
 
       </div>
