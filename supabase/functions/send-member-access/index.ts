@@ -6,38 +6,53 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const ok  = (body: object) => new Response(JSON.stringify(body), { headers: { ...cors, 'Content-Type': 'application/json' } })
+const err = (msg: string)  => { console.error('[send-member-access]', msg); return ok({ error: msg }) }
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
     const { email, clerk_user_id } = await req.json()
-    if (!email && !clerk_user_id) {
-      return new Response(JSON.stringify({ error: 'email or clerk_user_id required' }), {
-        status: 400, headers: { ...cors, 'Content-Type': 'application/json' },
-      })
-    }
+    if (!email && !clerk_user_id) return err('email or clerk_user_id required')
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
-    const clerkKey = Deno.env.get('CLERK_SECRET_KEY')!
+    const clerkKey = Deno.env.get('CLERK_SECRET_KEY')
+    if (!clerkKey) return err('CLERK_SECRET_KEY not set in Supabase secrets')
 
     // Look up member
     const query = supabase.from('members').select('clerk_user_id, email, name, tier')
-    const { data: member } = clerk_user_id
-      ? await query.eq('clerk_user_id', clerk_user_id).single()
-      : await query.eq('email', email.toLowerCase().trim()).single()
+    const { data: member, error: dbErr } = clerk_user_id
+      ? await query.eq('clerk_user_id', clerk_user_id).maybeSingle()
+      : await query.eq('email', email.toLowerCase().trim()).maybeSingle()
 
-    if (!member) {
-      return new Response(JSON.stringify({ error: 'Member not found' }), {
-        status: 404, headers: { ...cors, 'Content-Type': 'application/json' },
-      })
+    if (dbErr) return err('DB error: ' + dbErr.message)
+    if (!member) return err(`Member not found for ${email || clerk_user_id}`)
+
+    // Resolve Clerk user ID — member record may have it, or look it up by email
+    let userId = member.clerk_user_id
+
+    if (!userId) {
+      // Try looking up by email in Clerk
+      const lookupRes = await fetch(
+        `https://api.clerk.com/v1/users?email_address[]=${encodeURIComponent(member.email)}`,
+        { headers: { 'Authorization': `Bearer ${clerkKey}` } }
+      )
+      const lookupText = await lookupRes.text()
+      let users: any[] = []
+      try { users = JSON.parse(lookupText) } catch {}
+      if (Array.isArray(users) && users[0]) {
+        userId = users[0].id
+        await supabase.from('members').update({ clerk_user_id: userId }).eq('email', member.email)
+        console.log('[send-member-access] found Clerk user by email:', userId)
+      }
     }
 
-    // Ensure Clerk account exists — create if missing
-    let userId = member.clerk_user_id
-    if (!userId && member.email) {
+    if (!userId) {
+      // Create Clerk account
       const nameParts = (member.name || '').trim().split(/\s+/)
       const createRes = await fetch('https://api.clerk.com/v1/users', {
         method: 'POST',
@@ -51,27 +66,17 @@ serve(async (req) => {
           public_metadata: { role: 'member', tier: member.tier || 'Member' },
         }),
       })
-      const createData = await createRes.json()
+      const createText = await createRes.text()
+      let createData: any = {}
+      try { createData = JSON.parse(createText) } catch {}
+
       if (createRes.ok) {
         userId = createData.id
-      } else {
-        // Try lookup if already exists
-        const lookupRes = await fetch(
-          `https://api.clerk.com/v1/users?email_address[]=${encodeURIComponent(member.email)}`,
-          { headers: { 'Authorization': `Bearer ${clerkKey}` } }
-        )
-        const users = await lookupRes.json()
-        userId = Array.isArray(users) && users[0] ? users[0].id : null
-      }
-      if (userId) {
         await supabase.from('members').update({ clerk_user_id: userId }).eq('email', member.email)
+        console.log('[send-member-access] created Clerk user:', userId)
+      } else {
+        return err(`Clerk account creation failed (${createRes.status}): ${createText.slice(0, 300)}`)
       }
-    }
-
-    if (!userId) {
-      return new Response(JSON.stringify({ error: 'Could not find or create Clerk account' }), {
-        status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
-      })
     }
 
     // Create sign-in token
@@ -80,14 +85,14 @@ serve(async (req) => {
       headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId, expires_in_seconds: 86400 }),
     })
-    if (!tokenRes.ok) {
-      const err = await tokenRes.text()
-      return new Response(JSON.stringify({ error: 'Could not create sign-in token: ' + err }), {
-        status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
-      })
-    }
-    const { token } = await tokenRes.json()
-    const magicLink = `https://subs.app/welcome?ticket=${token}`
+    const tokenText = await tokenRes.text()
+    let tokenData: any = {}
+    try { tokenData = JSON.parse(tokenText) } catch {}
+
+    if (!tokenRes.ok) return err(`Sign-in token failed (${tokenRes.status}): ${tokenText.slice(0, 300)}`)
+
+    const magicLink = `https://subs.app/welcome?ticket=${tokenData.token}`
+    console.log('[send-member-access] magic link created for', member.email)
 
     // Send welcome email
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -95,20 +100,11 @@ serve(async (req) => {
     await fetch(`${SUPABASE_URL}/functions/v1/send-welcome-email`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${SERVICE_ROLE}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: member.email,
-        name: member.name || '',
-        tier: member.tier || 'Member',
-        magic_link: magicLink,
-      }),
+      body: JSON.stringify({ email: member.email, name: member.name || '', tier: member.tier || 'Member', magic_link: magicLink }),
     })
 
-    return new Response(JSON.stringify({ success: true, magic_link: magicLink }), {
-      headers: { ...cors, 'Content-Type': 'application/json' },
-    })
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...cors, 'Content-Type': 'application/json' },
-    })
+    return ok({ success: true, magic_link: magicLink })
+  } catch (e) {
+    return err(e.message)
   }
 })
