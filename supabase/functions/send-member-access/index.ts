@@ -79,12 +79,36 @@ serve(async (req) => {
       }
     }
 
-    // Create sign-in token
-    const tokenRes = await fetch('https://api.clerk.com/v1/sign_in_tokens', {
+    // Create sign-in token — if user not found (stale ID), re-lookup by email first
+    let tokenRes = await fetch('https://api.clerk.com/v1/sign_in_tokens', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId, expires_in_seconds: 86400 }),
     })
+
+    if (tokenRes.status === 404) {
+      // Stale or placeholder clerk_user_id — look up real user by email
+      const lookupRes = await fetch(
+        `https://api.clerk.com/v1/users?email_address[]=${encodeURIComponent(member.email)}`,
+        { headers: { 'Authorization': `Bearer ${clerkKey}` } }
+      )
+      const lookupText = await lookupRes.text()
+      let users: any[] = []
+      try { users = JSON.parse(lookupText) } catch {}
+      if (Array.isArray(users) && users[0]) {
+        userId = users[0].id
+        await supabase.from('members').update({ clerk_user_id: userId }).eq('email', member.email)
+        console.log('[send-member-access] corrected stale clerk_user_id to', userId)
+        tokenRes = await fetch('https://api.clerk.com/v1/sign_in_tokens', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId, expires_in_seconds: 86400 }),
+        })
+      } else {
+        return err(`Clerk user not found for ${member.email} — create their account in Clerk first`)
+      }
+    }
+
     const tokenText = await tokenRes.text()
     let tokenData: any = {}
     try { tokenData = JSON.parse(tokenText) } catch {}
