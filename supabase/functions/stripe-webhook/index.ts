@@ -215,16 +215,19 @@ serve(async (req) => {
       if (clerkUserId) updates.clerk_user_id = clerkUserId
       if (isPaid || existingMember.status !== 'Active') updates.status = memberStatus
       await supabase.from('members').update(updates).eq('id', existingMember.id)
-    } else if (clerkUserId) {
-      await supabase.from('members').insert({
-        clerk_user_id: clerkUserId,
+    } else {
+      // Always insert the member record — even if Clerk failed, so payment is tracked
+      const insert: Record<string, any> = {
         email: sessionEmail,
         name: sessionName,
         tier,
         status: memberStatus,
         stripe_customer_id: customerId,
         stripe_subscription_id: subscriptionId,
-      })
+      }
+      if (clerkUserId) insert.clerk_user_id = clerkUserId
+      const { error: insertErr } = await supabase.from('members').insert(insert)
+      if (insertErr) console.error('[webhook] member insert error:', insertErr.message)
     }
 
     // ── Notify admin (always) ────────────────────────────────────────────────
