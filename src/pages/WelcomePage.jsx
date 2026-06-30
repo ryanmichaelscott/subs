@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useSignIn, useUser } from '@clerk/clerk-react'
 import { S, C } from '../theme'
+
+const PLAN_VALUES = { member: 99, 'member-plus': 179, plus: 179, elite: 349 }
 
 export default function WelcomePage() {
   const [searchParams] = useSearchParams()
@@ -11,10 +13,20 @@ export default function WelcomePage() {
 
   const ticket    = searchParams.get('ticket')
   const sessionId = searchParams.get('session_id')
+  const purchaseFired = useRef(false)
 
   const [phase, setPhase]           = useState('loading') // loading | authing | confirmed | expired | error
   const [email, setEmail]           = useState('')
   const [resendState, setResendState] = useState(null) // null | sending | sent | error
+
+  useEffect(() => {
+    if (!sessionId || purchaseFired.current) return
+    purchaseFired.current = true
+    const plan = sessionStorage.getItem('subs_checkout_plan') || ''
+    const value = PLAN_VALUES[plan] || 99
+    if (window.fbq) window.fbq('track', 'Purchase', { value, currency: 'USD' })
+    sessionStorage.removeItem('subs_checkout_plan')
+  }, [sessionId])
 
   useEffect(() => {
     if (!userLoaded) return

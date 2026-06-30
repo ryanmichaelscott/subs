@@ -241,6 +241,8 @@ export default function UtahLanding() {
   const handleCheckout = async () => {
     if (checkoutLoading) return
     setCheckoutLoading(true)
+    if (window.fbq) window.fbq('track', 'InitiateCheckout')
+    sessionStorage.setItem('subs_checkout_plan', 'elite')
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
@@ -260,6 +262,10 @@ export default function UtahLanding() {
       alert('Something went wrong. Please call or text us at (888) 454-3019 and we\'ll get you set up right away.')
     }
   }
+
+  useEffect(() => {
+    if (window.fbq) window.fbq('track', 'Lead')
+  }, [])
 
   useEffect(() => {
     const prev = document.title
