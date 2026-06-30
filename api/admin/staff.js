@@ -49,6 +49,21 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: msg })
       }
       invitationId = inviteData.id
+
+      // If the user already has a Clerk account, update their role immediately —
+      // ignore_existing only sends the email but doesn't update existing metadata
+      const lookupRes = await fetch(`https://api.clerk.com/v1/users?email_address[]=${encodeURIComponent(email)}`, {
+        headers: { 'Authorization': `Bearer ${clerkKey}` },
+      })
+      const lookupData = await lookupRes.json()
+      const existingUser = Array.isArray(lookupData) ? lookupData[0] : null
+      if (existingUser) {
+        await fetch(`https://api.clerk.com/v1/users/${existingUser.id}/metadata`, {
+          method: 'PATCH',
+          headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ public_metadata: { role } }),
+        })
+      }
     }
 
     const { data, error } = await supabase

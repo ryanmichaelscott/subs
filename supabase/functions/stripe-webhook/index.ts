@@ -69,12 +69,14 @@ async function findOrCreateClerkUser(clerkKey: string, email: string, firstName:
     const existing = Array.isArray(users) ? users[0] : null
     if (existing) {
       console.log('[clerk] found existing user:', existing.id)
-      // Update tier in metadata if needed
-      if (existing.public_metadata?.tier !== tier) {
+      // Never downgrade admin/staff roles — only set member role for non-privileged accounts
+      const existingRole = existing.public_metadata?.role
+      const safeRole = (existingRole === 'admin' || existingRole === 'staff') ? existingRole : 'member'
+      if (existing.public_metadata?.tier !== tier || existing.public_metadata?.role !== safeRole) {
         await fetch(`https://api.clerk.com/v1/users/${existing.id}/metadata`, {
           method: 'PATCH',
           headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ public_metadata: { ...existing.public_metadata, role: 'member', tier } }),
+          body: JSON.stringify({ public_metadata: { ...existing.public_metadata, role: safeRole, tier } }),
         })
       }
       return existing.id
