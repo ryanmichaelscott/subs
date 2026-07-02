@@ -58,6 +58,7 @@ export default function AdminDashboard() {
   const [managerForm, setManagerForm] = useState({ name: '', email: '', phone: '' })
   const [showCreateAccount, setShowCreateAccount] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [staffMembers, setStaffMembers] = useState([])
   const [staffLoading, setStaffLoading] = useState(false)
   const [showAddStaff, setShowAddStaff] = useState(false)
@@ -417,6 +418,18 @@ export default function AdminDashboard() {
         {/* Desktop nav actions */}
         <div className="admin-nav-actions">
           <button onClick={() => setShowCreateAccount(true)} style={{ background: S.green, border: 'none', color: S.black, fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, cursor: 'pointer', letterSpacing: '0.02em' }}>+ Create Account</button>
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setMoreOpen(o => !o)} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: moreOpen ? S.offwhite : S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>
+              Tools ▾
+            </button>
+            {moreOpen && (
+              <div style={{ position: 'absolute', top: '110%', right: 0, background: S.card, border: `1px solid ${S.border}`, borderRadius: 10, padding: 6, minWidth: 180, zIndex: 60, boxShadow: '0 12px 32px rgba(0,0,0,0.5)' }}>
+                <button onClick={() => { setMoreOpen(false); navigate('/admin/service-maps') }} style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', color: S.offwhite, fontSize: 13, fontWeight: 600, padding: '9px 12px', borderRadius: 7, cursor: 'pointer', textAlign: 'left' }}>
+                  🗺 Service Maps
+                </button>
+              </div>
+            )}
+          </div>
           <span style={{ fontSize: 12, color: S.muted }}>{user?.primaryEmailAddress?.emailAddress || 'admin@subs.co'}</span>
           <button onClick={() => signOut().then(() => navigate('/admin/login'))} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 12, padding: '6px 12px', borderRadius: 7, cursor: 'pointer' }}>Sign out</button>
         </div>
@@ -436,6 +449,12 @@ export default function AdminDashboard() {
             style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '11px 16px', borderRadius: 8, cursor: 'pointer', marginBottom: 10, textAlign: 'left' }}
           >
             + Create Account
+          </button>
+          <button
+            onClick={() => { setNavOpen(false); navigate('/admin/service-maps') }}
+            style={{ width: '100%', background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, padding: '10px 16px', borderRadius: 8, cursor: 'pointer', marginBottom: 10, textAlign: 'left' }}
+          >
+            🗺 Service Maps
           </button>
           {isAdmin && (
             <button

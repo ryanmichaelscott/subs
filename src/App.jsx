@@ -11,6 +11,7 @@ import ContractorApply from './pages/ContractorApply'
 import ContractorDashboard from './pages/ContractorDashboard'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminServiceMaps from './pages/AdminServiceMaps'
 import WaitlistPage from './pages/WaitlistPage'
 import NpsPage from './pages/NpsPage'
 import SmsConsent from './pages/SmsConsent'
@@ -85,6 +86,9 @@ export default function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={
           <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
+        } />
+        <Route path="/admin/service-maps" element={
+          <ProtectedRoute role="admin"><AdminServiceMaps /></ProtectedRoute>
         } />
         <Route path="/admin/*" element={
           <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
