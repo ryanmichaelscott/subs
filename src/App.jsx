@@ -12,6 +12,7 @@ import ContractorDashboard from './pages/ContractorDashboard'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminServiceMaps from './pages/AdminServiceMaps'
+import CalculatorPage from './pages/CalculatorPage'
 import WaitlistPage from './pages/WaitlistPage'
 import NpsPage from './pages/NpsPage'
 import SmsConsent from './pages/SmsConsent'
@@ -55,6 +56,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Marketing />} />
+        <Route path="/calculator" element={<CalculatorPage />} />
         <Route path="/signup" element={<Marketing />} />
         <Route path="/login" element={<MemberLogin />} />
         <Route path="/checkout" element={<CheckoutPage />} />

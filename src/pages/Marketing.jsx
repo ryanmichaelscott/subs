@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
+import SavingsCalculator from '../components/SavingsCalculator'
 
 const TRADES = [
   { icon: '❄️', name: 'HVAC', discount: '15–20% off' },
@@ -194,14 +195,6 @@ const HERO_BIG_TICKET = [
   { name: 'Painting & Drywall', discount: '10–20% off' },
 ]
 
-const SAVINGS_DATA = [
-  { service: 'Lawn Care',        freq: '12×', retail: 85,  member: 65,  saved: 240, discount: '15–25% off', estSaved: '~$200–300/yr' },
-  { service: 'Pest Control',     freq: '4×',  retail: 120, member: 85,  saved: 140, discount: '20–35% off', estSaved: '~$100–180/yr' },
-  { service: 'HVAC Tune-Up',     freq: '1×',  retail: 280, member: 165, saved: 115, discount: '35–45% off', estSaved: '~$90–140/yr'  },
-  { service: 'Window Washing',   freq: '2×',  retail: 180, member: 120, saved: 120, discount: '25–35% off', estSaved: '~$100–150/yr' },
-  { service: 'Plumbing (1 call)',freq: '1×',  retail: 340, member: 190, saved: 150, discount: '35–45% off', estSaved: '~$120–200/yr' },
-]
-
 function Hero() {
   return (
     <section style={{
@@ -309,49 +302,25 @@ function Hero() {
   )
 }
 
-function SavingsCalculator() {
-  const total = SAVINGS_DATA.reduce((sum, r) => sum + r.saved, 0)
+function SavingsSection() {
+  const scrollToPlans = () => {
+    const el = document.getElementById('section-membership')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   return (
     <section style={{ background: S.surface, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '80px 20px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 12 }}>Member Savings</div>
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '80px 20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 12 }}>Savings Calculator</div>
           <h2 style={{ fontFamily: C.display, fontSize: 'clamp(28px, 4vw, 48px)', color: S.offwhite, fontWeight: 400, margin: '0 0 16px', lineHeight: 1.1 }}>
-            What SUBS members save<br />in a year
+            See what you'd save<br />on your next job
           </h2>
           <p style={{ fontSize: 15, color: S.muted, maxWidth: 520, margin: '0 auto', lineHeight: 1.6 }}>
-            Real services. Real usage. Real savings — on a $99 membership.
+            Pick a service. See the retail price, the member price, and what stays in your pocket.
           </p>
         </div>
 
-        <style>{`@media (max-width: 600px) { .hide-mobile { display: none; } }`}</style>
-        <div style={{ borderRadius: 14, border: `1px solid ${S.border}`, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: S.black, borderBottom: `1px solid ${S.border}` }}>
-                <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'left' }}>Service</th>
-                <th className="hide-mobile" style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Avg Retail</th>
-                <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.muted, textAlign: 'right', whiteSpace: 'nowrap' }}>Avg Discount</th>
-                <th style={{ padding: '14px 20px', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: S.green, textAlign: 'right', whiteSpace: 'nowrap' }}>Est. Savings</th>
-              </tr>
-            </thead>
-            <tbody>
-              {SAVINGS_DATA.map((row, i) => (
-                <tr key={row.service} style={{ background: i % 2 === 0 ? S.card : S.surface, borderBottom: `1px solid ${S.border}` }}>
-                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, fontWeight: 500 }}>{row.service}</td>
-                  <td className="hide-mobile" style={{ padding: '15px 20px', fontSize: 14, color: S.muted, textAlign: 'right' }}>${row.retail}</td>
-                  <td style={{ padding: '15px 20px', fontSize: 14, color: S.offwhite, textAlign: 'right', fontWeight: 600 }}>{row.discount}</td>
-                  <td style={{ padding: '15px 20px', fontSize: 14, color: '#5DFF8A', textAlign: 'right', fontWeight: 700 }}>{row.estSaved}</td>
-                </tr>
-              ))}
-              <tr style={{ background: S.black, borderTop: `2px solid ${S.border}` }}>
-                <td colSpan={2} style={{ padding: '18px 20px', fontSize: 15, fontWeight: 700, color: S.offwhite }}>Total Annual Savings</td>
-                <td className="hide-mobile" />
-                <td style={{ padding: '18px 20px', fontSize: 18, fontWeight: 800, color: '#5DFF8A', textAlign: 'right' }}>~${total}+/yr</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <SavingsCalculator onJoin={scrollToPlans} joinLabel="Join now →" />
 
         <div style={{
           marginTop: 24, background: '#0A1C0E', border: `1px solid ${S.green}44`,
@@ -366,6 +335,39 @@ function SavingsCalculator() {
         </div>
       </div>
     </section>
+  )
+}
+
+function StickyJoinButton() {
+  const [hidden, setHidden] = useState(false)
+
+  useEffect(() => {
+    const target = document.getElementById('section-membership')
+    if (!target || !('IntersectionObserver' in window)) return
+    const io = new IntersectionObserver(
+      ([entry]) => setHidden(entry.isIntersecting),
+      { threshold: 0.15 }
+    )
+    io.observe(target)
+    return () => io.disconnect()
+  }, [])
+
+  if (hidden) return null
+
+  return (
+    <div style={{ position: 'fixed', bottom: 18, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 90, pointerEvents: 'none', padding: '0 16px' }}>
+      <button
+        onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
+        style={{
+          pointerEvents: 'auto', background: S.green, border: 'none', color: S.black,
+          fontSize: 15, fontWeight: 800, padding: '15px 42px', borderRadius: 100,
+          cursor: 'pointer', boxShadow: '0 10px 34px rgba(93,255,138,0.35), 0 4px 14px rgba(0,0,0,0.5)',
+          width: '100%', maxWidth: 340,
+        }}
+      >
+        Join now →
+      </button>
+    </div>
   )
 }
 
@@ -854,11 +856,21 @@ export default function Marketing() {
     }, 50)
   }
 
+  // Support /#plans deep links (e.g. from the /calculator page)
+  useEffect(() => {
+    if (window.location.hash === '#plans') {
+      setTimeout(() => {
+        const el = document.getElementById('section-membership')
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 150)
+    }
+  }, [])
+
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
       <Nav setSection={scrollTo} />
       <div id="section-home"><Hero /></div>
-      <SavingsCalculator />
+      <SavingsSection />
       <div id="section-how"><HowItWorks /></div>
       <ContractorQuality />
       <div id="section-membership"><Membership /></div>
@@ -868,6 +880,7 @@ export default function Marketing() {
       <div id="section-faq"><FAQ /></div>
       <BottomCTA />
       <Footer />
+      <StickyJoinButton />
     </div>
   )
 }

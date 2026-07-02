@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import SavingsCalculator from '../components/SavingsCalculator'
 
 
 const css = `
@@ -392,6 +393,21 @@ export default function UtahLanding() {
             </div>
             <p>on a <b>single</b> exterior paint job — your membership pays for itself many times over on one project, before you touch the other 38 trades.</p>
           </div>
+        </section>
+
+        {/* Savings calculator */}
+        <section className="wrap rv">
+          <div className="section-head" style={{ marginBottom: 32 }}>
+            <span className="eyebrow">Savings Calculator</span>
+            <div className="lab">Run your own numbers.</div>
+            <p className="section-sub">Pick any service you're thinking about. See what your neighbors pay retail — and what you'd pay as a member.</p>
+          </div>
+          <SavingsCalculator
+            onJoin={handleCheckout}
+            joinLabel={checkoutLoading ? 'Loading…' : 'Claim founding price →'}
+            defaultState="UT"
+            showStatePicker={false}
+          />
         </section>
 
         {/* Pricing */}
