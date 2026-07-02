@@ -339,20 +339,29 @@ function SavingsSection() {
 }
 
 function StickyJoinButton() {
-  const [hidden, setHidden] = useState(false)
+  const [plansVisible, setPlansVisible] = useState(false)
+  const [pastHero, setPastHero] = useState(false)
 
   useEffect(() => {
     const target = document.getElementById('section-membership')
     if (!target || !('IntersectionObserver' in window)) return
     const io = new IntersectionObserver(
-      ([entry]) => setHidden(entry.isIntersecting),
+      ([entry]) => setPlansVisible(entry.isIntersecting),
       { threshold: 0.15 }
     )
     io.observe(target)
     return () => io.disconnect()
   }, [])
 
-  if (hidden) return null
+  useEffect(() => {
+    const hero = document.getElementById('section-home')
+    const onScroll = () => setPastHero(window.scrollY > (hero?.offsetHeight || 600) * 0.7)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  if (!pastHero || plansVisible) return null
 
   return (
     <div style={{ position: 'fixed', bottom: 18, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 90, pointerEvents: 'none', padding: '0 16px' }}>
