@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.approve-contractor]
 verify_jwt = false
+
+[functions.contractor-email-sequence]
+verify_jwt = false
