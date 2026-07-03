@@ -4,6 +4,7 @@ import { useUser, useClerk } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 import { supabase } from '../lib/supabase'
 import ImpersonationBanner from '../components/ImpersonationBanner'
+import AddToHomeScreen from '../components/AddToHomeScreen'
 
 const TRADES = [
   'Additions & ADUs', 'Bathroom Remodel', 'Carpet Cleaning', 'Concrete Work', 'Countertops',
@@ -511,6 +512,7 @@ export default function MemberDashboard() {
 
   return (
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
+      <AddToHomeScreen />
       <style>{`
         .md-nav-meta { display: flex; align-items: center; gap: 8px; }
         .md-nav-email, .md-nav-tier { display: inline; }

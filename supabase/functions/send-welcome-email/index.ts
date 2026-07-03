@@ -72,6 +72,24 @@ function buildEmail(name: string, tier: string, magicLink: string): string {
       </p>
     </div>
 
+    <div style="border-top:1px solid #eee;padding-top:24px;margin-top:24px;">
+      <table role="presentation" style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="vertical-align:top;padding-right:16px;width:56px;">
+            <img src="https://subs.app/icons/icon-192.png" alt="SUBS app icon" width="56" height="56" style="border-radius:13px;display:block;" />
+          </td>
+          <td style="vertical-align:top;">
+            <p style="font-size:14px;font-weight:600;color:#1a1a1a;margin:0 0 6px;">Add SUBS to your home screen</p>
+            <p style="font-size:13.5px;color:#555;line-height:1.7;margin:0;">
+              One tap to your membership card, jobs, and pricing — no app store needed.<br/>
+              <strong>iPhone:</strong> open <a href="https://subs.app/dashboard" style="color:#1a1a1a;">subs.app</a> in Safari, tap the <strong>Share</strong> button (⬆️), then <strong>Add to Home Screen</strong>.<br/>
+              <strong>Android:</strong> open <a href="https://subs.app/dashboard" style="color:#1a1a1a;">subs.app</a> in Chrome, tap the <strong>⋮ menu</strong>, then <strong>Add to Home screen</strong>.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </div>
+
     <p style="font-size:13px;color:#aaa;margin-top:32px;">
       — The SUBS Team · <a href="https://subs.app" style="color:#aaa;text-decoration:none;">subs.app</a>
     </p>
