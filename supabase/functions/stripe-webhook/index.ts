@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { confirmAndPay, COMMISSION_RATE } from '../_shared/contractor-referral.ts'
 
 // ── Price → tier mapping (legacy flow: clerk_user_id in session metadata) ────
 const PRICE_TO_TIER: Record<string, string> = {
@@ -108,6 +109,60 @@ function parseName(fullName: string): { firstName: string; lastName: string } {
   return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' }
 }
 
+// ── Contractor referral: log the referral from a completed checkout session ──
+// referralType: 'member' (homeowner signup) or 'contractor' (partner signup)
+async function processReferral(supabase: any, stripeKey: string, session: any, referralType: string, plan: string) {
+  const code = session.metadata?.referral_code
+  if (!code) return
+
+  const { data: refContractor } = await supabase
+    .from('contractors')
+    .select('id')
+    .eq('referral_code', code)
+    .maybeSingle()
+  if (!refContractor) {
+    console.log('[referral] no contractor for code', code)
+    return
+  }
+
+  // Idempotent: one referral row per checkout session
+  const { data: existing } = await supabase
+    .from('contractor_referrals')
+    .select('*')
+    .eq('stripe_session_id', session.id)
+    .maybeSingle()
+
+  let row = existing
+  if (!row) {
+    const saleCents = session.amount_total || 0
+    const sale = saleCents / 100
+    const commission = Math.round(saleCents * COMMISSION_RATE) / 100
+    const insert: Record<string, any> = {
+      contractor_id: refContractor.id,
+      referral_type: referralType,
+      member_email: session.customer_details?.email || session.customer_email || '',
+      plan,
+      sale_amount: sale,
+      commission_amount: commission,
+      status: 'pending',
+      stripe_session_id: session.id,
+      stripe_subscription_id: session.subscription || null,
+    }
+    if (referralType === 'member' && session.customer) {
+      const { data: m } = await supabase.from('members').select('id').eq('stripe_customer_id', session.customer).maybeSingle()
+      if (m) insert.member_id = m.id
+    }
+    const { data: inserted, error } = await supabase.from('contractor_referrals').insert(insert).select().single()
+    if (error) { console.error('[referral] insert failed:', error.message); return }
+    row = inserted
+    console.log(`[referral] logged ${referralType} referral $${commission} for contractor ${refContractor.id}`)
+  }
+
+  if (row && session.payment_status === 'paid') {
+    await confirmAndPay(supabase, stripeKey, row)
+  }
+}
+
 serve(async (req) => {
   const payload   = await req.text()
   const sigHeader = req.headers.get('stripe-signature') || ''
@@ -166,6 +221,16 @@ serve(async (req) => {
     const sessionEmail   = session.customer_details?.email || session.customer_email || ''
     const sessionName    = session.customer_details?.name || ''
     const isPaid         = session.payment_status === 'paid'
+
+    // Contractor subscription checkout — not a member signup. Log any referral
+    // and stop; confirm-contractor-subscription handles the activation.
+    const isContractorSession = session.metadata?.type === 'contractor_subscription' || !!session.metadata?.company_name
+    if (isContractorSession) {
+      const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') || ''
+      await processReferral(supabase, stripeKey, session, 'contractor', 'contractor')
+      await markProcessed()
+      return new Response(JSON.stringify({ received: true }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }
 
     // Plan from metadata (new Stripe-first flow) or fall back to subscription price lookup
     const metaPlan = session.metadata?.plan || ''
@@ -232,6 +297,12 @@ serve(async (req) => {
       const { error: insertErr } = await supabase.from('members').insert(insert)
       if (insertErr) console.error('[webhook] member insert error:', insertErr.message)
     }
+
+    // ── Contractor referral (member signup with a ref code) ─────────────────
+    try {
+      const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') || ''
+      await processReferral(supabase, stripeKey, session, 'member', session.metadata?.plan || tier)
+    } catch (e) { console.error('[webhook] referral error:', e) }
 
     // ── Notify admin (always) ────────────────────────────────────────────────
     try {
@@ -352,6 +423,23 @@ serve(async (req) => {
     const customerId     = invoice.customer
     const invoiceEmail   = invoice.customer_email || ''
     const invoiceName    = invoice.customer_name || ''
+
+    // Confirm + pay any referral tied to this subscription (covers ACH and
+    // event-ordering where the session handler saw payment_status unpaid)
+    if (subscriptionId) {
+      try {
+        const { data: refRow } = await supabase
+          .from('contractor_referrals')
+          .select('*')
+          .eq('stripe_subscription_id', subscriptionId)
+          .in('status', ['pending', 'confirmed'])
+          .maybeSingle()
+        if (refRow) {
+          const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') || ''
+          await confirmAndPay(supabase, stripeKey, refRow)
+        }
+      } catch (e) { console.error('[webhook] referral confirm error:', e) }
+    }
 
     let memberRow: any = null
     if (subscriptionId) {

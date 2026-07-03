@@ -650,7 +650,41 @@ export default function ContractorDashboard() {
   const [saZip, setSaZip] = useState('')
   const [saRadius, setSaRadius] = useState('25')
   const isActive = contractorStatus === 'active'
-  const tabs = [['leads', '📥 Leads'], ['rates', '💲 Rates'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
+  const tabs = [['leads', '📥 Leads'], ['rates', '💲 Rates'], ['referrals', '🤝 Referrals'], ['profile', '👤 Profile'], ['billing', '💳 Billing']]
+
+  const [referralData, setReferralData] = useState(null)
+  const [connectBusy, setConnectBusy] = useState(false)
+  const [refLinkCopied, setRefLinkCopied] = useState(false)
+  const [referralBannerDismissed, setReferralBannerDismissed] = useState(() => localStorage.getItem('subs_referral_banner_dismissed') === 'true')
+
+  const loadReferrals = async (cId) => {
+    const { data } = await supabase.functions.invoke('contractor-referrals', { body: { contractor_id: cId, action: 'stats' } })
+    if (data && !data.error) setReferralData(data)
+  }
+
+  // Fetch referral stats once contractor is known; if returning from Stripe
+  // Connect onboarding, sync pending payouts first
+  useEffect(() => {
+    if (!contractorId) return
+    const params = new URLSearchParams(window.location.search)
+    const run = async () => {
+      if (params.get('connect')) {
+        await supabase.functions.invoke('contractor-referrals', { body: { contractor_id: contractorId, action: 'sync' } })
+        window.history.replaceState({}, '', '/contractor/dashboard')
+        setTab('referrals')
+      }
+      loadReferrals(contractorId)
+    }
+    run()
+  }, [contractorId])
+
+  const handleConnectBank = async () => {
+    if (connectBusy || !contractorId) return
+    setConnectBusy(true)
+    const { data } = await supabase.functions.invoke('contractor-referrals', { body: { contractor_id: contractorId, action: 'onboard' } })
+    if (data?.url) { window.location.href = data.url }
+    else { setConnectBusy(false); alert(data?.error || 'Could not start bank setup. Try again.') }
+  }
 
   useEffect(() => { loadZipData().then(() => setZipReady(true)) }, [])
 
@@ -927,9 +961,35 @@ export default function ContractorDashboard() {
           </div>
         )}
 
-        <div style={{ marginBottom: 8 }}>
-          <div style={{ fontFamily: C.display, fontSize: 26, color: S.offwhite }}>Welcome, {profile.name || 'Partner'} 👋</div>
-          <div style={{ fontSize: 14, color: S.muted, marginTop: 4 }}>{profile.trade ? `${profile.trade} Partner` : 'Partner'}</div>
+        {/* Referral commissions earned but bank not connected yet */}
+        {referralData?.totals?.unpaid > 0 && !referralData?.connect?.payouts_enabled && !referralBannerDismissed && (
+          <div style={{ background: S.green + '15', border: `1px solid ${S.green}55`, borderRadius: 10, padding: '14px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 18 }}>💰</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: S.green, marginBottom: 3 }}>You earned ${referralData.totals.unpaid.toFixed(2)} in referral commissions!</div>
+                <div style={{ fontSize: 13, color: S.muted }}>Connect your bank to receive your payout.</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+              <button onClick={handleConnectBank} disabled={connectBusy} style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '10px 20px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {connectBusy ? 'Opening…' : 'Connect bank →'}
+              </button>
+              <button onClick={() => { setReferralBannerDismissed(true); localStorage.setItem('subs_referral_banner_dismissed', 'true') }} style={{ background: 'transparent', border: 'none', color: S.muted, fontSize: 16, cursor: 'pointer', padding: 4 }}>×</button>
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: C.display, fontSize: 26, color: S.offwhite }}>Welcome, {profile.name || 'Partner'} 👋</div>
+            <div style={{ fontSize: 14, color: S.muted, marginTop: 4 }}>{profile.trade ? `${profile.trade} Partner` : 'Partner'}</div>
+          </div>
+          {referralData?.totals?.unpaid > 0 && !referralData?.connect?.payouts_enabled && (
+            <button onClick={() => setTab('referrals')} style={{ background: S.green + '22', border: `1px solid ${S.green}66`, color: S.green, fontSize: 12.5, fontWeight: 700, padding: '7px 14px', borderRadius: 100, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              💰 Unclaimed commissions: ${referralData.totals.unpaid.toFixed(2)}
+            </button>
+          )}
         </div>
 
         <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, margin: '24px 0' }}>
@@ -1156,6 +1216,107 @@ export default function ContractorDashboard() {
 
         {/* Rate Card */}
         {tab === 'rates' && <RateCardBuilder contractorId={contractorId} />}
+
+        {/* Referrals */}
+        {tab === 'referrals' && (() => {
+          if (!referralData) {
+            return <Card style={{ padding: '52px 24px', textAlign: 'center', color: S.muted, fontSize: 14 }}>Loading referrals…</Card>
+          }
+          const { referral_code, referral_link, referrals, totals, connect } = referralData
+          const statusColor = { pending: S.amber, confirmed: S.blue, paid: S.green }
+          const statusLabel = { pending: 'Pending', confirmed: connect.payouts_enabled ? 'Processing' : 'Unclaimed', paid: 'Paid' }
+          return (
+            <div>
+              {/* Code + link */}
+              <Card style={{ padding: 24, marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 6 }}>Your referral code</div>
+                <p style={{ fontSize: 13, color: S.muted, margin: '0 0 16px', lineHeight: 1.6 }}>
+                  Share your link with homeowners and other contractors. Homeowners get <b style={{ color: S.offwhite }}>10% off</b> their membership — you earn <b style={{ color: S.green }}>30% commission</b> on every signup. Refer another contractor and earn 30% of their partner membership too.
+                </p>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ background: S.surface, border: `1px dashed ${S.green}88`, borderRadius: 10, padding: '12px 20px', fontFamily: 'monospace', fontSize: 18, fontWeight: 700, color: S.green, letterSpacing: '0.04em' }}>
+                    {referral_code || '—'}
+                  </div>
+                  {referral_link && (
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(referral_link).then(() => { setRefLinkCopied(true); setTimeout(() => setRefLinkCopied(false), 2000) }) }}
+                      style={{ background: refLinkCopied ? S.green : 'transparent', border: `1px solid ${refLinkCopied ? S.green : S.border}`, color: refLinkCopied ? S.black : S.offwhite, fontSize: 13, fontWeight: 600, padding: '12px 18px', borderRadius: 10, cursor: 'pointer' }}
+                    >
+                      {refLinkCopied ? '✓ Copied!' : '📋 Copy link'}
+                    </button>
+                  )}
+                </div>
+                {referral_link && <div style={{ fontSize: 12.5, color: S.muted, marginTop: 10, wordBreak: 'break-all' }}>{referral_link}</div>}
+              </Card>
+
+              {/* Totals */}
+              <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+                {[
+                  [String(totals.count), 'Total referrals', S.offwhite],
+                  [`$${totals.pending.toFixed(2)}`, 'Pending (payment processing)', S.amber],
+                  [`$${totals.unpaid.toFixed(2)}`, connect.payouts_enabled ? 'Queued for payout' : 'Unclaimed — connect bank', S.blue],
+                  [`$${totals.paid.toFixed(2)}`, 'Paid out', S.green],
+                ].map(([val, label, color]) => (
+                  <Card key={label} style={{ padding: '16px 20px' }}>
+                    <div style={{ fontFamily: C.display, fontSize: 24, color, marginBottom: 4 }}>{val}</div>
+                    <div style={{ fontSize: 12, color: S.muted }}>{label}</div>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Bank connection state */}
+              {!connect.payouts_enabled && (
+                <Card style={{ padding: '18px 22px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: 13.5, color: S.muted, lineHeight: 1.6 }}>
+                    <b style={{ color: S.offwhite }}>Get paid automatically.</b> Connect your bank once — every commission after that pays out on its own.
+                  </div>
+                  <button onClick={handleConnectBank} disabled={connectBusy} style={{ background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '11px 22px', borderRadius: 9, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    {connectBusy ? 'Opening…' : connect.has_account ? 'Finish bank setup →' : 'Connect bank →'}
+                  </button>
+                </Card>
+              )}
+
+              {/* Referral list */}
+              <Card style={{ padding: 0, overflow: 'hidden' }}>
+                {referrals.length === 0 ? (
+                  <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 36, marginBottom: 12 }}>🤝</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: S.offwhite, marginBottom: 6 }}>No referrals yet</div>
+                    <div style={{ fontSize: 13.5, color: S.muted }}>Share your link — your first commission is one signup away.</div>
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${S.border}` }}>
+                          {['Date', 'Referred', 'Type', 'Plan', 'Commission', 'Status'].map(h => (
+                            <th key={h} style={{ padding: '12px 18px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: S.muted, textAlign: 'left' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {referrals.map(r => (
+                          <tr key={r.id} style={{ borderBottom: `1px solid ${S.border}` }}>
+                            <td style={{ padding: '13px 18px', fontSize: 13, color: S.muted, whiteSpace: 'nowrap' }}>{new Date(r.created_at).toLocaleDateString()}</td>
+                            <td style={{ padding: '13px 18px', fontSize: 13, color: S.offwhite }}>{r.member_email || '—'}</td>
+                            <td style={{ padding: '13px 18px', fontSize: 13, color: S.muted, textTransform: 'capitalize' }}>{r.referral_type}</td>
+                            <td style={{ padding: '13px 18px', fontSize: 13, color: S.muted, textTransform: 'capitalize' }}>{r.plan || '—'}</td>
+                            <td style={{ padding: '13px 18px', fontSize: 13, fontWeight: 700, color: S.green }}>${Number(r.commission_amount).toFixed(2)}</td>
+                            <td style={{ padding: '13px 18px' }}>
+                              <span style={{ fontSize: 11.5, fontWeight: 700, color: statusColor[r.status], background: statusColor[r.status] + '22', padding: '4px 10px', borderRadius: 100 }}>
+                                {statusLabel[r.status]}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Card>
+            </div>
+          )
+        })()}
 
         {/* Profile */}
         {tab === 'profile' && (

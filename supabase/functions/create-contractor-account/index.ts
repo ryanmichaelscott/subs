@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { company_name, trades, contact_name, email, phone, service_area } = await req.json()
+    const { company_name, trades, contact_name, email, phone, service_area, referred_by_code } = await req.json()
 
     if (!company_name?.trim() || !email?.trim() || !trades?.length) {
       return new Response(JSON.stringify({ error: 'Company name, email, and at least one trade are required.' }), {
@@ -48,6 +48,7 @@ serve(async (req) => {
       phone: phone?.trim() || '',
       service_area: service_area ? JSON.stringify(service_area) : null,
       status: 'pending',
+      referred_by_code: referred_by_code ? String(referred_by_code).toUpperCase().trim() : null,
     })
 
     if (dbError) throw new Error(dbError.message)

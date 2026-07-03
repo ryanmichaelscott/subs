@@ -59,7 +59,7 @@ export default function ContractorApply() {
     setError(null)
     setLoading(true)
     const { data, error: fnError } = await supabase.functions.invoke('create-contractor-account', {
-      body: { ...form, trades, service_area },
+      body: { ...form, trades, service_area, referred_by_code: localStorage.getItem('subs_ref') || null },
     })
     let msg = null
     if (fnError?.context) {

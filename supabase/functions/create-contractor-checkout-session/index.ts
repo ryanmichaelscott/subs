@@ -28,7 +28,7 @@ serve(async (req) => {
     // Verify contractor exists and is approved
     const { data: contractor } = await supabase
       .from('contractors')
-      .select('id, name, status')
+      .select('id, name, status, referred_by_code')
       .eq('contact_email', email.toLowerCase().trim())
       .single()
 
@@ -44,8 +44,21 @@ serve(async (req) => {
       })
     }
 
-    // Resolve promo code if provided
+    // Resolve promo code if provided; fall back to the referral code captured
+    // at application time (contractor-to-contractor referrals, 10% off)
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined
+    let referralCode: string | null = null
+
+    const resolveReferrer = async (code: string) => {
+      const { data } = await supabase
+        .from('contractors')
+        .select('id, referral_code, referral_promo_id')
+        .eq('referral_code', code.toUpperCase().trim())
+        .maybeSingle()
+      // One level deep, no self-referral
+      return data && data.id !== contractor.id ? data : null
+    }
+
     if (promo_code?.trim()) {
       const promos = await stripe.promotionCodes.list({ code: promo_code.trim(), active: true, limit: 1 })
       if (promos.data.length === 0) {
@@ -54,6 +67,14 @@ serve(async (req) => {
         })
       }
       discounts = [{ promotion_code: promos.data[0].id }]
+      const referrer = await resolveReferrer(promo_code)
+      if (referrer) referralCode = referrer.referral_code
+    } else if (contractor.referred_by_code) {
+      const referrer = await resolveReferrer(contractor.referred_by_code)
+      if (referrer?.referral_promo_id) {
+        discounts = [{ promotion_code: referrer.referral_promo_id }]
+        referralCode = referrer.referral_code
+      }
     }
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -63,7 +84,12 @@ serve(async (req) => {
       customer_email: email,
       success_url,
       cancel_url,
-      metadata: { email, company_name: contractor.name },
+      metadata: {
+        email,
+        company_name: contractor.name,
+        type: 'contractor_subscription',
+        ...(referralCode ? { referral_code: referralCode } : {}),
+      },
     }
 
     if (discounts) {

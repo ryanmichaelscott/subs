@@ -1,2 +1,5 @@
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.approve-contractor]
+verify_jwt = false

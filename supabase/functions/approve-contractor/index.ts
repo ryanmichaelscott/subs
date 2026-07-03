@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { ensureReferralCode } from '../_shared/contractor-referral.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -93,6 +94,14 @@ serve(async (req) => {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
+  }
+
+  // Generate referral code + Stripe promo code — non-fatal if it fails
+  try {
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') || ''
+    await ensureReferralCode(supabase, stripeKey, contractor)
+  } catch (e) {
+    console.error('[approve-contractor] referral code generation failed:', e.message)
   }
 
   // Send branded approval email via Resend

@@ -18,6 +18,7 @@ export default async function handler(req, res) {
 
   const plan   = req.method === 'GET' ? req.query.plan   : (req.body?.plan   || req.query.plan)
   const coupon = req.method === 'GET' ? req.query.coupon : (req.body?.coupon || req.query.coupon)
+  const ref    = req.method === 'GET' ? req.query.ref    : (req.body?.ref    || req.query.ref)
 
   const priceId = PRICE_IDS[plan]
   if (!priceId) {
@@ -48,6 +49,31 @@ export default async function handler(req, res) {
   // DOOR100 is Elite-only — ignore coupon for other plans
   if (coupon && PROMO_CODES[coupon.toUpperCase()] && plan === 'elite') {
     params.discounts = [{ promotion_code: PROMO_CODES[coupon.toUpperCase()] }]
+  }
+
+  // Contractor referral code — 10% off + commission attribution.
+  // Explicit coupons take precedence; invalid codes are silently ignored.
+  if (ref && !params.discounts) {
+    try {
+      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (supabaseUrl && supabaseKey) {
+        const code = String(ref).toUpperCase().trim()
+        const lookup = await fetch(
+          `${supabaseUrl}/rest/v1/contractors?referral_code=eq.${encodeURIComponent(code)}&select=id,referral_code,referral_promo_id&limit=1`,
+          { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
+        )
+        const rows = await lookup.json()
+        const contractor = Array.isArray(rows) ? rows[0] : null
+        if (contractor?.referral_promo_id) {
+          params.discounts = [{ promotion_code: contractor.referral_promo_id }]
+          params.metadata.referral_code = contractor.referral_code
+          params.subscription_data.metadata.referral_code = contractor.referral_code
+        }
+      }
+    } catch (e) {
+      console.error('[checkout] referral lookup failed:', e.message)
+    }
   }
 
   try {

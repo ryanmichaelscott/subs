@@ -12,6 +12,7 @@ import ContractorDashboard from './pages/ContractorDashboard'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminServiceMaps from './pages/AdminServiceMaps'
+import AdminReferrals from './pages/AdminReferrals'
 import CalculatorPage from './pages/CalculatorPage'
 import WaitlistPage from './pages/WaitlistPage'
 import NpsPage from './pages/NpsPage'
@@ -50,6 +51,12 @@ class DashboardErrorBoundary extends Component {
     return this.props.children
   }
 }
+
+// Capture ?ref=CODE from any landing URL so it survives navigation to checkout
+try {
+  const refParam = new URLSearchParams(window.location.search).get('ref')
+  if (refParam) localStorage.setItem('subs_ref', refParam.toUpperCase().trim())
+} catch { /* private browsing */ }
 
 export default function App() {
   return (
@@ -91,6 +98,9 @@ export default function App() {
         } />
         <Route path="/admin/service-maps" element={
           <ProtectedRoute role="admin"><AdminServiceMaps /></ProtectedRoute>
+        } />
+        <Route path="/admin/referrals" element={
+          <ProtectedRoute role="admin"><AdminReferrals /></ProtectedRoute>
         } />
         <Route path="/admin/*" element={
           <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>

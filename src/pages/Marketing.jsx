@@ -485,7 +485,7 @@ function Membership() {
                 </li>
               ))}
             </ul>
-            <a href={`/api/checkout?plan=${tier.id}`} onClick={() => { if (window.fbq) window.fbq('track', 'InitiateCheckout'); sessionStorage.setItem('subs_checkout_plan', tier.id) }} style={{ textDecoration: 'none' }}>
+            <a href={`/api/checkout?plan=${tier.id}${localStorage.getItem('subs_ref') ? `&ref=${encodeURIComponent(localStorage.getItem('subs_ref'))}` : ''}`} onClick={() => { if (window.fbq) window.fbq('track', 'InitiateCheckout'); sessionStorage.setItem('subs_checkout_plan', tier.id) }} style={{ textDecoration: 'none' }}>
               <button style={{ width: '100%', background: tier.popular ? tier.color : S.surface, border: `1px solid ${tier.popular ? 'transparent' : S.border}`, color: tier.popular ? S.black : S.offwhite, fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: 'pointer' }}>
                 Join {tier.name}
               </button>
