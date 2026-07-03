@@ -13,6 +13,7 @@ import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminServiceMaps from './pages/AdminServiceMaps'
 import AdminReferrals from './pages/AdminReferrals'
+import AdminMarketIntel from './pages/AdminMarketIntel'
 import CalculatorPage from './pages/CalculatorPage'
 import WaitlistPage from './pages/WaitlistPage'
 import NpsPage from './pages/NpsPage'
@@ -101,6 +102,9 @@ export default function App() {
         } />
         <Route path="/admin/referrals" element={
           <ProtectedRoute role="admin"><AdminReferrals /></ProtectedRoute>
+        } />
+        <Route path="/admin/market-intel" element={
+          <ProtectedRoute role="admin"><AdminMarketIntel /></ProtectedRoute>
         } />
         <Route path="/admin/*" element={
           <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>

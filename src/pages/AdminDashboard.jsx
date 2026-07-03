@@ -430,6 +430,11 @@ export default function AdminDashboard() {
                 <button onClick={() => { setMoreOpen(false); navigate('/admin/referrals') }} style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', color: S.offwhite, fontSize: 13, fontWeight: 600, padding: '9px 12px', borderRadius: 7, cursor: 'pointer', textAlign: 'left' }}>
                   🤝 Referrals
                 </button>
+                {isAdmin && (
+                  <button onClick={() => { setMoreOpen(false); navigate('/admin/market-intel') }} style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', color: S.offwhite, fontSize: 13, fontWeight: 600, padding: '9px 12px', borderRadius: 7, cursor: 'pointer', textAlign: 'left' }}>
+                    📡 Market Intelligence
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -465,6 +470,14 @@ export default function AdminDashboard() {
           >
             🤝 Referrals
           </button>
+          {isAdmin && (
+            <button
+              onClick={() => { setNavOpen(false); navigate('/admin/market-intel') }}
+              style={{ width: '100%', background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, fontSize: 14, padding: '10px 16px', borderRadius: 8, cursor: 'pointer', marginBottom: 10, textAlign: 'left' }}
+            >
+              📡 Market Intelligence
+            </button>
+          )}
           {isAdmin && (
             <button
               onClick={() => { setTab('staff'); setNavOpen(false) }}
