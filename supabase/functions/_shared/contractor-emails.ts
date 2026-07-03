@@ -103,6 +103,27 @@ export function day3Email(firstName: string, code: string, appUrl: string) {
   }
 }
 
+// One-time launch announcement blast to existing contractors
+export function referralLaunchEmail(firstName: string, code: string, appUrl: string) {
+  const link = `${appUrl}/?ref=${code}`
+  return {
+    subject: 'New for SUBS partners: earn 30% on every referral 💰',
+    html: shell(`
+      ${h1(`${firstName}, we just launched something for you.`)}
+      ${p(`SUBS partners can now earn <b style="color:${BONE};">30% commission</b> on every confirmed signup they refer — homeowners <i>and</i> other contractors. And everyone you refer gets <b style="color:${BONE};">10% off</b> their membership.`)}
+      ${codeBox(code, link)}
+      ${p(`<b style="color:${BONE};">What you earn per confirmed signup:</b>`)}
+      ${list([
+        `<b style="color:${BONE};">Homeowner members:</b> $26–$94 per signup depending on their tier (Member, Member+, or Elite).`,
+        `<b style="color:${BONE};">Contractors:</b> $54 per partner who joins with your link.`,
+        `Commissions pay out to your bank automatically — connect it once in your dashboard and you're set.`,
+      ])}
+      ${button(`${appUrl}/contractor/dashboard`, 'Get my referral link →')}
+      ${p(`Your code is already live — text your link to past customers, drop it in invoices, or share it with contractor friends. Every signup is money in your pocket.`)}
+    `),
+  }
+}
+
 export function day14Email(firstName: string, code: string, appUrl: string, stats: { count: number; unpaid: number }) {
   const link = `${appUrl}/?ref=${code}`
   const hasReferrals = stats.count > 0
