@@ -248,11 +248,6 @@ function Hero() {
             <button onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
               Start saving today
             </button>
-            <Link to="/contractor/apply">
-              <button style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
-                Join as a Partner
-              </button>
-            </Link>
           </div>
         </div>
 
