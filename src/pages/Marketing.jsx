@@ -185,7 +185,7 @@ const CONTRACTOR_LOGOS = [
   { src: '/contractor-logos/6.png', w: 1232, h: 280 },
   { src: '/contractor-logos/7.png', w: 376, h: 280 },
   { src: '/contractor-logos/8.png', w: 648, h: 280 },
-  { src: '/contractor-logos/9.png', w: 2039, h: 280 },
+  { src: '/contractor-logos/9.png', w: 2039, h: 280, maxWidth: 300 },
 ]
 
 const UGC_VIDEOS = [
