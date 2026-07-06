@@ -173,7 +173,20 @@ function Nav({ setSection }) {
   )
 }
 
-const CONTRACTOR_LOGOS = Array.from({ length: 9 }, (_, i) => `/contractor-logos/${i + 1}.png`)
+// w/h are each logo's actual pixel dimensions — reserving them via aspect-ratio keeps
+// the marquee's track width stable before images load, avoiding a layout-shift/flicker.
+// maxWidth reins in the couple of ultra-wide wordmark logos so they don't dominate the row.
+const CONTRACTOR_LOGOS = [
+  { src: '/contractor-logos/1.png', w: 946, h: 280 },
+  { src: '/contractor-logos/2.png', w: 280, h: 280 },
+  { src: '/contractor-logos/3.png', w: 392, h: 280 },
+  { src: '/contractor-logos/4.png', w: 396, h: 280 },
+  { src: '/contractor-logos/5.png', w: 2585, h: 280, maxWidth: 300 },
+  { src: '/contractor-logos/6.png', w: 1232, h: 280 },
+  { src: '/contractor-logos/7.png', w: 376, h: 280 },
+  { src: '/contractor-logos/8.png', w: 648, h: 280 },
+  { src: '/contractor-logos/9.png', w: 2039, h: 280 },
+]
 
 const UGC_VIDEOS = [
   { src: '/videos/UGC_1.mp4' },
@@ -274,7 +287,7 @@ function ContractorMarquee() {
           from { transform: translateX(0); }
           to { transform: translateX(-50%); }
         }
-        .marquee-track { animation: subs-marquee-scroll 35s linear infinite; }
+        .marquee-track { animation: subs-marquee-scroll 35s linear infinite; will-change: transform; }
         .marquee-viewport:hover .marquee-track { animation-play-state: paused; }
       `}</style>
       <div style={{ textAlign: 'center', marginBottom: 16 }}>
@@ -291,8 +304,22 @@ function ContractorMarquee() {
         }}
       >
         <div className="marquee-track" style={{ display: 'flex', alignItems: 'center', gap: 60, width: 'max-content' }}>
-          {logos.map((src, i) => (
-            <img key={i} src={src} alt="Vetted SUBS contractor partner logo" style={{ height: 90, width: 'auto', display: 'block', objectFit: 'contain', flexShrink: 0 }} />
+          {logos.map((logo, i) => (
+            <img
+              key={i}
+              src={logo.src}
+              width={logo.w}
+              height={logo.h}
+              alt="Vetted SUBS contractor partner logo"
+              style={{
+                height: 90,
+                width: logo.maxWidth || 'auto',
+                maxWidth: logo.maxWidth || 'none',
+                display: 'block',
+                objectFit: 'contain',
+                flexShrink: 0,
+              }}
+            />
           ))}
         </div>
       </div>

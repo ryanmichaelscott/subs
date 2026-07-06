@@ -5,6 +5,12 @@ import './index.css'
 import './styles/responsive.css'
 import App from './App.jsx'
 
+// Always reload at the top of the page instead of the browser restoring
+// whatever scroll position was open before the refresh
+if ('scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual'
+}
+
 // Capture referral code synchronously before Clerk can redirect
 const _subs_ref = new URLSearchParams(window.location.search).get('ref')
 if (_subs_ref) localStorage.setItem('subs_referral_code', _subs_ref)
