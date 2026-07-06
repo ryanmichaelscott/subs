@@ -513,7 +513,7 @@ function Network() {
 
 function MemberVideoCard({ video }) {
   return (
-    <div style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
+    <div className="member-video-frame" style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
       <video
         src={video.src}
         autoPlay
@@ -531,7 +531,8 @@ function Testimonials() {
   return (
     <section style={{ background: S.surface, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
       <style>{`
-        .ugc-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .ugc-grid { display: grid; grid-template-columns: 1fr; gap: 20px; justify-items: center; }
+        .member-video-frame { width: min(100%, 320px); }
         @media (min-width: 768px) { .ugc-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (min-width: 1280px) { .ugc-grid { grid-template-columns: repeat(3, 1fr); } }
       `}</style>
