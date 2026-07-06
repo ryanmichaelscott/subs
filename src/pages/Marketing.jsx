@@ -100,12 +100,6 @@ const STEPS = [
   { icon: '💰', title: 'Save thousands', body: 'Your member discount comes off the final quote. On a $25K roof, 15% off is $3,750 back in your pocket. Most members save more on a single job than a decade of membership fees.' },
 ]
 
-const TESTIMONIALS = [
-  { name: 'Sarah K.', tier: 'Member+', location: 'Draper, UT', quote: 'Needed a new roof. Called through SUBS, contractor came out — the quote already had my member discount baked in. Saved $3,800 vs the other two quotes I got. Membership paid for itself 40× over.' },
-  { name: 'Tom B.', tier: 'Elite', location: 'South Jordan, UT', quote: "I have zero time to manage contractors. I text SUBS, they handle it. My HVAC, lawn, and pest are all on autopilot. It's like having an EA for my house." },
-  { name: 'Dana M.', tier: 'Member', location: 'Murray, UT', quote: "Joined for the plumbing rate. My last emergency call was $380/hr. SUBS's rate card for the same company is $175. The $99 membership paid for itself twice in one call." },
-]
-
 const FAQS = [
   { q: 'How does the member discount actually work?', a: "Every contractor in the SUBS network has agreed to a member discount rate — typically 15–20% off their standard quote. When they come out and assess your job, the final price already reflects your membership. You're not negotiating. The discount is baked in by contract." },
   { q: 'Can I cancel anytime?', a: 'Memberships are annual and non-refundable after the first 14 days. If SUBS fails to deliver your included services, we\'ll prorate a refund for missed items. Most members renew — the savings on a single HVAC service typically cover the full annual fee.' },
@@ -182,9 +176,9 @@ function Nav({ setSection }) {
 const CONTRACTOR_LOGOS = Array.from({ length: 9 }, (_, i) => `/contractor-logos/${i + 1}.png`)
 
 const UGC_VIDEOS = [
-  { src: '/videos/UGC_1.mp4', name: 'Mike, Draper', amount: '$640 saved on HVAC', quote: 'Called one number, they showed up next day.' },
-  { src: '/videos/UGC_2.mp4', name: 'Sarah, South Jordan', amount: '$520 saved on roofing', quote: 'Membership paid for itself on the first call.' },
-  { src: '/videos/UGC_3.mp4', name: 'James, Lehi', amount: '$400 saved this summer', quote: 'Used it for plumbing and landscaping. Easy decision.' },
+  { src: '/videos/UGC_1.mp4' },
+  { src: '/videos/UGC_2.mp4' },
+  { src: '/videos/UGC_3.mp4' },
 ]
 
 function Hero() {
@@ -247,12 +241,17 @@ function Hero() {
           <span style={{ fontSize: 11, fontWeight: 700, color: S.offwhite, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             Why We Started SUBS
           </span>
-          <video
-            src="/videos/subs_owner_video.mp4"
-            controls
-            playsInline
-            style={{ width: '100%', display: 'block', borderRadius: 12, border: `1px solid ${S.border}`, background: S.black }}
-          />
+          <div style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            <video
+              src="/videos/subs_owner_video.mp4"
+              autoPlay
+              muted
+              loop
+              controls
+              playsInline
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
         </div>
       </div>
     </section>
@@ -262,17 +261,17 @@ function Hero() {
 function ContractorMarquee() {
   const logos = [...CONTRACTOR_LOGOS, ...CONTRACTOR_LOGOS]
   return (
-    <section style={{ background: S.black, borderBottom: `1px solid ${S.border}`, padding: '20px 0', overflow: 'hidden' }}>
+    <section style={{ background: S.offwhite, borderBottom: `1px solid ${S.borderLt}`, padding: '32px 0', overflow: 'hidden' }}>
       <style>{`
         @keyframes subs-marquee-scroll {
           from { transform: translateX(0); }
           to { transform: translateX(-50%); }
         }
-        .marquee-track { animation: subs-marquee-scroll 26s linear infinite; }
+        .marquee-track { animation: subs-marquee-scroll 44s linear infinite; }
         .marquee-viewport:hover .marquee-track { animation-play-state: paused; }
       `}</style>
-      <div style={{ textAlign: 'center', marginBottom: 14 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase' }}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: '#6B7268', textTransform: 'uppercase' }}>
           Our Vetted Utah Contractor Network
         </span>
       </div>
@@ -284,9 +283,9 @@ function ContractorMarquee() {
           maskImage: 'linear-gradient(to right, transparent 0, black 64px, black calc(100% - 64px), transparent 100%)',
         }}
       >
-        <div className="marquee-track" style={{ display: 'flex', alignItems: 'center', gap: 56, width: 'max-content' }}>
+        <div className="marquee-track" style={{ display: 'flex', alignItems: 'center', gap: 64, width: 'max-content' }}>
           {logos.map((src, i) => (
-            <img key={i} src={src} alt="Vetted SUBS contractor partner logo" style={{ height: 60, width: 'auto', display: 'block', objectFit: 'contain', flexShrink: 0 }} />
+            <img key={i} src={src} alt="Vetted SUBS contractor partner logo" style={{ height: 120, width: 'auto', display: 'block', objectFit: 'contain', flexShrink: 0 }} />
           ))}
         </div>
       </div>
@@ -400,54 +399,6 @@ function HowItWorks() {
   )
 }
 
-function ContractorQuality() {
-  const pillars = [
-    { icon: '🔍', title: 'Background Checked', desc: 'Every contractor passes a background check before their first job. No exceptions, no shortcuts.' },
-    { icon: '📋', title: 'Licensed & Insured', desc: "We verify every license and insurance certificate before approval. If they're not covered, they're not in the network." },
-    { icon: '⭐', title: 'Top-Rated Only', desc: 'We monitor ratings after every job. Partners who fall below 4.5 are removed. We keep only the best.' },
-    { icon: '💰', title: 'Member Pricing Guaranteed', desc: 'Every partner has agreed by contract to honor your member rate on every job. The discount is baked in — no negotiating.' },
-  ]
-  return (
-    <section style={{ background: S.black, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 56 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 12 }}>The SUBS Standard</div>
-          <h2 style={{ fontFamily: C.display, fontSize: 'clamp(32px, 5vw, 52px)', color: S.offwhite, fontWeight: 400, margin: '0 0 16px', lineHeight: 1.1 }}>
-            You're not rolling the dice.<br />You're getting the best.
-          </h2>
-          <p style={{ fontSize: 15, color: S.muted, maxWidth: 580, margin: '0 auto', lineHeight: 1.65 }}>
-            Every contractor in our network is vetted, licensed, insured, and background checked. We don't list anyone — we approve them.
-          </p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 2, marginBottom: 28 }}>
-          {pillars.map((p, i) => (
-            <div key={i} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, padding: 28 }}>
-              <div style={{ fontSize: 28, marginBottom: 16 }}>{p.icon}</div>
-              <div style={{ fontFamily: C.display, fontSize: 20, color: S.offwhite, marginBottom: 10 }}>{p.title}</div>
-              <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.6, margin: 0 }}>{p.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 12, padding: '28px 32px', display: 'flex', flexWrap: 'wrap', gap: 40, justifyContent: 'center', alignItems: 'center' }}>
-          {[
-            ['100%', 'License verified'],
-            ['100%', 'Insurance verified'],
-            ['100%', 'Background checked'],
-            ['4.8★', 'Avg. partner rating'],
-          ].map(([val, label]) => (
-            <div key={label} style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: C.display, fontSize: 30, color: S.green }}>{val}</div>
-              <div style={{ fontSize: 12, color: S.muted, marginTop: 4 }}>{label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function Membership() {
   return (
     <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
@@ -526,25 +477,56 @@ function Network() {
   )
 }
 
+function MemberVideoCard({ video }) {
+  const [playing, setPlaying] = useState(false)
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    if (playing) videoRef.current?.play().catch(() => {})
+  }, [playing])
+
+  return (
+    <div style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
+      <video
+        ref={videoRef}
+        src={video.src}
+        playsInline
+        controls={playing}
+        onClick={() => !playing && setPlaying(true)}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: playing ? 'default' : 'pointer' }}
+      />
+      {!playing && (
+        <button
+          onClick={() => setPlaying(true)}
+          aria-label="Play member video"
+          style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)', border: 'none', cursor: 'pointer', padding: 0 }}
+        >
+          <span style={{ width: 56, height: 56, borderRadius: '50%', background: S.green, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: S.black, boxShadow: '0 4px 18px rgba(0,0,0,0.4)' }}>
+            ▶
+          </span>
+        </button>
+      )}
+    </div>
+  )
+}
+
 function Testimonials() {
   return (
-    <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 48 }}>
-        <h2 style={{ fontFamily: C.display, fontSize: 'clamp(28px, 4vw, 44px)', color: S.offwhite, fontWeight: 400, margin: 0 }}>What members say</h2>
-      </div>
-      <div className="testimonials-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-        {TESTIMONIALS.map((t, i) => (
-          <div key={i} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 14, padding: 28 }}>
-            <p style={{ fontSize: 15, color: S.offwhite, lineHeight: 1.65, marginBottom: 20, fontStyle: 'italic' }}>"{t.quote}"</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>{t.name}</div>
-                <div style={{ fontSize: 12, color: S.muted }}>{t.location}</div>
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.greenDim + '44', padding: '4px 10px', borderRadius: 100 }}>{t.tier}</span>
-            </div>
+    <section style={{ background: S.surface, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
+      <style>{`
+        .ugc-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .ugc-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1280px) { .ugc-grid { grid-template-columns: repeat(3, 1fr); } }
+      `}</style>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase' }}>
+            What Our Members Are Saying
           </div>
-        ))}
+        </div>
+        <div className="ugc-grid">
+          {UGC_VIDEOS.map((v, i) => <MemberVideoCard key={i} video={v} />)}
+        </div>
       </div>
     </section>
   )
@@ -785,68 +767,6 @@ function FAQ() {
   )
 }
 
-function UGCVideoCard({ video }) {
-  const [playing, setPlaying] = useState(false)
-  const videoRef = useRef(null)
-
-  useEffect(() => {
-    if (playing) videoRef.current?.play().catch(() => {})
-  }, [playing])
-
-  return (
-    <div style={{ background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ position: 'relative', aspectRatio: '9 / 16', background: S.black }}>
-        <video
-          ref={videoRef}
-          src={video.src}
-          playsInline
-          controls={playing}
-          onClick={() => !playing && setPlaying(true)}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: playing ? 'default' : 'pointer' }}
-        />
-        {!playing && (
-          <button
-            onClick={() => setPlaying(true)}
-            aria-label={`Play video testimonial from ${video.name}`}
-            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            <span style={{ width: 56, height: 56, borderRadius: '50%', background: S.green, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: S.black, boxShadow: '0 4px 18px rgba(0,0,0,0.4)' }}>
-              ▶
-            </span>
-          </button>
-        )}
-      </div>
-      <div style={{ padding: '18px 20px' }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite, marginBottom: 4 }}>{video.name}</div>
-        <div style={{ fontSize: 15, fontWeight: 800, color: S.green, marginBottom: 8 }}>{video.amount}</div>
-        <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.55, margin: 0 }}>"{video.quote}"</p>
-      </div>
-    </div>
-  )
-}
-
-function UGCVideos() {
-  return (
-    <section style={{ background: S.black, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
-      <style>{`
-        .ugc-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 768px) { .ugc-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 1280px) { .ugc-grid { grid-template-columns: repeat(3, 1fr); } }
-      `}</style>
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase' }}>
-            What Utah Homeowners Are Saying
-          </div>
-        </div>
-        <div className="ugc-grid">
-          {UGC_VIDEOS.map((v, i) => <UGCVideoCard key={i} video={v} />)}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function BottomCTA() {
   return (
     <section style={{ background: S.forest, borderTop: `1px solid ${S.greenDim}` }}>
@@ -935,14 +855,12 @@ export default function Marketing() {
       <div id="section-home"><Hero /></div>
       <ContractorMarquee />
       <SavingsSection />
+      <Testimonials />
       <div id="section-how"><HowItWorks /></div>
-      <ContractorQuality />
       <div id="section-membership"><Membership /></div>
       <div id="section-network"><Network /></div>
-      <Testimonials />
       <div id="section-vendors"><ForVendors /></div>
       <div id="section-faq"><FAQ /></div>
-      <UGCVideos />
       <BottomCTA />
       <Footer />
       <StickyJoinButton />
