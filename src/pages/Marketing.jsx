@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import { S, C } from '../theme'
@@ -179,20 +179,12 @@ function Nav({ setSection }) {
   )
 }
 
-const HERO_EVERYDAY = [
-  { name: 'Lawn Care & Landscaping', discount: '15–25% off' },
-  { name: 'Pest Control', discount: '20–35% off' },
-  { name: 'Window Washing', discount: '15–25% off' },
-  { name: 'House Cleaning', discount: '15–20% off' },
-  { name: 'Gutter Cleaning', discount: '15–25% off' },
-]
+const CONTRACTOR_LOGOS = Array.from({ length: 9 }, (_, i) => `/contractor-logos/${i + 1}.png`)
 
-const HERO_BIG_TICKET = [
-  { name: 'HVAC Tune-Up & Repair', discount: '15–25% off' },
-  { name: 'Plumbing', discount: '20–30% off' },
-  { name: 'Roofing', discount: '10–20% off' },
-  { name: 'Electrical', discount: '15–25% off' },
-  { name: 'Painting & Drywall', discount: '10–20% off' },
+const UGC_VIDEOS = [
+  { src: '/videos/UGC_1.mp4', name: 'Mike, Draper', amount: '$640 saved on HVAC', quote: 'Called one number, they showed up next day.' },
+  { src: '/videos/UGC_2.mp4', name: 'Sarah, South Jordan', amount: '$520 saved on roofing', quote: 'Membership paid for itself on the first call.' },
+  { src: '/videos/UGC_3.mp4', name: 'James, Lehi', amount: '$400 saved this summer', quote: 'Used it for plumbing and landscaping. Easy decision.' },
 ]
 
 function Hero() {
@@ -210,7 +202,6 @@ function Hero() {
         .hero-invoice { display: flex; border-radius: 12px; overflow: hidden; border: 1px solid ${S.border}; }
         @media (max-width: 820px) {
           .hero-grid { grid-template-columns: 1fr; }
-          .hero-trades-card { display: none; }
         }
         @media (max-width: 480px) {
           .hero-invoice { flex-direction: column; }
@@ -251,46 +242,52 @@ function Hero() {
           </div>
         </div>
 
-        {/* Right column — covered trades */}
-        <div className="hero-trades-card" style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{ padding: '14px 24px', borderBottom: `1px solid ${S.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: S.green, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Member Pricing</span>
-            <span style={{ fontSize: 11, color: S.muted, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Typical savings</span>
-          </div>
+        {/* Right column — owner video */}
+        <div className="hero-video-card" style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: S.offwhite, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            Why We Started SUBS
+          </span>
+          <video
+            src="/videos/subs_owner_video.mp4"
+            controls
+            playsInline
+            style={{ width: '100%', display: 'block', borderRadius: 12, border: `1px solid ${S.border}`, background: S.black }}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
 
-          {/* Everyday services */}
-          <div style={{ padding: '8px 24px 4px', borderBottom: `1px solid ${S.border}22` }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: S.muted, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Recurring Services</span>
-          </div>
-          {HERO_EVERYDAY.map((trade, i) => (
-            <div key={i} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '10px 24px',
-              background: i % 2 === 1 ? S.surface + '66' : 'transparent',
-            }}>
-              <span style={{ fontSize: 13, color: S.offwhite }}>{trade.name}</span>
-              <span style={{ fontSize: 12, color: S.green, fontWeight: 600 }}>{trade.discount}</span>
-            </div>
+function ContractorMarquee() {
+  const logos = [...CONTRACTOR_LOGOS, ...CONTRACTOR_LOGOS]
+  return (
+    <section style={{ background: S.black, borderBottom: `1px solid ${S.border}`, padding: '20px 0', overflow: 'hidden' }}>
+      <style>{`
+        @keyframes subs-marquee-scroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        .marquee-track { animation: subs-marquee-scroll 26s linear infinite; }
+        .marquee-viewport:hover .marquee-track { animation-play-state: paused; }
+      `}</style>
+      <div style={{ textAlign: 'center', marginBottom: 14 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase' }}>
+          Our Vetted Utah Contractor Network
+        </span>
+      </div>
+      <div
+        className="marquee-viewport"
+        style={{
+          overflow: 'hidden',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0, black 64px, black calc(100% - 64px), transparent 100%)',
+          maskImage: 'linear-gradient(to right, transparent 0, black 64px, black calc(100% - 64px), transparent 100%)',
+        }}
+      >
+        <div className="marquee-track" style={{ display: 'flex', alignItems: 'center', gap: 56, width: 'max-content' }}>
+          {logos.map((src, i) => (
+            <img key={i} src={src} alt="Vetted SUBS contractor partner logo" style={{ height: 60, width: 'auto', display: 'block', objectFit: 'contain', flexShrink: 0 }} />
           ))}
-
-          {/* Bigger ticket */}
-          <div style={{ padding: '8px 24px 4px', borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}22` }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: S.muted, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Big Ticket Services</span>
-          </div>
-          {HERO_BIG_TICKET.map((trade, i) => (
-            <div key={i} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '10px 24px',
-              background: i % 2 === 1 ? S.surface + '66' : 'transparent',
-            }}>
-              <span style={{ fontSize: 13, color: S.offwhite }}>{trade.name}</span>
-              <span style={{ fontSize: 12, color: S.green, fontWeight: 600 }}>{trade.discount}</span>
-            </div>
-          ))}
-
-          <div style={{ padding: '12px 24px', borderTop: `1px solid ${S.border}`, textAlign: 'center' }}>
-            <span style={{ fontSize: 12, color: S.muted }}>+ 20 more trades at member rates</span>
-          </div>
         </div>
       </div>
     </section>
@@ -788,6 +785,68 @@ function FAQ() {
   )
 }
 
+function UGCVideoCard({ video }) {
+  const [playing, setPlaying] = useState(false)
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    if (playing) videoRef.current?.play().catch(() => {})
+  }, [playing])
+
+  return (
+    <div style={{ background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ position: 'relative', aspectRatio: '9 / 16', background: S.black }}>
+        <video
+          ref={videoRef}
+          src={video.src}
+          playsInline
+          controls={playing}
+          onClick={() => !playing && setPlaying(true)}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: playing ? 'default' : 'pointer' }}
+        />
+        {!playing && (
+          <button
+            onClick={() => setPlaying(true)}
+            aria-label={`Play video testimonial from ${video.name}`}
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <span style={{ width: 56, height: 56, borderRadius: '50%', background: S.green, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: S.black, boxShadow: '0 4px 18px rgba(0,0,0,0.4)' }}>
+              ▶
+            </span>
+          </button>
+        )}
+      </div>
+      <div style={{ padding: '18px 20px' }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite, marginBottom: 4 }}>{video.name}</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: S.green, marginBottom: 8 }}>{video.amount}</div>
+        <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.55, margin: 0 }}>"{video.quote}"</p>
+      </div>
+    </div>
+  )
+}
+
+function UGCVideos() {
+  return (
+    <section style={{ background: S.black, borderTop: `1px solid ${S.border}`, borderBottom: `1px solid ${S.border}` }}>
+      <style>{`
+        .ugc-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .ugc-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1280px) { .ugc-grid { grid-template-columns: repeat(3, 1fr); } }
+      `}</style>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase' }}>
+            What Utah Homeowners Are Saying
+          </div>
+        </div>
+        <div className="ugc-grid">
+          {UGC_VIDEOS.map((v, i) => <UGCVideoCard key={i} video={v} />)}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function BottomCTA() {
   return (
     <section style={{ background: S.forest, borderTop: `1px solid ${S.greenDim}` }}>
@@ -874,6 +933,7 @@ export default function Marketing() {
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite }}>
       <Nav setSection={scrollTo} />
       <div id="section-home"><Hero /></div>
+      <ContractorMarquee />
       <SavingsSection />
       <div id="section-how"><HowItWorks /></div>
       <ContractorQuality />
@@ -882,6 +942,7 @@ export default function Marketing() {
       <Testimonials />
       <div id="section-vendors"><ForVendors /></div>
       <div id="section-faq"><FAQ /></div>
+      <UGCVideos />
       <BottomCTA />
       <Footer />
       <StickyJoinButton />
