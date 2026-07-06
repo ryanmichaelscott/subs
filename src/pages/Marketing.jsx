@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import { S, C } from '../theme'
@@ -194,6 +194,8 @@ function Hero() {
       <style>{`
         .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; flex: 1; align-items: center; }
         .hero-invoice { display: flex; border-radius: 12px; overflow: hidden; border: 1px solid ${S.border}; }
+        .hero-video-card { align-items: center; }
+        .hero-video-frame { width: min(100%, 320px); }
         @media (max-width: 820px) {
           .hero-grid { grid-template-columns: 1fr; }
         }
@@ -237,11 +239,16 @@ function Hero() {
         </div>
 
         {/* Right column — owner video */}
-        <div className="hero-video-card" style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: S.offwhite, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            Why We Started SUBS
-          </span>
-          <div style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
+        <div className="hero-video-card" style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: S.green, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
+              Our Story
+            </div>
+            <div style={{ fontFamily: C.display, fontSize: 24, color: S.offwhite, fontWeight: 400 }}>
+              Why We Started SUBS
+            </div>
+          </div>
+          <div className="hero-video-frame" style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.4)' }}>
             <video
               src="/videos/subs_owner_video.mp4"
               autoPlay
@@ -261,17 +268,17 @@ function Hero() {
 function ContractorMarquee() {
   const logos = [...CONTRACTOR_LOGOS, ...CONTRACTOR_LOGOS]
   return (
-    <section style={{ background: S.offwhite, borderBottom: `1px solid ${S.borderLt}`, padding: '32px 0', overflow: 'hidden' }}>
+    <section style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: '26px 0', overflow: 'hidden' }}>
       <style>{`
         @keyframes subs-marquee-scroll {
           from { transform: translateX(0); }
           to { transform: translateX(-50%); }
         }
-        .marquee-track { animation: subs-marquee-scroll 44s linear infinite; }
+        .marquee-track { animation: subs-marquee-scroll 35s linear infinite; }
         .marquee-viewport:hover .marquee-track { animation-play-state: paused; }
       `}</style>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: '#6B7268', textTransform: 'uppercase' }}>
+      <div style={{ textAlign: 'center', marginBottom: 16 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase' }}>
           Our Vetted Utah Contractor Network
         </span>
       </div>
@@ -283,9 +290,9 @@ function ContractorMarquee() {
           maskImage: 'linear-gradient(to right, transparent 0, black 64px, black calc(100% - 64px), transparent 100%)',
         }}
       >
-        <div className="marquee-track" style={{ display: 'flex', alignItems: 'center', gap: 64, width: 'max-content' }}>
+        <div className="marquee-track" style={{ display: 'flex', alignItems: 'center', gap: 60, width: 'max-content' }}>
           {logos.map((src, i) => (
-            <img key={i} src={src} alt="Vetted SUBS contractor partner logo" style={{ height: 120, width: 'auto', display: 'block', objectFit: 'contain', flexShrink: 0 }} />
+            <img key={i} src={src} alt="Vetted SUBS contractor partner logo" style={{ height: 90, width: 'auto', display: 'block', objectFit: 'contain', flexShrink: 0 }} />
           ))}
         </div>
       </div>
@@ -478,34 +485,17 @@ function Network() {
 }
 
 function MemberVideoCard({ video }) {
-  const [playing, setPlaying] = useState(false)
-  const videoRef = useRef(null)
-
-  useEffect(() => {
-    if (playing) videoRef.current?.play().catch(() => {})
-  }, [playing])
-
   return (
     <div style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
       <video
-        ref={videoRef}
         src={video.src}
+        autoPlay
+        muted
+        loop
+        controls
         playsInline
-        controls={playing}
-        onClick={() => !playing && setPlaying(true)}
-        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: playing ? 'default' : 'pointer' }}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
       />
-      {!playing && (
-        <button
-          onClick={() => setPlaying(true)}
-          aria-label="Play member video"
-          style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.25)', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
-          <span style={{ width: 56, height: 56, borderRadius: '50%', background: S.green, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: S.black, boxShadow: '0 4px 18px rgba(0,0,0,0.4)' }}>
-            ▶
-          </span>
-        </button>
-      )}
     </div>
   )
 }
@@ -520,9 +510,12 @@ function Testimonials() {
       `}</style>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase' }}>
-            What Our Members Are Saying
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 12 }}>
+            Real Members
           </div>
+          <h2 style={{ fontFamily: C.display, fontSize: 'clamp(28px, 4vw, 44px)', color: S.offwhite, fontWeight: 400, margin: 0 }}>
+            What Our Members Are Saying
+          </h2>
         </div>
         <div className="ugc-grid">
           {UGC_VIDEOS.map((v, i) => <MemberVideoCard key={i} video={v} />)}
