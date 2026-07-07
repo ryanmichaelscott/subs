@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { S, C } from '../theme'
 
 // National average retail prices (2025-26 ranges from HomeAdvisor/Angi/Thumbtack-style
@@ -159,7 +159,7 @@ function roundPrice(n) {
   return Math.round(n / 100) * 100
 }
 
-export default function SavingsCalculator({ onJoin, joinLabel = 'Join now →', defaultState = 'UT', showStatePicker = true }) {
+export default function SavingsCalculator({ onJoin, joinLabel = 'Join now →', defaultState = 'UT', showStatePicker = true, onSelectionChange, belowResult }) {
   const [stateCode, setStateCode] = useState(defaultState)
   const [trade, setTrade] = useState('HVAC')
   const [serviceIdx, setServiceIdx] = useState(0)
@@ -174,6 +174,11 @@ export default function SavingsCalculator({ onJoin, joinLabel = 'Join now →', 
     const savings = retail - member
     return { retail, member, savings, payback: savings / MEMBERSHIP_PRICE }
   }, [stateCode, service])
+
+  useEffect(() => {
+    onSelectionChange?.({ stateCode, stateName: STATE_NAMES[stateCode], trade, service: service.name, retail, member, savings })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateCode, trade, service, retail, member, savings])
 
   const sel = {
     width: '100%', background: S.surface, border: `1px solid ${S.border}`, color: S.offwhite,
@@ -255,6 +260,8 @@ export default function SavingsCalculator({ onJoin, joinLabel = 'Join now →', 
           )}
         </div>
       </div>
+
+      {belowResult}
 
       <p style={{ fontSize: 11.5, color: S.muted, marginTop: 18, marginBottom: 0, lineHeight: 1.5 }}>
         * Estimates based on published national pricing data adjusted for {STATE_NAMES[stateCode] || 'your area'}, assuming a typical ~20% member discount.

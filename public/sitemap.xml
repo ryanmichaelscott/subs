@@ -11,6 +11,11 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://subs.app/calculator</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://subs.app/contractor/apply</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
