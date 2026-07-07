@@ -41,6 +41,10 @@ export default function AdminDashboard() {
   const [adminDocUploading, setAdminDocUploading] = useState(null)
   const [adminDocError, setAdminDocError] = useState(null)
   const [waitlistEntries, setWaitlistEntries] = useState([])
+  const [marketingLeads, setMarketingLeads] = useState([])
+  const [marketingLeadFilter, setMarketingLeadFilter] = useState('all')
+  const [leadNoteEditing, setLeadNoteEditing] = useState(null)
+  const [leadNoteDraft, setLeadNoteDraft] = useState('')
   const [launchingMarket, setLaunchingMarket] = useState(null)
   const [launchResult, setLaunchResult] = useState({})
 
@@ -86,6 +90,9 @@ export default function AdminDashboard() {
 
       supabase.from('waitlist').select('*').order('created_at', { ascending: false })
         .then(({ data }) => setWaitlistEntries(data || [])),
+
+      supabase.from('marketing_leads').select('*').order('created_at', { ascending: false })
+        .then(({ data }) => setMarketingLeads(data || [])),
 
       supabase.from('enterprise_members').select('*').order('created_at', { ascending: false })
         .then(({ data }) => setEnterpriseMembers(data || [])),
@@ -390,6 +397,7 @@ export default function AdminDashboard() {
 
   const tabs = [
     ...(isAdmin ? [['stats', '📊 Revenue']] : []),
+    ['leads', '🔥 Leads'],
     ['members', '👥 Members'], ['approvals', '🛠 Approvals'], ['contractors', '🔧 Contractors'],
     ['activity', '⚡ Activity'], ['waitlist', '📍 Waitlist'],
     ...(isAdmin ? [['kpis', '📈 KPIs']] : []),
@@ -510,6 +518,11 @@ export default function AdminDashboard() {
               {id === 'approvals' && contractors.filter(c => c.status === 'pending').length > 0 && (
                 <span style={{ position: 'absolute', top: 4, right: 8, background: S.amber, color: S.black, borderRadius: '50%', width: 16, height: 16, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {contractors.filter(c => c.status === 'pending').length}
+                </span>
+              )}
+              {id === 'leads' && marketingLeads.filter(l => l.status === 'new').length > 0 && (
+                <span style={{ position: 'absolute', top: 4, right: 8, background: S.green, color: S.black, borderRadius: '50%', width: 16, height: 16, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {marketingLeads.filter(l => l.status === 'new').length}
                 </span>
               )}
               {id === 'waitlist' && tab !== 'waitlist' && waitlistEntries.filter(e => !e.notified_at).length > 0 && (
@@ -718,6 +731,163 @@ export default function AdminDashboard() {
         )}
 
         {/* Contractor Approvals */}
+        {tab === 'leads' && (() => {
+          const LEAD_STATUS = {
+            new: { label: 'New', color: S.amber },
+            called: { label: 'Called', color: S.blue },
+            closed: { label: 'Closed', color: S.green },
+            rejected: { label: 'Rejected', color: S.danger },
+          }
+          const counts = { all: marketingLeads.length }
+          for (const key of Object.keys(LEAD_STATUS)) counts[key] = marketingLeads.filter(l => l.status === key).length
+          const filtered = marketingLeadFilter === 'all' ? marketingLeads : marketingLeads.filter(l => l.status === marketingLeadFilter)
+
+          const handleLeadStatus = async (id, status) => {
+            const status_updated_at = new Date().toISOString()
+            const { error } = await supabase.from('marketing_leads').update({ status, status_updated_at }).eq('id', id)
+            if (!error) setMarketingLeads(prev => prev.map(l => l.id === id ? { ...l, status, status_updated_at } : l))
+          }
+
+          const handleSaveNote = async (id) => {
+            const notes = leadNoteDraft.trim() || null
+            const { error } = await supabase.from('marketing_leads').update({ notes }).eq('id', id)
+            if (!error) {
+              setMarketingLeads(prev => prev.map(l => l.id === id ? { ...l, notes } : l))
+              setLeadNoteEditing(null)
+              setLeadNoteDraft('')
+            }
+          }
+
+          const fmtPhone = (p) => {
+            const d = (p || '').replace(/\D/g, '')
+            const ten = d.length === 11 && d.startsWith('1') ? d.slice(1) : d
+            return ten.length === 10 ? `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}` : p
+          }
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {/* Summary cards */}
+              <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                {Object.entries(LEAD_STATUS).map(([key, meta]) => (
+                  <Card key={key} style={{ padding: '20px 24px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{meta.label}</div>
+                    <div style={{ fontFamily: C.display, fontSize: 32, color: meta.color }}>{counts[key]}</div>
+                  </Card>
+                ))}
+              </div>
+
+              <Card style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: `1px solid ${S.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: S.offwhite }}>Calculator Leads</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {['all', ...Object.keys(LEAD_STATUS)].map(key => (
+                      <button
+                        key={key}
+                        onClick={() => setMarketingLeadFilter(key)}
+                        style={{
+                          fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 100, cursor: 'pointer',
+                          background: marketingLeadFilter === key ? S.green + '22' : 'transparent',
+                          border: `1px solid ${marketingLeadFilter === key ? S.green : S.border}`,
+                          color: marketingLeadFilter === key ? S.green : S.muted,
+                        }}
+                      >
+                        {key === 'all' ? 'All' : LEAD_STATUS[key].label} ({counts[key]})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {filtered.length === 0 ? (
+                  <div style={{ padding: '48px 20px', textAlign: 'center', color: S.muted, fontSize: 14 }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>🔥</div>
+                    {marketingLeads.length === 0
+                      ? 'No calculator leads yet. Submissions from subs.app/calculator land here the moment they come in.'
+                      : 'No leads match this filter.'}
+                  </div>
+                ) : filtered.map(lead => {
+                  const meta = LEAD_STATUS[lead.status] || LEAD_STATUS.new
+                  const digits = (lead.phone || '').replace(/\D/g, '')
+                  return (
+                    <div key={lead.id} style={{ padding: '16px 20px', borderBottom: `1px solid ${S.border}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 240 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 15, fontWeight: 700, color: S.offwhite }}>{lead.first_name}</span>
+                            {lead.owns_home === true && (
+                              <span style={{ fontSize: 10, fontWeight: 700, color: S.green, background: S.green + '22', padding: '2px 8px', borderRadius: 100 }}>HOMEOWNER</span>
+                            )}
+                            {lead.owns_home === false && (
+                              <span style={{ fontSize: 10, fontWeight: 700, color: S.amber, background: S.amber + '22', padding: '2px 8px', borderRadius: 100 }}>RENTER</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>
+                            <a href={`tel:${digits}`} style={{ color: S.green, textDecoration: 'none', fontWeight: 600 }}>📞 {fmtPhone(lead.phone)}</a>
+                            {lead.state ? ` · ${lead.state}` : ''} · {timeAgo(lead.created_at)}
+                          </div>
+                          {(lead.trade || lead.service) && (
+                            <div style={{ fontSize: 13, color: S.offwhite, marginTop: 6 }}>
+                              {lead.trade}{lead.service ? ` · ${lead.service}` : ''}
+                              {lead.estimated_savings ? (
+                                <span style={{ color: S.muted }}>
+                                  {' '}— saw <span style={{ color: S.green, fontWeight: 700 }}>${Number(lead.estimated_savings).toLocaleString()}</span> savings
+                                  {lead.retail_price ? ` ($${Number(lead.retail_price).toLocaleString()} → $${Number(lead.member_price).toLocaleString()})` : ''}
+                                </span>
+                              ) : null}
+                            </div>
+                          )}
+                          {lead.notes && leadNoteEditing !== lead.id && (
+                            <div style={{ fontSize: 12.5, color: S.muted, marginTop: 6, fontStyle: 'italic' }}>📝 {lead.notes}</div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: meta.color + '22', color: meta.color }}>
+                            {meta.label}{lead.status !== 'new' && lead.status_updated_at ? ` · ${timeAgo(lead.status_updated_at)}` : ''}
+                          </span>
+                          {lead.status !== 'called' && (
+                            <button onClick={() => handleLeadStatus(lead.id, 'called')} style={{ fontSize: 12, background: S.blue + '22', border: `1px solid ${S.blue}44`, color: S.blue, padding: '5px 10px', borderRadius: 6, cursor: 'pointer' }}>📞 Called</button>
+                          )}
+                          {lead.status !== 'closed' && (
+                            <button onClick={() => handleLeadStatus(lead.id, 'closed')} style={{ fontSize: 12, background: S.green + '22', border: `1px solid ${S.green}44`, color: S.green, padding: '5px 10px', borderRadius: 6, cursor: 'pointer' }}>✓ Closed</button>
+                          )}
+                          {lead.status !== 'rejected' && (
+                            <button onClick={() => handleLeadStatus(lead.id, 'rejected')} style={{ fontSize: 12, background: S.danger + '22', border: `1px solid ${S.danger}44`, color: S.danger, padding: '5px 10px', borderRadius: 6, cursor: 'pointer' }}>✗ Rejected</button>
+                          )}
+                          <button
+                            onClick={() => {
+                              if (leadNoteEditing === lead.id) { setLeadNoteEditing(null); setLeadNoteDraft('') }
+                              else { setLeadNoteEditing(lead.id); setLeadNoteDraft(lead.notes || '') }
+                            }}
+                            style={{ fontSize: 12, background: S.surface, border: `1px solid ${S.border}`, color: S.muted, padding: '5px 10px', borderRadius: 6, cursor: 'pointer' }}
+                          >
+                            📝 {lead.notes ? 'Edit note' : 'Note'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {leadNoteEditing === lead.id && (
+                        <div style={{ marginTop: 12, padding: '12px 14px', background: S.surface, borderRadius: 8, border: `1px solid ${S.border}` }}>
+                          <textarea
+                            value={leadNoteDraft}
+                            onChange={e => setLeadNoteDraft(e.target.value)}
+                            placeholder="Call notes — what happened, when to follow up…"
+                            rows={2}
+                            style={{ width: '100%', background: S.card, border: `1px solid ${S.border}`, borderRadius: 8, padding: '10px 12px', color: S.offwhite, fontSize: 13, fontFamily: C.body, outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
+                          />
+                          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                            <button onClick={() => handleSaveNote(lead.id)} style={{ fontSize: 12, background: S.green, border: 'none', color: S.black, fontWeight: 700, padding: '6px 14px', borderRadius: 6, cursor: 'pointer' }}>Save note</button>
+                            <button onClick={() => { setLeadNoteEditing(null); setLeadNoteDraft('') }} style={{ fontSize: 12, background: 'transparent', border: `1px solid ${S.border}`, color: S.muted, padding: '6px 14px', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </Card>
+            </div>
+          )
+        })()}
+
         {tab === 'approvals' && (
           <div>
             {actionError && (
