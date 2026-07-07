@@ -269,7 +269,7 @@ export default function CalculatorPage() {
         <SavingsCalculator
           onSelectionChange={handleSelectionChange}
           onJoin={revealAndScroll}
-          joinLabel="Lock in this price →"
+          joinLabel="Lock in member pricing →"
           belowResult={revealed ? <LeadForm selection={selection} /> : (
             <div style={{ marginTop: 20, textAlign: 'center', padding: '14px 16px', background: S.surface, border: `1px dashed ${S.border}`, borderRadius: 12 }}>
               <span style={{ fontSize: 13.5, color: S.muted }}>
