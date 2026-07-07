@@ -31,6 +31,7 @@ function formatPhoneInput(value) {
 function LeadForm({ selection }) {
   const [firstName, setFirstName] = useState('')
   const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
   const [ownsHome, setOwnsHome] = useState(null)
   const [website, setWebsite] = useState('') // honeypot — hidden from humans
   const [loading, setLoading] = useState(false)
@@ -46,6 +47,7 @@ function LeadForm({ selection }) {
   async function handleSubmit() {
     if (!firstName.trim()) { setError('Please enter your first name.'); return }
     if (phone.replace(/\D/g, '').length < 10) { setError('Please enter a valid 10-digit phone number.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Please enter a valid email — that\'s where your free checklist goes.'); return }
     if (ownsHome === null) { setError('Please let us know if you own your home.'); return }
 
     setError(null)
@@ -54,6 +56,7 @@ function LeadForm({ selection }) {
       body: {
         firstName: firstName.trim(),
         phone,
+        email: email.trim(),
         ownsHome,
         website,
         trade: selection?.trade,
@@ -88,9 +91,13 @@ function LeadForm({ selection }) {
         <div style={{ fontFamily: C.display, fontSize: 'clamp(22px, 3vw, 28px)', color: S.offwhite, marginBottom: 10 }}>
           You're locked in, {firstName.trim()}.
         </div>
-        <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.65, maxWidth: 440, margin: '0 auto 20px' }}>
+        <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.65, maxWidth: 440, margin: '0 auto 16px' }}>
           Our concierge team will call or text you shortly to confirm your member pricing
           on <strong style={{ color: S.offwhite }}>{selection?.service}</strong>. Keep an eye on your phone.
+        </p>
+        <p style={{ fontSize: 13.5, color: S.muted, lineHeight: 1.6, maxWidth: 440, margin: '0 auto 20px' }}>
+          🎁 Your free <strong style={{ color: S.offwhite }}>Utah Homeowner's Maintenance Checklist</strong> is
+          on its way to <strong style={{ color: S.green }}>{email.trim()}</strong> — check your inbox.
         </p>
         <Link to="/#plans" style={{ textDecoration: 'none' }}>
           <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 800, padding: '13px 28px', borderRadius: 10, cursor: 'pointer' }}>
@@ -119,6 +126,16 @@ function LeadForm({ selection }) {
         </p>
       </div>
 
+      {/* Free checklist gift callout */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10, padding: '13px 16px', marginBottom: 16 }}>
+        <span style={{ fontSize: 22, lineHeight: 1, flexShrink: 0 }}>🎁</span>
+        <span style={{ fontSize: 13, color: S.muted, lineHeight: 1.6 }}>
+          <strong style={{ color: S.offwhite }}>Free bonus:</strong> we'll also email you
+          the <strong style={{ color: S.green }}>Utah Homeowner's Annual Maintenance Checklist</strong> —
+          27 tasks that prevent $10,000+ in emergency repairs. A $0 gift that could save you thousands.
+        </span>
+      </div>
+
       <div className="lead-fields" style={{ marginBottom: 12 }}>
         <div>
           <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>First name</label>
@@ -127,6 +144,10 @@ function LeadForm({ selection }) {
         <div>
           <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Phone number</label>
           <input type="tel" inputMode="tel" value={phone} autoComplete="tel" onChange={e => { setPhone(formatPhoneInput(e.target.value)); setError(null) }} placeholder="(801) 555-0100" style={inp} />
+        </div>
+        <div style={{ gridColumn: '1 / -1' }}>
+          <label style={{ display: 'block', fontSize: 11, color: S.muted, marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Email <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— where we send your free checklist</span></label>
+          <input type="email" inputMode="email" value={email} autoComplete="email" onChange={e => { setEmail(e.target.value); setError(null) }} placeholder="mike@gmail.com" style={inp} />
         </div>
       </div>
 
@@ -177,8 +198,8 @@ function LeadForm({ selection }) {
       </div>
 
       <p style={{ fontSize: 10.5, color: S.muted + 'CC', lineHeight: 1.6, marginTop: 12, marginBottom: 0 }}>
-        By submitting, you agree that SUBS may call or text you at the number provided about your member pricing and services.
-        Message and data rates may apply. Reply STOP to opt out.
+        By submitting, you agree that SUBS may call or text you at the number provided about your member pricing and services,
+        and email you the checklist plus occasional homeowner tips. Message and data rates may apply. Reply STOP to opt out; unsubscribe anytime.
         See our <Link to="/privacy" target="_blank" style={{ color: S.muted, textDecoration: 'underline' }}>Privacy Policy</Link> and{' '}
         <Link to="/sms-consent" target="_blank" style={{ color: S.muted, textDecoration: 'underline' }}>SMS Consent Policy</Link>.
       </p>

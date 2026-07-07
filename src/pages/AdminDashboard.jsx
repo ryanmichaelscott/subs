@@ -822,6 +822,12 @@ export default function AdminDashboard() {
                           </div>
                           <div style={{ fontSize: 13, color: S.muted, marginTop: 4 }}>
                             <a href={`tel:${digits}`} style={{ color: S.green, textDecoration: 'none', fontWeight: 600 }}>📞 {fmtPhone(lead.phone)}</a>
+                            {lead.email && (
+                              <>
+                                {' · '}
+                                <a href={`mailto:${lead.email}`} style={{ color: S.muted, textDecoration: 'none' }}>✉️ {lead.email}</a>
+                              </>
+                            )}
                             {lead.state ? ` · ${lead.state}` : ''} · {timeAgo(lead.created_at)}
                           </div>
                           {(lead.trade || lead.service) && (
