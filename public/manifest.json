@@ -4,8 +4,8 @@
   "description": "Home Services. Wholesale Prices.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0C0F0A",
-  "theme_color": "#0C0F0A",
+  "background_color": "#F7F3E9",
+  "theme_color": "#10382A",
   "icons": [
     {
       "src": "/icons/icon-192.png",

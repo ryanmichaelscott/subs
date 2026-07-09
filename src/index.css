@@ -4,11 +4,11 @@
 
 body {
   margin: 0;
-  background: #0C0F0A;
+  background: #F7F3E9;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #F0EEE8;
+  color: #1E2A23;
 }
 
 #root {
@@ -25,8 +25,8 @@ input, select, textarea { font-family: inherit; }
 a { text-decoration: none; color: inherit; }
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0C0F0A; }
-::-webkit-scrollbar-thumb { background: #252A23; border-radius: 3px; }
+::-webkit-scrollbar-track { background: #F7F3E9; }
+::-webkit-scrollbar-thumb { background: #DCD3BF; border-radius: 3px; }
 
 @keyframes spin {
   from { transform: rotate(0deg); }

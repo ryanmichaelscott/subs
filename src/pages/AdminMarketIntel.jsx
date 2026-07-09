@@ -12,11 +12,11 @@ function Card({ children, style }) {
 }
 
 function demandColor(requests, contractors) {
-  if (contractors === 0) return { bg: '#2D1010', text: '#FF5A5A', label: 'GAP' }
+  if (contractors === 0) return { bg: '#F6E7E2', text: '#B3402F', label: 'GAP' }
   const ratio = requests / contractors
-  if (ratio >= 3) return { bg: '#2D1010', text: '#FF5A5A', label: 'High demand' }
-  if (ratio >= 1.5) return { bg: '#2b230d', text: '#FFC24B', label: 'Tight' }
-  return { bg: '#0a1c0e', text: S.green, label: 'Covered' }
+  if (ratio >= 3) return { bg: '#F6E7E2', text: '#B3402F', label: 'High demand' }
+  if (ratio >= 1.5) return { bg: '#F3ECD7', text: '#8F701F', label: 'Tight' }
+  return { bg: '#E7EFE0', text: S.green, label: 'Covered' }
 }
 
 const th = { padding: '11px 14px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: S.muted, textAlign: 'left', whiteSpace: 'nowrap' }
@@ -162,11 +162,11 @@ export default function AdminMarketIntel() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12, marginBottom: 32 }}>
                 {gaps.map(g => (
-                  <div key={`${g.trade}|${g.state}|${g.county}`} style={{ background: '#2D1010', border: '1px solid #5a2525', borderRadius: 12, padding: '16px 18px' }}>
+                  <div key={`${g.trade}|${g.state}|${g.county}`} style={{ background: '#F6E7E2', border: '1px solid #E3BEB3', borderRadius: 12, padding: '16px 18px' }}>
                     <div style={{ fontSize: 14.5, fontWeight: 700, color: S.offwhite }}>{g.trade}</div>
-                    <div style={{ fontSize: 12.5, color: '#FF5A5A', marginTop: 2 }}>{g.county}{g.county !== 'Statewide' ? ' County' : ''}, {g.state}</div>
+                    <div style={{ fontSize: 12.5, color: '#B3402F', marginTop: 2 }}>{g.county}{g.county !== 'Statewide' ? ' County' : ''}, {g.state}</div>
                     <div style={{ fontSize: 13, color: S.muted, marginTop: 8 }}>
-                      <b style={{ color: '#FF5A5A' }}>{g.requests}</b> request{g.requests === 1 ? '' : 's'} · <b style={{ color: '#FF5A5A' }}>0</b> contractors
+                      <b style={{ color: '#B3402F' }}>{g.requests}</b> request{g.requests === 1 ? '' : 's'} · <b style={{ color: '#B3402F' }}>0</b> contractors
                     </div>
                   </div>
                 ))}
@@ -198,7 +198,7 @@ export default function AdminMarketIntel() {
                             <td style={td}>{r.state}</td>
                             <td style={td}>{r.county}</td>
                             <td style={{ ...td, color: S.offwhite, fontWeight: 700 }}>{r.requests}</td>
-                            <td style={{ ...td, color: r.contractors === 0 ? '#FF5A5A' : S.offwhite }}>{r.contractors}</td>
+                            <td style={{ ...td, color: r.contractors === 0 ? '#B3402F' : S.offwhite }}>{r.contractors}</td>
                             <td style={td}>{r.ratio === null ? '∞' : r.ratio.toFixed(1)}</td>
                             <td style={{ padding: '11px 14px' }}>
                               <span style={{ fontSize: 11, fontWeight: 700, color: color.text, background: color.bg, padding: '4px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>{color.label}</span>
@@ -230,20 +230,20 @@ export default function AdminMarketIntel() {
                     </thead>
                     <tbody>
                       {performance.map(p => (
-                        <tr key={p.id} style={{ borderBottom: `1px solid ${S.border}`, background: p.swapCandidate ? '#2D101033' : 'transparent' }}>
+                        <tr key={p.id} style={{ borderBottom: `1px solid ${S.border}`, background: p.swapCandidate ? '#F6E7E233' : 'transparent' }}>
                           <td style={{ ...td, color: S.offwhite, fontWeight: 600 }}>{p.name}</td>
                           <td style={td}>{p.trade}</td>
                           <td style={{ ...td, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.area}</td>
                           <td style={{ ...td, color: S.offwhite }}>{p.assigned}</td>
                           <td style={{ ...td, color: S.offwhite }}>{p.completed}</td>
-                          <td style={{ ...td, color: p.completionRate === null ? S.muted : p.completionRate < 0.5 ? '#FF5A5A' : p.completionRate < 0.8 ? '#FFC24B' : S.green, fontWeight: 700 }}>
+                          <td style={{ ...td, color: p.completionRate === null ? S.muted : p.completionRate < 0.5 ? '#B3402F' : p.completionRate < 0.8 ? '#8F701F' : S.green, fontWeight: 700 }}>
                             {p.completionRate === null ? '—' : `${Math.round(p.completionRate * 100)}%`}
                           </td>
                           <td style={td}>{p.rating ? `★ ${p.rating.toFixed(1)}` : '—'}</td>
                           <td style={td}>{p.lastActive ? new Date(p.lastActive).toLocaleDateString() : 'Never'}</td>
                           <td style={{ padding: '11px 14px' }}>
                             {p.swapCandidate && (
-                              <span style={{ fontSize: 11, fontWeight: 700, color: '#FF5A5A', background: '#2D1010', border: '1px solid #5a2525', padding: '4px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: '#B3402F', background: '#F6E7E2', border: '1px solid #E3BEB3', padding: '4px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>
                                 ⚠ Swap candidate
                               </span>
                             )}

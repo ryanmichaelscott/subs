@@ -311,7 +311,7 @@ function Bullets({ items }) {
   return (
     <ul style={{ margin: '12px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
       {items.map((item, i) => (
-        <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: '#C8C6C0', lineHeight: 1.6 }}>
+        <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 15, color: '#4A544C', lineHeight: 1.6 }}>
           <span style={{ color: S.green, flexShrink: 0, marginTop: 4, fontSize: 10 }}>●</span>
           {item}
         </li>
@@ -347,7 +347,7 @@ export default function LegalPage() {
           <h1 style={{ fontFamily: C.display, fontSize: 48, fontWeight: 400, color: S.offwhite, margin: '0 0 16px', lineHeight: 1.1 }}>{doc.title}</h1>
           <div style={{ fontSize: 14, color: S.muted }}>Effective Date: {doc.effective}</div>
           {doc.intro && (
-            <p style={{ fontSize: 16, color: '#C8C6C0', lineHeight: 1.7, marginTop: 24, paddingTop: 24, borderTop: `1px solid ${S.border}` }}>{doc.intro}</p>
+            <p style={{ fontSize: 16, color: '#4A544C', lineHeight: 1.7, marginTop: 24, paddingTop: 24, borderTop: `1px solid ${S.border}` }}>{doc.intro}</p>
           )}
         </div>
 
@@ -360,21 +360,21 @@ export default function LegalPage() {
               </h2>
 
               {s.body && (
-                <p style={{ fontSize: 15, color: '#C8C6C0', lineHeight: 1.75, margin: '0 0 0', whiteSpace: 'pre-line' }}>{s.body}</p>
+                <p style={{ fontSize: 15, color: '#4A544C', lineHeight: 1.75, margin: '0 0 0', whiteSpace: 'pre-line' }}>{s.body}</p>
               )}
               {s.bullets && <Bullets items={s.bullets} />}
               {s.footer && (
-                <p style={{ fontSize: 15, color: '#C8C6C0', lineHeight: 1.75, margin: '16px 0 0' }}>{s.footer}</p>
+                <p style={{ fontSize: 15, color: '#4A544C', lineHeight: 1.75, margin: '16px 0 0' }}>{s.footer}</p>
               )}
 
               {/* Multi-subheading sections (Privacy 2, 7) */}
               {s.subheading && <SubHead>{s.subheading}</SubHead>}
               {s.subheading && s.bullets && !s.body && <Bullets items={s.bullets} />}
-              {s.subheading && s.body2 && <p style={{ fontSize: 15, color: '#C8C6C0', lineHeight: 1.75, margin: '8px 0 0' }}>{s.body2}</p>}
+              {s.subheading && s.body2 && <p style={{ fontSize: 15, color: '#4A544C', lineHeight: 1.75, margin: '8px 0 0' }}>{s.body2}</p>}
 
               {s.subheading2 && <SubHead>{s.subheading2}</SubHead>}
               {s.bullets2 && <Bullets items={s.bullets2} />}
-              {s.body2 && !s.subheading && <p style={{ fontSize: 15, color: '#C8C6C0', lineHeight: 1.75, margin: '8px 0 0' }}>{s.body2}</p>}
+              {s.body2 && !s.subheading && <p style={{ fontSize: 15, color: '#4A544C', lineHeight: 1.75, margin: '8px 0 0' }}>{s.body2}</p>}
 
               {s.subheading3 && <SubHead>{s.subheading3}</SubHead>}
               {s.bullets3 && <Bullets items={s.bullets3} />}

@@ -371,7 +371,7 @@ export default function EnterpriseDashboard() {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 16px', boxSizing: 'border-box' }}>
 
         {/* Header card */}
-        <Card style={{ padding: '28px 32px', marginBottom: 28, background: `linear-gradient(135deg, #0e1a11 0%, #0C0F0A 100%)`, border: `1px solid ${S.border}` }}>
+        <Card style={{ padding: '28px 32px', marginBottom: 28, background: `linear-gradient(135deg, #EFE9DB 0%, #FFFDF7 100%)`, border: `1px solid ${S.border}` }}>
           <div className="ent-header-grid" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontFamily: C.display, fontSize: 34, fontWeight: 400, color: S.offwhite, lineHeight: 1.1, marginBottom: 10 }}>

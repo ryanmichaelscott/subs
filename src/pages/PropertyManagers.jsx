@@ -196,8 +196,8 @@ function Hero() {
         {/* Badge */}
         <div style={{
           display: 'inline-block',
-          background: 'rgba(93,255,138,0.1)',
-          border: `1px solid rgba(93,255,138,0.3)`,
+          background: 'rgba(23,90,65,0.1)',
+          border: `1px solid rgba(23,90,65,0.3)`,
           color: S.green,
           fontSize: 11,
           fontWeight: 700,
@@ -444,8 +444,8 @@ function HowItWorks() {
                   width: 52,
                   height: 52,
                   borderRadius: '50%',
-                  background: 'rgba(93,255,138,0.08)',
-                  border: `1.5px solid rgba(93,255,138,0.25)`,
+                  background: 'rgba(23,90,65,0.08)',
+                  border: `1.5px solid rgba(23,90,65,0.25)`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -812,8 +812,8 @@ function ContactForm() {
 
         {success ? (
           <div style={{
-            background: 'rgba(93,255,138,0.08)',
-            border: `1.5px solid rgba(93,255,138,0.35)`,
+            background: 'rgba(23,90,65,0.08)',
+            border: `1.5px solid rgba(23,90,65,0.35)`,
             borderRadius: 14,
             padding: '32px 28px',
             textAlign: 'center',

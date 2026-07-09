@@ -37,13 +37,13 @@ class DashboardErrorBoundary extends Component {
   render() {
     if (this.state.error) {
       return (
-        <div style={{ background: '#0C0F0A', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, padding: 24 }}>
+        <div style={{ background: '#F7F3E9', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, padding: 24 }}>
           <div style={{ fontSize: 32 }}>⚠️</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#F0EEE8' }}>Something went wrong</div>
-          <div style={{ fontSize: 13, color: '#8A9088', maxWidth: 400, textAlign: 'center', lineHeight: 1.6 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#1E2A23' }}>Something went wrong</div>
+          <div style={{ fontSize: 13, color: '#6A7466', maxWidth: 400, textAlign: 'center', lineHeight: 1.6 }}>
             {this.state.error.message || 'An unexpected error occurred. Please refresh the page or contact support.'}
           </div>
-          <button onClick={() => window.location.reload()} style={{ marginTop: 8, background: '#5DFF8A', border: 'none', color: '#0C0F0A', fontSize: 14, fontWeight: 700, padding: '10px 20px', borderRadius: 9, cursor: 'pointer' }}>
+          <button onClick={() => window.location.reload()} style={{ marginTop: 8, background: '#175A41', border: 'none', color: '#F7F3E9', fontSize: 14, fontWeight: 700, padding: '10px 20px', borderRadius: 9, cursor: 'pointer' }}>
             Refresh page
           </button>
         </div>

@@ -86,7 +86,7 @@ function LeadForm({ selection }) {
 
   if (submitted) {
     return (
-      <div id="lead-form" style={{ marginTop: 20, background: '#0A1C0E', border: `1px solid ${S.green}`, borderRadius: 14, padding: 'clamp(24px, 4vw, 32px)', textAlign: 'center' }}>
+      <div id="lead-form" style={{ marginTop: 20, background: '#E7EFE0', border: `1px solid ${S.green}`, borderRadius: 14, padding: 'clamp(24px, 4vw, 32px)', textAlign: 'center' }}>
         <div style={{ fontSize: 38, marginBottom: 12 }}>🎉</div>
         <div style={{ fontFamily: C.display, fontSize: 'clamp(22px, 3vw, 28px)', color: S.offwhite, marginBottom: 10 }}>
           You're locked in, {firstName.trim()}.
@@ -109,7 +109,7 @@ function LeadForm({ selection }) {
   }
 
   return (
-    <div id="lead-form" style={{ marginTop: 20, background: '#0A1C0E', border: `1px solid ${S.green}66`, borderRadius: 14, padding: 'clamp(22px, 4vw, 30px)' }}>
+    <div id="lead-form" style={{ marginTop: 20, background: '#E7EFE0', border: `1px solid ${S.green}66`, borderRadius: 14, padding: 'clamp(22px, 4vw, 30px)' }}>
       <style>{`
         @keyframes lead-form-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         #lead-form { animation: lead-form-in 0.35s ease; }
@@ -176,7 +176,7 @@ function LeadForm({ selection }) {
       </div>
 
       {error && (
-        <div style={{ background: '#2D1010', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 14px', marginBottom: 14, color: S.danger, fontSize: 13 }}>
+        <div style={{ background: '#F6E7E2', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 14px', marginBottom: 14, color: S.danger, fontSize: 13 }}>
           {error}
         </div>
       )}
@@ -184,7 +184,7 @@ function LeadForm({ selection }) {
       <button
         onClick={handleSubmit}
         disabled={loading}
-        style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontFamily: C.body, fontSize: 16, fontWeight: 800, padding: '15px 0', borderRadius: 10, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.8 : 1, boxShadow: '0 8px 28px rgba(93,255,138,0.28)' }}
+        style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontFamily: C.body, fontSize: 16, fontWeight: 800, padding: '15px 0', borderRadius: 10, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.8 : 1, boxShadow: '0 8px 28px rgba(23,90,65,0.28)' }}
       >
         {loading ? 'Locking in your pricing…' : 'Get my member pricing locked in →'}
       </button>
@@ -325,7 +325,7 @@ export default function CalculatorPage() {
         </div>
         <div className="calc-ugc-grid">
           {UGC_VIDEOS.map(src => (
-            <div key={src} className="calc-ugc-frame" style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div key={src} className="calc-ugc-frame" style={{ position: 'relative', aspectRatio: '9 / 16', background: '#163024', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
               <video src={src} autoPlay muted loop controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             </div>
           ))}
@@ -369,13 +369,13 @@ export default function CalculatorPage() {
       {/* Final CTA */}
       <section style={{ background: S.forest, borderTop: `1px solid ${S.greenDim}` }}>
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '56px 20px', textAlign: 'center' }}>
-          <h2 style={{ fontFamily: C.display, fontSize: 'clamp(26px, 4vw, 40px)', color: S.offwhite, fontWeight: 400, margin: '0 0 14px', lineHeight: 1.15 }}>
+          <h2 style={{ fontFamily: C.display, fontSize: 'clamp(26px, 4vw, 40px)', color: S.black, fontWeight: 400, margin: '0 0 14px', lineHeight: 1.15 }}>
             Ready to stop overpaying?
           </h2>
-          <p style={{ fontSize: 15, color: '#A8C4A0', lineHeight: 1.65, marginBottom: 28 }}>
+          <p style={{ fontSize: 15, color: '#C6DCC8', lineHeight: 1.65, marginBottom: 28 }}>
             Your savings number is 10 seconds away — and locking it in costs nothing.
           </p>
-          <button onClick={scrollToCalc} style={{ background: S.green, border: 'none', color: S.black, fontSize: 16, fontWeight: 800, padding: '16px 40px', borderRadius: 100, cursor: 'pointer', boxShadow: '0 10px 34px rgba(93,255,138,0.3)' }}>
+          <button onClick={scrollToCalc} style={{ background: S.black, border: 'none', color: S.forest, fontSize: 16, fontWeight: 800, padding: '16px 40px', borderRadius: 100, cursor: 'pointer', boxShadow: '0 10px 34px rgba(0,0,0,0.25)' }}>
             Calculate my savings ↑
           </button>
         </div>

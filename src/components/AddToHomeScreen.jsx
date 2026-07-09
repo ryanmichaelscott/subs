@@ -64,7 +64,7 @@ export default function AddToHomeScreen() {
       `}</style>
       <div style={{
         maxWidth: 480, margin: '0 auto', background: S.card, border: `1px solid ${S.green}55`,
-        borderRadius: 16, padding: '18px 18px 16px', boxShadow: '0 -8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(93,255,138,0.08)',
+        borderRadius: 16, padding: '18px 18px 16px', boxShadow: '0 -8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(23,90,65,0.08)',
         animation: 'a2hs-slide-up 0.35s ease-out',
       }}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>

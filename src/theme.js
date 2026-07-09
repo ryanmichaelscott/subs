@@ -1,18 +1,23 @@
+// SUBS brand palette — cream + deep green, "trustworthy lux".
+// Key names are legacy (from the original dark theme) and are kept so every
+// component keeps working: `black` is the page background (now cream),
+// `offwhite` is the primary text color (now deep green-ink), `green` is the
+// brand accent (now rich forest green instead of neon).
 export const S = {
-  black: '#0C0F0A',
-  forest: '#1A3320',
-  green: '#5DFF8A',
-  greenDim: '#2A5C38',
-  offwhite: '#F0EEE8',
-  muted: '#8A9088',
-  surface: '#141814',
-  border: '#252A23',
-  borderLt: '#D4D0C8',
-  card: '#101410',
-  danger: '#FF5A5A',
-  blue: '#5B8DEF',
-  amber: '#F5A623',
-  purple: '#C084FC',
+  black: '#F7F3E9',      // page background — warm cream
+  forest: '#10382A',     // deep green band (CTA sections, dark blocks)
+  green: '#175A41',      // brand green — rich, Rolex-adjacent
+  greenDim: '#2E6B4F',
+  offwhite: '#1E2A23',   // primary text — near-black green ink
+  muted: '#6A7466',      // secondary text — gray-green
+  surface: '#EFE9DB',    // recessed panels — deeper cream
+  border: '#DCD3BF',     // hairlines — warm tan
+  borderLt: '#C9BFA6',
+  card: '#FFFDF7',       // raised cards — warm paper white
+  danger: '#B3402F',
+  blue: '#35608F',
+  amber: '#A8842C',      // antique gold
+  purple: '#6E5A8E',
 }
 
 export const C = {

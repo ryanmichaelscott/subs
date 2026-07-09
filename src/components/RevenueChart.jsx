@@ -15,7 +15,7 @@ const PERIODS = [
 const CURRENT_LABEL = { week: 'This week', month: 'This month', quarter: 'This quarter', year: 'This year' }
 const PREV_LABEL = { week: 'Last week', month: 'Last month', quarter: 'Last quarter', year: 'Last year' }
 
-const GREEN = '#5DFF8A'
+const GREEN = '#175A41'
 const BLUE = '#4DA6FF'
 
 function fmtY(v) {
@@ -32,7 +32,7 @@ function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
     <div style={{
-      background: '#141814', border: '1px solid #252A23', borderRadius: 10,
+      background: '#EFE9DB', border: '1px solid #DCD3BF', borderRadius: 10,
       padding: '10px 14px', minWidth: 170, boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
     }}>
       <div style={{ fontSize: 11, color: S.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -117,8 +117,8 @@ export default function RevenueChart({ supabase }) {
         {summary && (
           <div style={{
             fontSize: 12, fontWeight: 700, padding: '3px 9px', borderRadius: 20, lineHeight: 1.4,
-            background: pct >= 0 ? `${GREEN}25` : '#FF5A5A25',
-            color: pct >= 0 ? GREEN : '#FF5A5A',
+            background: pct >= 0 ? `${GREEN}25` : '#B3402F25',
+            color: pct >= 0 ? GREEN : '#B3402F',
           }}>
             {pct >= 0 ? '+' : ''}{pct}%
           </div>
@@ -127,7 +127,7 @@ export default function RevenueChart({ supabase }) {
         {summary && (
           <div style={{ fontSize: 12, color: S.muted }}>
             vs {fmtDollar(summary.previous_total)} {PREV_LABEL[period].toLowerCase()}
-            <span style={{ color: diff >= 0 ? GREEN : '#FF5A5A', marginLeft: 5, fontWeight: 600 }}>
+            <span style={{ color: diff >= 0 ? GREEN : '#B3402F', marginLeft: 5, fontWeight: 600 }}>
               {diff >= 0 ? '+' : '−'}{fmtDollar(diff)}
             </span>
           </div>
@@ -155,7 +155,7 @@ export default function RevenueChart({ supabase }) {
         </div>
       ) : error ? (
         <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 13, color: '#FF5A5A' }}>{error}</span>
+          <span style={{ fontSize: 13, color: '#B3402F' }}>{error}</span>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={220}>

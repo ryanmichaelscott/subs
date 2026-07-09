@@ -29,9 +29,9 @@ const US_STATES = [
 ]
 
 function cellColor(count) {
-  if (count === 0) return { bg: '#2D1010', border: '#5a2525', text: '#FF5A5A' }
-  if (count <= 2) return { bg: '#2b230d', border: '#5c4a1a', text: '#FFC24B' }
-  return { bg: '#0a1c0e', border: '#1e4a28', text: S.green }
+  if (count === 0) return { bg: '#F6E7E2', border: '#E3BEB3', text: '#B3402F' }
+  if (count <= 2) return { bg: '#F3ECD7', border: '#DCC98F', text: '#8F701F' }
+  return { bg: '#E7EFE0', border: '#1e4a28', text: S.green }
 }
 
 export default function AdminServiceMaps() {
@@ -147,7 +147,7 @@ export default function AdminServiceMaps() {
 
         {/* Legend */}
         <div style={{ display: 'flex', gap: 18, marginBottom: 24, fontSize: 12.5, color: S.muted, flexWrap: 'wrap' }}>
-          {[['#FF5A5A', '0 — gap'], ['#FFC24B', '1–2 — thin'], [S.green, '3+ — covered']].map(([color, label]) => (
+          {[['#B3402F', '0 — gap'], ['#8F701F', '1–2 — thin'], [S.green, '3+ — covered']].map(([color, label]) => (
             <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
               <span style={{ width: 10, height: 10, borderRadius: 3, background: color, display: 'inline-block' }} />{label}
             </span>
@@ -168,8 +168,8 @@ export default function AdminServiceMaps() {
         {contractors && view === 'trade' && (
           <>
             <div style={{ display: 'flex', gap: 16, marginBottom: 20, fontSize: 13, color: S.muted, flexWrap: 'wrap' }}>
-              <span><b style={{ color: '#FF5A5A' }}>{gapCount}</b> gaps</span>
-              <span><b style={{ color: '#FFC24B' }}>{thinCount}</b> thin</span>
+              <span><b style={{ color: '#B3402F' }}>{gapCount}</b> gaps</span>
+              <span><b style={{ color: '#8F701F' }}>{thinCount}</b> thin</span>
               <span><b style={{ color: S.green }}>{coveredCount}</b> covered</span>
               <span>· {trade} · {pool.filter(c => c.tradeList.includes(trade)).length} contractor{pool.filter(c => c.tradeList.includes(trade)).length === 1 ? '' : 's'} in pool</span>
             </div>
@@ -194,7 +194,7 @@ export default function AdminServiceMaps() {
                         {covering.map(c => (
                           <div key={c.id} style={{ fontSize: 12.5, color: S.offwhite, padding: '3px 0', display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-                            {c.status !== 'active' && <span style={{ fontSize: 10.5, color: '#FFC24B', flexShrink: 0 }}>approved</span>}
+                            {c.status !== 'active' && <span style={{ fontSize: 10.5, color: '#8F701F', flexShrink: 0 }}>approved</span>}
                           </div>
                         ))}
                       </div>

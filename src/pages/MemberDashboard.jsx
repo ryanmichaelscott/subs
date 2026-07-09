@@ -60,7 +60,7 @@ const STATUS_CONFIG = {
   Scheduled: { label: 'Scheduled',                 color: S.blue },
   Complete:  { label: 'Completed',                 color: S.green },
   completed: { label: 'Completed',                 color: S.green },
-  Cancelled: { label: 'Cancelled',                 color: '#FF5A5A' },
+  Cancelled: { label: 'Cancelled',                 color: '#B3402F' },
 }
 
 function Card({ children, style, className = '', ...props }) {
@@ -119,27 +119,28 @@ function MemberCard({ name, member }) {
     ? new Date(member.renewal_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : '—'
   return (
-    <Card style={{ padding: '20px 24px', background: `linear-gradient(135deg, ${S.forest} 0%, #0f1f12 100%)`, border: `1px solid ${S.greenDim}` }}>
+    <Card style={{ padding: '20px 24px', background: `linear-gradient(135deg, ${S.forest} 0%, #0A241B 100%)`, border: `1px solid ${S.greenDim}` }}>
+      {/* Dark card — light-on-dark colors are intentional here, like a physical membership card */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div style={{ fontFamily: C.body, fontSize: 16, fontWeight: 800, color: S.green, letterSpacing: '0.1em' }}>SUBS</div>
-        <div style={{ fontSize: 11, color: S.muted }}>SUBS.app</div>
+        <div style={{ fontFamily: C.body, fontSize: 16, fontWeight: 800, color: '#C2A55C', letterSpacing: '0.1em' }}>SUBS</div>
+        <div style={{ fontSize: 11, color: '#A8BCA8' }}>SUBS.app</div>
       </div>
-      <div style={{ fontSize: 14, color: S.muted, letterSpacing: '0.1em', marginBottom: 4 }}>•••• •••• •••• 4821</div>
+      <div style={{ fontSize: 14, color: '#A8BCA8', letterSpacing: '0.1em', marginBottom: 4 }}>•••• •••• •••• 4821</div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <div style={{ fontSize: 10, color: S.muted, marginBottom: 2 }}>MEMBER</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>{name}</div>
+          <div style={{ fontSize: 10, color: '#A8BCA8', marginBottom: 2 }}>MEMBER</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: S.black }}>{name}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: S.muted, marginBottom: 2 }}>TIER</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: TIER_COLORS[tier] || S.blue }}>{tier}</div>
+          <div style={{ fontSize: 10, color: '#A8BCA8', marginBottom: 2 }}>TIER</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#C2A55C' }}>{tier}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: S.muted, marginBottom: 2 }}>SINCE</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: S.offwhite }}>{joinedYear}</div>
+          <div style={{ fontSize: 10, color: '#A8BCA8', marginBottom: 2 }}>SINCE</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: S.black }}>{joinedYear}</div>
         </div>
       </div>
-      <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${S.greenDim}`, fontSize: 11, color: S.muted }}>
+      <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${S.greenDim}`, fontSize: 11, color: '#A8BCA8' }}>
         {renewal !== '—' ? `Renews ${renewal} · ${TIER_PRICES[tier]}` : TIER_PRICES[tier]}
       </div>
     </Card>
@@ -762,7 +763,7 @@ export default function MemberDashboard() {
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           {c.discount_description && <div style={{ fontSize: 13, fontWeight: 700, color: S.green }}>{c.discount_description}</div>}
-                          <span style={{ display: 'inline-block', marginTop: 6, fontSize: 11, fontWeight: 600, color: S.green, border: '1px solid rgba(93,255,138,0.4)', borderRadius: 20, padding: '3px 9px', lineHeight: 1.4 }}>✓ Certified Pro*</span>
+                          <span style={{ display: 'inline-block', marginTop: 6, fontSize: 11, fontWeight: 600, color: S.green, border: '1px solid rgba(23,90,65,0.4)', borderRadius: 20, padding: '3px 9px', lineHeight: 1.4 }}>✓ Certified Pro*</span>
                         </div>
                       </div>
                       {selectedContractor === c.id && (

@@ -453,7 +453,7 @@ function RateCardBuilder({ contractorId }) {
         </div>
       )}
       {saveError && (
-        <div style={{ background: '#2D1010', border: `1px solid ${S.danger}`, borderRadius: 9, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: S.danger }}>
+        <div style={{ background: '#F6E7E2', border: `1px solid ${S.danger}`, borderRadius: 9, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: S.danger }}>
           {saveError}
         </div>
       )}

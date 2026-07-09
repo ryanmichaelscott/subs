@@ -6,14 +6,14 @@ const css = `
 @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
 .utah-page {
-  --ink:#0B0E09; --ink2:#11150F; --card:#141A12; --green:#5DFF8A;
-  --bone:#F4F6F2; --ash:#9AA39A; --ash-dim:#6B736A; --line:#283026; --slash:#7A8378;
+  --ink:#F7F3E9; --ink2:#EFE9DB; --card:#FFFDF7; --green:#175A41;
+  --bone:#1E2A23; --ash:#6A7466; --ash-dim:#8A9080; --line:#DCD3BF; --slash:#9AA392;
   --disp:'Archivo Black',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
   --mono:'Space Mono',ui-monospace,monospace; --maxw:1080px;
-  background:#0B0E09;
-  background-image:radial-gradient(900px 500px at 88% -8%,rgba(93,255,138,.10),transparent 60%),radial-gradient(700px 420px at -10% 18%,rgba(93,255,138,.05),transparent 60%);
+  background:#F7F3E9;
+  background-image:radial-gradient(900px 500px at 88% -8%,rgba(23,90,65,.10),transparent 60%),radial-gradient(700px 420px at -10% 18%,rgba(23,90,65,.05),transparent 60%);
   background-attachment:fixed;
-  color:#F4F6F2; font-family:'Inter',system-ui,sans-serif; line-height:1.5;
+  color:#1E2A23; font-family:'Inter',system-ui,sans-serif; line-height:1.5;
   font-size:16px; overflow-x:hidden; min-height:100vh;
 }
 .utah-page *, .utah-page *::before, .utah-page *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -31,21 +31,21 @@ const css = `
   transition:transform .12s ease,box-shadow .2s ease,background .2s ease; text-align:center;
   text-decoration:none;
 }
-.utah-page .btn-primary { background:var(--green); color:#06210F; box-shadow:0 10px 30px rgba(93,255,138,.22); }
-.utah-page .btn-primary:hover { transform:translateY(-2px); box-shadow:0 16px 40px rgba(93,255,138,.34); }
+.utah-page .btn-primary { background:var(--green); color:#F7F3E9; box-shadow:0 10px 30px rgba(23,90,65,.22); }
+.utah-page .btn-primary:hover { transform:translateY(-2px); box-shadow:0 16px 40px rgba(23,90,65,.34); }
 .utah-page .btn-ghost { background:transparent; color:var(--bone); border-color:var(--line); }
 .utah-page .btn-ghost:hover { border-color:var(--green); color:var(--green); }
 .utah-page .btn:focus-visible { outline:3px solid var(--green); outline-offset:3px; }
 
 .utah-page .u-banner {
-  background:#0c1a0f; border-bottom:1px solid #1e3024; padding:10px 20px;
-  text-align:center; font-family:var(--mono); font-size:13px; color:var(--green);
+  background:#10382A; border-bottom:1px solid #2E6B4F; padding:10px 20px;
+  text-align:center; font-family:var(--mono); font-size:13px; color:#C2A55C;
   letter-spacing:.04em; line-height:1.4;
 }
 
 .utah-page header.nav {
   position:sticky; top:0; z-index:60; backdrop-filter:saturate(140%) blur(10px);
-  background:rgba(11,14,9,.78); border-bottom:1px solid var(--line);
+  background:rgba(247,243,233,.85); border-bottom:1px solid var(--line);
 }
 .utah-page .nav-in { display:flex; align-items:center; height:62px; }
 .utah-page .logo { font-family:var(--disp); font-size:22px; letter-spacing:.06em; color:var(--bone); }
@@ -71,10 +71,10 @@ const css = `
 
 .utah-page .receipt-grid { display:grid; grid-template-columns:1fr; gap:20px; margin-top:36px; }
 .utah-page .receipt { background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
-.utah-page .receipt.win { border-color:var(--green); box-shadow:0 0 0 1px rgba(93,255,138,.25),0 24px 60px rgba(0,0,0,.4); }
+.utah-page .receipt.win { border-color:var(--green); box-shadow:0 0 0 1px rgba(23,90,65,.25),0 24px 60px rgba(0,0,0,.4); }
 .utah-page .r-head { padding:14px 18px; display:flex; justify-content:space-between; align-items:center; font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
 .utah-page .r-head.no { background:#1b211a; color:var(--ash); }
-.utah-page .r-head.yes { background:var(--green); color:#06210F; font-weight:700; }
+.utah-page .r-head.yes { background:var(--green); color:#F7F3E9; font-weight:700; }
 .utah-page .r-body { padding:18px; }
 .utah-page .r-meta { font-size:13px; color:var(--ash); padding-bottom:14px; border-bottom:1px dashed var(--line); }
 .utah-page .r-line { font-size:13.5px; color:#c7cec4; padding:14px 0; border-bottom:1px dashed var(--line); }
@@ -86,19 +86,19 @@ const css = `
 .utah-page .r-total .k { font-weight:700; font-size:15px; }
 .utah-page .r-total .v { font-family:var(--disp); font-size:clamp(1.6rem,6vw,2rem); }
 .utah-page .receipt.win .r-total .v { color:var(--green); }
-.utah-page .save-callout { margin-top:22px; background:linear-gradient(180deg,rgba(93,255,138,.08),rgba(93,255,138,.02)); border:1px solid rgba(93,255,138,.35); border-radius:16px; padding:22px; }
+.utah-page .save-callout { margin-top:22px; background:linear-gradient(180deg,rgba(23,90,65,.08),rgba(23,90,65,.02)); border:1px solid rgba(23,90,65,.35); border-radius:16px; padding:22px; }
 .utah-page .save-callout .big { font-family:var(--disp); font-size:clamp(2.4rem,11vw,3.4rem); color:var(--green); line-height:1; }
 .utah-page .save-callout .lab2 { font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ash); }
 .utah-page .save-callout p { margin-top:12px; color:#cdd4c9; font-size:1rem; }
 .utah-page .save-callout p b { color:var(--bone); }
 
-.utah-page #pricing { background:linear-gradient(180deg,transparent,rgba(93,255,138,.03) 40%,transparent); }
+.utah-page #pricing { background:linear-gradient(180deg,transparent,rgba(23,90,65,.03) 40%,transparent); }
 .utah-page .price-grid { display:grid; grid-template-columns:1fr; gap:22px; margin-top:40px; }
 .utah-page .plan { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:32px 28px; position:relative; }
-.utah-page .plan.elite { border-color:var(--green); box-shadow:0 0 0 1px rgba(93,255,138,.3),0 30px 70px rgba(0,0,0,.5); background:linear-gradient(180deg,#16201526,var(--card)); }
+.utah-page .plan.elite { border-color:var(--green); box-shadow:0 0 0 1px rgba(23,90,65,.3),0 30px 70px rgba(0,0,0,.5); background:linear-gradient(180deg,#175A4112,var(--card)); }
 .utah-page .plan .tier { font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ash); }
 .utah-page .plan.elite .tier { color:var(--green); }
-.utah-page .plan .badge { position:absolute; top:-12px; right:18px; background:var(--green); color:#06210F; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.08em; padding:6px 12px; border-radius:30px; text-transform:uppercase; }
+.utah-page .plan .badge { position:absolute; top:-12px; right:18px; background:var(--green); color:#F7F3E9; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.08em; padding:6px 12px; border-radius:30px; text-transform:uppercase; }
 .utah-page .plan h3 { font-size:1.5rem; margin-top:6px; }
 .utah-page .price { display:flex; align-items:flex-end; gap:10px; margin:16px 0 4px; flex-wrap:wrap; }
 .utah-page .price .now { font-family:var(--disp); font-size:3.6rem; line-height:.9; color:var(--bone); }
@@ -131,13 +131,13 @@ const css = `
 
 .utah-page .steps { display:grid; grid-template-columns:1fr; gap:16px; margin-top:36px; }
 .utah-page .step { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:26px 24px; display:flex; gap:18px; align-items:flex-start; }
-.utah-page .step .n { font-family:var(--disp); color:#06210F; background:var(--green); width:38px; height:38px; flex:0 0 38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.utah-page .step .n { font-family:var(--disp); color:#F7F3E9; background:var(--green); width:38px; height:38px; flex:0 0 38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; }
 .utah-page .step h3 { font-size:1.15rem; }
 .utah-page .step p { color:var(--ash); font-size:14.5px; margin-top:6px; }
 
-.utah-page .guarantee { background:var(--green); color:#06210F; border-radius:22px; padding:48px 32px; text-align:center; }
-.utah-page .guarantee .eyebrow { color:#06210F; opacity:.7; }
-.utah-page .guarantee h2 { font-size:clamp(1.6rem,6vw,2.4rem); margin:12px 0; color:#06210F; }
+.utah-page .guarantee { background:var(--green); color:#F7F3E9; border-radius:22px; padding:48px 32px; text-align:center; }
+.utah-page .guarantee .eyebrow { color:#F7F3E9; opacity:.7; }
+.utah-page .guarantee h2 { font-size:clamp(1.6rem,6vw,2.4rem); margin:12px 0; color:#F7F3E9; }
 .utah-page .guarantee p { font-size:1.05rem; max-width:46ch; margin:0 auto; font-weight:600; }
 .utah-page .guarantee .shield { width:54px; height:54px; margin:0 auto 6px; }
 
@@ -164,7 +164,7 @@ const css = `
 .utah-page footer a { color:var(--ash); }
 
 .utah-page .stickybar {
-  position:fixed; left:0; right:0; bottom:0; z-index:70; background:rgba(11,14,9,.92);
+  position:fixed; left:0; right:0; bottom:0; z-index:70; background:rgba(247,243,233,.95);
   backdrop-filter:blur(10px); border-top:1px solid var(--line); padding:11px 16px;
   display:flex; align-items:center; gap:12px; transform:translateY(120%); transition:transform .3s ease;
 }
@@ -205,7 +205,7 @@ const css = `
 `
 
 const CHECK = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#175A41" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 6L9 17l-5-5" />
   </svg>
 )
@@ -474,7 +474,7 @@ export default function UtahLanding() {
         {/* Guarantee */}
         <section className="wrap rv">
           <div className="guarantee">
-            <svg className="shield" viewBox="0 0 24 24" fill="none" stroke="#06210F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="shield" viewBox="0 0 24 24" fill="none" stroke="#F7F3E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2l8 3v6c0 5-3.5 8-8 11-4.5-3-8-6-8-11V5l8-3z" />
               <path d="M9 12l2 2 4-4" />
             </svg>

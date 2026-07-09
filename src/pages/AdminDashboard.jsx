@@ -637,7 +637,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={handleBackfill}
                         disabled={backfillLoading}
-                        style={{ background: S.amber, color: '#0C0F0A', fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', cursor: backfillLoading ? 'not-allowed' : 'pointer', opacity: backfillLoading ? 0.6 : 1 }}
+                        style={{ background: S.amber, color: '#F7F3E9', fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', cursor: backfillLoading ? 'not-allowed' : 'pointer', opacity: backfillLoading ? 0.6 : 1 }}
                       >
                         {backfillLoading ? 'Running…' : 'Backfill subscriptions'}
                       </button>

@@ -236,7 +236,7 @@ function Hero() {
               <div style={{ fontFamily: C.display, fontSize: 46, color: S.muted, lineHeight: 1, textDecoration: 'line-through', marginBottom: 10 }}>$380</div>
               <div style={{ fontSize: 12, color: S.muted }}>HVAC tune-up · standard rate</div>
             </div>
-            <div style={{ flex: 1, background: '#0A1C0E', padding: '22px 26px', borderLeft: `1px solid ${S.border}` }}>
+            <div style={{ flex: 1, background: '#E7EFE0', padding: '22px 26px', borderLeft: `1px solid ${S.border}` }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: S.green, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 14 }}>Member Price</div>
               <div style={{ fontFamily: C.display, fontSize: 46, color: S.offwhite, lineHeight: 1, marginBottom: 10 }}>$165</div>
               <div style={{ fontSize: 12, color: S.green }}>You saved $215 on one call</div>
@@ -261,7 +261,7 @@ function Hero() {
               Why We Started SUBS
             </div>
           </div>
-          <div className="hero-video-frame" style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.4)' }}>
+          <div className="hero-video-frame" style={{ position: 'relative', aspectRatio: '9 / 16', background: '#163024', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.4)' }}>
             <video
               src="/videos/subs_owner_video.mp4"
               autoPlay
@@ -348,7 +348,7 @@ function SavingsSection() {
         <SavingsCalculator onJoin={scrollToPlans} joinLabel="Join now →" />
 
         <div style={{
-          marginTop: 24, background: '#0A1C0E', border: `1px solid ${S.green}44`,
+          marginTop: 24, background: '#E7EFE0', border: `1px solid ${S.green}44`,
           borderRadius: 12, padding: '20px 28px', textAlign: 'center',
         }}>
           <span style={{ fontSize: 15, color: S.offwhite, fontWeight: 600 }}>
@@ -395,7 +395,7 @@ function StickyJoinButton() {
         style={{
           pointerEvents: 'auto', background: S.green, border: 'none', color: S.black,
           fontSize: 15, fontWeight: 800, padding: '15px 42px', borderRadius: 100,
-          cursor: 'pointer', boxShadow: '0 10px 34px rgba(93,255,138,0.35), 0 4px 14px rgba(0,0,0,0.5)',
+          cursor: 'pointer', boxShadow: '0 10px 34px rgba(23,90,65,0.35), 0 4px 14px rgba(0,0,0,0.5)',
           width: '100%', maxWidth: 340,
         }}
       >
@@ -513,7 +513,7 @@ function Network() {
 
 function MemberVideoCard({ video }) {
   return (
-    <div className="member-video-frame" style={{ position: 'relative', aspectRatio: '9 / 16', background: '#141A12', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
+    <div className="member-video-frame" style={{ position: 'relative', aspectRatio: '9 / 16', background: '#163024', border: `1px solid ${S.border}`, borderRadius: 12, overflow: 'hidden' }}>
       <video
         src={video.src}
         autoPlay
@@ -742,7 +742,7 @@ function ForVendors() {
                 </div>
 
                 {error && (
-                  <div style={{ background: '#2D1010', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 14px', marginBottom: 14, color: S.danger, fontSize: 13 }}>
+                  <div style={{ background: '#F6E7E2', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 14px', marginBottom: 14, color: S.danger, fontSize: 13 }}>
                     {error}
                   </div>
                 )}
@@ -792,14 +792,14 @@ function BottomCTA() {
   return (
     <section style={{ background: S.forest, borderTop: `1px solid ${S.greenDim}` }}>
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '80px 20px', textAlign: 'center' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 16 }}>Start Saving Today</div>
-        <h2 style={{ fontFamily: C.display, fontSize: 'clamp(28px, 4vw, 48px)', color: S.offwhite, fontWeight: 400, margin: '0 0 20px', lineHeight: 1.15 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: '#C2A55C', textTransform: 'uppercase', marginBottom: 16 }}>Start Saving Today</div>
+        <h2 style={{ fontFamily: C.display, fontSize: 'clamp(28px, 4vw, 48px)', color: S.black, fontWeight: 400, margin: '0 0 20px', lineHeight: 1.15 }}>
           The most obvious purchase<br />a homeowner can make.
         </h2>
-        <p style={{ fontSize: 15, color: '#A8C4A0', lineHeight: 1.7, marginBottom: 36 }}>
+        <p style={{ fontSize: 15, color: '#C6DCC8', lineHeight: 1.7, marginBottom: 36 }}>
           One roof. One HVAC system. One plumbing job. At member discount rates, any single job saves more than a decade of membership fees.
         </p>
-        <button onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 16, fontWeight: 700, padding: '16px 32px', borderRadius: 12, cursor: 'pointer' }}>
+        <button onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ background: S.black, border: 'none', color: S.forest, fontSize: 16, fontWeight: 700, padding: '16px 32px', borderRadius: 12, cursor: 'pointer' }}>
           Join today →
         </button>
       </div>

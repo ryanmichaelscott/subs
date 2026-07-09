@@ -149,7 +149,7 @@ export default function WaitlistPage() {
                 </div>
 
                 {error && (
-                  <div style={{ background: '#2D1010', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 14px', marginTop: 16, color: S.danger, fontSize: 13 }}>
+                  <div style={{ background: '#F6E7E2', border: `1px solid ${S.danger}`, borderRadius: 8, padding: '10px 14px', marginTop: 16, color: S.danger, fontSize: 13 }}>
                     {error}
                   </div>
                 )}

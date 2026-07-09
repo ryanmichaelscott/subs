@@ -124,12 +124,12 @@ export default function WelcomePage() {
                   {resendState === null && <button onClick={handleResend} style={btn}>Send access link</button>}
                   {resendState === 'sending' && <button disabled style={{ ...btn, opacity: 0.6, cursor: 'not-allowed' }}>Sending…</button>}
                   {resendState === 'sent' && (
-                    <div style={{ background: '#0a1c0e', border: `1px solid ${S.green}`, borderRadius: 8, padding: '10px 16px', fontSize: 14, color: S.green }}>
+                    <div style={{ background: '#E7EFE0', border: `1px solid ${S.green}`, borderRadius: 8, padding: '10px 16px', fontSize: 14, color: S.green }}>
                       ✓ Access link sent — check your inbox (and spam folder).
                     </div>
                   )}
                   {resendState === 'error' && (
-                    <div style={{ background: '#2D1010', border: '1px solid #FF5A5A', borderRadius: 8, padding: '10px 16px', fontSize: 14, color: '#FF5A5A' }}>
+                    <div style={{ background: '#F6E7E2', border: '1px solid #B3402F', borderRadius: 8, padding: '10px 16px', fontSize: 14, color: '#B3402F' }}>
                       Couldn't send that address. Double-check and try again.
                     </div>
                   )}
@@ -156,13 +156,13 @@ export default function WelcomePage() {
                   </button>
                 )}
                 {resendState === 'sent' && (
-                  <div style={{ background: '#0a1c0e', border: `1px solid ${S.green}`, borderRadius: 8, padding: '10px 16px', fontSize: 14, color: S.green }}>
+                  <div style={{ background: '#E7EFE0', border: `1px solid ${S.green}`, borderRadius: 8, padding: '10px 16px', fontSize: 14, color: S.green }}>
                     ✓ New access link sent — check your inbox.
                   </div>
                 )}
                 {resendState === 'error' && (
-                  <div style={{ background: '#2D1010', border: '1px solid #FF5A5A', borderRadius: 8, padding: '10px 16px', fontSize: 14, color: '#FF5A5A' }}>
-                    Couldn't send that address. Try <Link to="/login" style={{ color: '#FF5A5A' }}>logging in</Link> instead.
+                  <div style={{ background: '#F6E7E2', border: '1px solid #B3402F', borderRadius: 8, padding: '10px 16px', fontSize: 14, color: '#B3402F' }}>
+                    Couldn't send that address. Try <Link to="/login" style={{ color: '#B3402F' }}>logging in</Link> instead.
                   </div>
                 )}
               </div>

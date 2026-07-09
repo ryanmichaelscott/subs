@@ -227,7 +227,7 @@ export default function SavingsCalculator({ onJoin, joinLabel = 'Join now →', 
       <div className="calc-result">
         <div style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 14, padding: '20px 22px' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 8 }}>Avg. retail price</div>
-          <div style={{ fontFamily: C.display, fontSize: 'clamp(26px, 3.5vw, 34px)', color: S.muted, textDecoration: 'line-through', textDecorationColor: '#FF5A5A88' }}>
+          <div style={{ fontFamily: C.display, fontSize: 'clamp(26px, 3.5vw, 34px)', color: S.muted, textDecoration: 'line-through', textDecorationColor: '#B3402F88' }}>
             ${retail.toLocaleString()}
           </div>
           <div style={{ fontSize: 12, color: S.muted, marginTop: 6 }}>what non-members pay</div>
@@ -241,7 +241,7 @@ export default function SavingsCalculator({ onJoin, joinLabel = 'Join now →', 
           <div style={{ fontSize: 12, color: S.muted, marginTop: 6 }}>est. member rate</div>
         </div>
 
-        <div style={{ background: '#0A1C0E', border: `1px solid ${S.green}`, borderRadius: 14, padding: '20px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div style={{ background: '#E7EFE0', border: `1px solid ${S.green}`, borderRadius: 14, padding: '20px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: S.green, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 8 }}>You save</div>
             <div style={{ fontFamily: C.display, fontSize: 'clamp(30px, 4vw, 40px)', color: S.green, lineHeight: 1 }}>
