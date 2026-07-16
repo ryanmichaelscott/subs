@@ -141,7 +141,7 @@ function MemberCard({ name, member }) {
     <Card style={{ padding: '20px 24px', background: `linear-gradient(135deg, ${S.forest} 0%, #0A241B 100%)`, border: `1px solid ${S.greenDim}` }}>
       {/* Dark card — light-on-dark colors are intentional here, like a physical membership card */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <img src="/logo-wordmark-gold.png" alt="SUBS" style={{ height: 18, width: 'auto', display: 'block' }} />
+        <img src="/logo-wordmark-cream.png" alt="SUBS" style={{ height: 18, width: 'auto', display: 'block' }} />
         <div style={{ fontSize: 11, color: '#A8BCA8' }}>SUBS.app</div>
       </div>
       <div style={{ fontSize: 14, color: '#A8BCA8', letterSpacing: '0.1em', marginBottom: 4 }}>•••• •••• •••• 4821</div>

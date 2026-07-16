@@ -91,7 +91,7 @@ const TIERS = [
 ]
 
 const STEPS = [
-  { icon: '🏠', title: 'Join as a member', body: 'Pay once a year. Your membership unlocks contractor-rate discounts across 30+ trades — the same pricing contractors charge each other, not the retail markup homeowners normally pay.' },
+  { icon: '🏠', title: 'Join free', body: 'Create a free account — no credit card. Your membership unlocks contractor-rate discounts across 30+ trades — the same pricing contractors charge each other, not the retail markup homeowners normally pay.' },
   { icon: '📋', title: 'Access your rate card', body: "Browse your member discount schedule across every trade category. See exactly what percentage off you're getting before you book anything." },
   { icon: '📲', title: 'Get a gut check or book', body: "Contact SUBS. We connect you with a vetted contractor in your trade. They come out, assess the job, and quote it — at your member rate, not retail." },
   { icon: '💰', title: 'Save thousands', body: 'Your member discount comes off the final quote. On a $25K roof, 15% off is $3,750 back in your pocket. Most members save more on a single job than a decade of membership fees.' },
@@ -99,10 +99,11 @@ const STEPS = [
 
 const FAQS = [
   { q: 'How does the member discount actually work?', a: "Every contractor in the SUBS network has agreed to a member discount rate — typically 15–20% off their standard quote. When they come out and assess your job, the final price already reflects your membership. You're not negotiating. The discount is baked in by contract." },
-  { q: 'Can I cancel anytime?', a: 'Memberships are annual and non-refundable after the first 14 days. If SUBS fails to deliver your included services, we\'ll prorate a refund for missed items. Most members renew — the savings on a single HVAC service typically cover the full annual fee.' },
+  { q: 'Is it really free to join?', a: 'Yes — a free SUBS account takes about a minute to create, requires no credit card, and gets you member discounts plus access to submit service requests to our contractor network. You only ever pay if you choose to upgrade to a paid pass.' },
+  { q: 'Can I cancel anytime?', a: 'The free tier has nothing to cancel — it\'s free forever. Paid passes are annual and refundable in full within the first 14 days. Most members renew — the savings on a single HVAC service typically cover the full annual fee.' },
   { q: 'How do you vet vendors?', a: "Every vendor in the SUBS network is licensed, insured, background-checked, and reviewed before joining. We monitor ratings after every job and remove partners who fall below 4.5. You're not calling a Yelp listing — you're calling our partner." },
   { q: 'Where is SUBS available?', a: 'SUBS currently serves the Salt Lake City metro and surrounding Utah communities. Enter your zip below to get notified when we reach your area.' },
-  { q: "What's the difference between Member+ and Elite?", a: "Member+ gives you unlimited service requests, enhanced pricing, and priority access. Elite adds concierge booking (we call and schedule for you), same-week scheduling, a dedicated SUBS home advisor, and first access to top rated contractors in your area." },
+  { q: "What's the difference between Free, Member, and Full Pass?", a: "Every tier gets the same member discounts from the same vetted contractors. Free lets you join today and start submitting service requests. Member ($99/yr) includes more service requests for homeowners who book often. Full Pass ($249/yr) is unlimited requests with priority scheduling — and it's transferable as a gift." },
 ]
 
 function Nav({ setSection }) {
@@ -368,10 +369,10 @@ function SavingsSection() {
           borderRadius: 12, padding: '20px 28px', textAlign: 'center',
         }}>
           <span style={{ fontSize: 15, color: S.offwhite, fontWeight: 600 }}>
-            Your SUBS membership pays for itself on the very first service call.
+            Membership pays for itself on the very first service call.
           </span>
           <span style={{ fontSize: 14, color: S.muted, display: 'block', marginTop: 6 }}>
-            $99/year — less than the tip on most contractor visits.
+            And joining is free — no credit card required.
           </span>
         </div>
       </div>

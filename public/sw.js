@@ -3,8 +3,8 @@
 // cache-first for hashed build assets and icons, network-only for everything
 // else (API calls, Stripe, Supabase, Clerk, analytics).
 // v3: real SUBS logo (gold serif on deep forest)
-const CACHE = 'subs-v3'
-const SHELL = ['/', '/manifest.json', '/icons/icon-192.png?v=3', '/icons/icon-512.png?v=3']
+const CACHE = 'subs-v4'
+const SHELL = ['/', '/manifest.json', '/icons/icon-192.png?v=4', '/icons/icon-512.png?v=4']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()))
