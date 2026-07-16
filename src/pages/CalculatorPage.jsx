@@ -16,7 +16,7 @@ const TRUST_LOGOS = [
 
 const FAQS = [
   { q: 'Is this number a real quote?', a: "It's an estimate based on published pricing data for your state and a typical ~20% member discount. Your exact price comes from the contractor's assessment — but the member discount is contractual, so it's baked into whatever they quote you." },
-  { q: 'What does the membership cost?', a: 'The Member Pass is $99/year for all member discounts. The Full Pass is $249/year and includes 6 free services worth $1,525 on top of every discount — most members get more back in free services alone than the pass costs.' },
+  { q: 'What does the membership cost?', a: 'Joining SUBS is free — a free account gets you member discounts and access to our contractor network, no credit card required. Member ($99/yr) and Full Pass ($249/yr) add more service requests, priority scheduling, and unlimited use for frequent bookers.' },
   { q: 'What happens after I submit my number?', a: 'Our concierge team calls or texts you, confirms your member pricing for the service you picked, and can connect you with a vetted contractor right away. No obligation — if the numbers don\'t make sense for you, no hard feelings.' },
   { q: 'Who are the contractors?', a: "Every contractor in the SUBS network is licensed, insured, and background-checked before their first job. We monitor ratings after every job and remove anyone who falls below 4.5 stars." },
 ]
@@ -99,9 +99,9 @@ function LeadForm({ selection }) {
           🎁 Your free <strong style={{ color: S.offwhite }}>Utah Homeowner's Maintenance Checklist</strong> is
           on its way to <strong style={{ color: S.green }}>{email.trim()}</strong> — check your inbox.
         </p>
-        <Link to="/#plans" style={{ textDecoration: 'none' }}>
+        <Link to="/join" style={{ textDecoration: 'none' }}>
           <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 14, fontWeight: 800, padding: '13px 28px', borderRadius: 10, cursor: 'pointer' }}>
-            Want it faster? Join now — from $99/yr →
+            Want it faster? Join free while you wait →
           </button>
         </Link>
       </div>
@@ -370,14 +370,21 @@ export default function CalculatorPage() {
       <section style={{ background: S.forest, borderTop: `1px solid ${S.greenDim}` }}>
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '56px 20px', textAlign: 'center' }}>
           <h2 style={{ fontFamily: C.display, fontSize: 'clamp(26px, 4vw, 40px)', color: S.black, fontWeight: 400, margin: '0 0 14px', lineHeight: 1.15 }}>
-            Ready to stop overpaying?
+            See your savings, then join free.
           </h2>
           <p style={{ fontSize: 15, color: '#C6DCC8', lineHeight: 1.65, marginBottom: 28 }}>
-            Your savings number is 10 seconds away — and locking it in costs nothing.
+            A free SUBS account gets you member pricing on every service — no credit card required.
           </p>
-          <button onClick={scrollToCalc} style={{ background: S.black, border: 'none', color: S.forest, fontSize: 16, fontWeight: 800, padding: '16px 40px', borderRadius: 100, cursor: 'pointer', boxShadow: '0 10px 34px rgba(0,0,0,0.25)' }}>
-            Calculate my savings ↑
-          </button>
+          <Link to="/join" style={{ textDecoration: 'none' }}>
+            <button style={{ background: S.black, border: 'none', color: S.forest, fontSize: 16, fontWeight: 800, padding: '16px 40px', borderRadius: 100, cursor: 'pointer', boxShadow: '0 10px 34px rgba(0,0,0,0.25)' }}>
+              Join Free →
+            </button>
+          </Link>
+          <div style={{ marginTop: 14 }}>
+            <Link to="/#plans" style={{ fontSize: 13, color: '#C6DCC8', textDecoration: 'underline' }}>
+              See Member and Full Pass options
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -22,33 +22,30 @@ const TIERS = [
     id: 'full',
     name: 'Full Pass',
     price: 249,
-    compareAt: 349,
     priceId: 'price_1TtwA5AYDs9oVarWSOV7SwP7',
     color: S.green,
-    tagline: '$1,525 in free services, included.',
+    tagline: 'Unlimited everything.',
     perks: [
+      'Unlimited service requests',
+      'Priority scheduling',
       'All member discounts — 15–35% off every service',
-      '6 FREE services worth $1,525 total value',
-      'Concierge line — we find and book the right contractor',
-      'Digital membership card',
-      'Valid 12 months',
+      'Apple & Google Wallet membership pass',
       'Transferable as a gift',
     ],
     popular: true,
   },
   {
     id: 'member',
-    name: 'Member Pass',
+    name: 'Member',
     price: 99,
     priceId: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
     color: S.forest,
-    tagline: 'Every member discount, all year.',
+    tagline: 'For homeowners who book often.',
     perks: [
+      'More service requests included',
+      'No overage fees for most homeowners',
       'All member discounts — 15–35% off every service',
-      'Save on every booking',
-      'Access to the vetted SUBS contractor network',
       'Digital membership card',
-      'Valid 12 months',
     ],
   },
 ]
@@ -59,8 +56,6 @@ export default function CheckoutPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const showUnpaidBanner = searchParams.get('unpaid') === '1'
-  const couponCode = searchParams.get('coupon')
-  const DOOR100_PROMO_ID = 'promo_1TtwmjAYDs9oVarW7K7jt7Xq'
   const [checking, setChecking] = useState(true)
   const [loadingId, setLoadingId] = useState(null)
   const [error, setError] = useState(null)
@@ -119,9 +114,6 @@ export default function CheckoutPage() {
       email: user.primaryEmailAddress?.emailAddress,
       success_url: `${window.location.origin}/dashboard?conversion=1&checkout_session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${window.location.origin}/checkout`,
-    }
-    if (couponCode === 'DOOR100' && tier.id === 'full') {
-      checkoutBody.promotion_code_id = DOOR100_PROMO_ID
     }
     const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
       body: checkoutBody,
@@ -250,24 +242,10 @@ export default function CheckoutPage() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: tier.color, letterSpacing: '0.06em', marginBottom: 8 }}>
                   {tier.name.toUpperCase()}
                 </div>
-                {tier.id === 'full' && couponCode === 'DOOR100' ? (
-                  <div style={{ marginBottom: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      <span style={{ fontFamily: C.display, fontSize: 40, color: S.green }}>$149</span>
-                      <span style={{ fontFamily: C.display, fontSize: 22, color: S.muted, textDecoration: 'line-through' }}>$249</span>
-                      <span style={{ fontSize: 14, color: S.muted }}>/yr</span>
-                    </div>
-                    <div style={{ fontSize: 12, color: S.green, fontWeight: 700, marginTop: 4 }}>DOOR100 ✓ — $100 off</div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
-                    {tier.compareAt && (
-                      <span style={{ fontFamily: C.display, fontSize: 22, color: S.muted, textDecoration: 'line-through' }}>${tier.compareAt}</span>
-                    )}
-                    <span style={{ fontFamily: C.display, fontSize: 40, color: S.offwhite }}>${tier.price}</span>
-                    <span style={{ fontSize: 14, color: S.muted }}>/yr</span>
-                  </div>
-                )}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
+                  <span style={{ fontFamily: C.display, fontSize: 40, color: S.offwhite }}>${tier.price}</span>
+                  <span style={{ fontSize: 14, color: S.muted }}>/yr</span>
+                </div>
                 <p style={{ fontSize: 13, color: S.muted, margin: '0 0 20px', lineHeight: 1.5 }}>{tier.tagline}</p>
                 <div style={{ flex: 1, marginBottom: 24 }}>
                   {tier.perks.map((perk) => (

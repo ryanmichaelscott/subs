@@ -48,7 +48,7 @@ function makeSolidPNG(w, h, r, g, b) {
 }
 
 function emailHtml(name, tier, memberId, expiryStr) {
-  const badgeColor = { Member: '#175A41', Full: '#175A41', 'Member+': '#5B8DEF', Elite: '#C084FC' }[tier] || '#175A41'
+  const badgeColor = { Free: '#175A41', Member: '#175A41', Full: '#175A41', 'Member+': '#35608F', Elite: '#6E5A8E' }[tier] || '#175A41'
   const firstName = name ? name.split(' ')[0] : null
   const expiryDisplay = new Date(expiryStr + 'T00:00:00').toLocaleDateString('en-US', {
     month: 'long', day: 'numeric', year: 'numeric',

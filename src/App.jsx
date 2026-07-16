@@ -22,7 +22,7 @@ import PropertyManagers from './pages/PropertyManagers'
 import EnterpriseDashboard from './pages/EnterpriseDashboard'
 import EnterpriseOnboarding from './pages/EnterpriseOnboarding'
 import LegalPage from './pages/LegalPage'
-import UtahLanding from './pages/UtahLanding'
+import JoinPage from './pages/JoinPage'
 import WelcomePage from './pages/WelcomePage'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -127,7 +127,9 @@ export default function App() {
             <ProtectedRoute role="enterprise"><EnterpriseDashboard /></ProtectedRoute>
           </DashboardErrorBoundary>
         } />
-        <Route path="/utah" element={<UtahLanding />} />
+        {/* Utah landing retired July 2026 — preserve old ad/bookmark traffic */}
+        <Route path="/utah" element={<Navigate to="/" replace />} />
+        <Route path="/join" element={<JoinPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

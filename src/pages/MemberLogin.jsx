@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Navigate } from 'react-router-dom'
 import { SignIn, SignUp } from '@clerk/clerk-react'
 import { S, C } from '../theme'
 
@@ -79,7 +79,9 @@ export default function MemberLogin() {
   const plan = searchParams.get('plan')
 
   const afterUrl = plan ? `/dashboard?plan=${plan}` : '/dashboard'
-  const signUpUrl = plan ? `/login?mode=signup&plan=${plan}` : '/login?mode=signup'
+
+  // Signup now happens through the free-tier flow at /join
+  if (isSignUp) return <Navigate to="/join" replace />
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#F7F3E9', padding: '24px 12px' }}>
@@ -103,7 +105,7 @@ export default function MemberLogin() {
             <SignIn
               routing="virtual"
               fallbackRedirectUrl={afterUrl}
-              signUpUrl={signUpUrl}
+              signUpUrl="/join"
               appearance={appearance}
             />
           )}

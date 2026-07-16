@@ -42,52 +42,53 @@ const TRADES = [
 
 const TIERS = [
   {
-    id: 'full',
-    name: 'Full Pass',
-    priceId: 'price_1TtwA5AYDs9oVarWSOV7SwP7',
-    price: 249,
-    compareAt: 349,
-    color: S.green,
-    tagline: '$1,525 in free services, included.',
-    popular: true,
+    id: 'free',
+    name: 'Free',
+    price: 0,
+    priceLabel: '$0',
+    color: S.forest,
+    tagline: 'Join today — no credit card.',
+    cta: 'Join Free',
+    href: '/join',
     perks: [
-      'All member discounts included — 15–35% off every service',
-      '6 FREE services worth $1,525 total value',
-      'Concierge line — call us to find and book the right contractor',
+      'Member discounts on every service',
+      'Submit service requests to our vetted contractor network',
+      'Concierge line — call us to find the right contractor',
       'Digital membership card',
-      'Valid 12 months',
-      'Transferable as a gift',
     ],
   },
   {
     id: 'member',
-    name: 'Member Pass',
-    priceId: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
+    name: 'Member',
     price: 99,
+    priceLabel: '$99',
+    per: '/yr',
     color: S.forest,
-    tagline: 'Every member discount, all year.',
+    tagline: 'For homeowners who book often.',
     perks: [
-      'Access to all member discounts — 15–35% off every service',
-      'Save on every booking',
-      'Access to the vetted SUBS contractor network',
-      'Digital membership card',
-      'Valid 12 months',
+      'Everything in Free',
+      'More service requests included',
+      'No overage fees for most homeowners',
+      'Priority over free members',
+    ],
+  },
+  {
+    id: 'full',
+    name: 'Full Pass',
+    price: 249,
+    priceLabel: '$249',
+    per: '/yr',
+    color: S.green,
+    tagline: 'Unlimited everything.',
+    popular: true,
+    perks: [
+      'Unlimited service requests',
+      'Priority scheduling',
+      'Apple & Google Wallet membership pass',
+      'Transferable as a gift',
     ],
   },
 ]
-
-// The 6 free services included with Full Pass — $1,525 total value.
-// Contractor names/logos are placeholders until partners are confirmed.
-export const FREE_SERVICES = [
-  { name: 'Home Cleaning', value: 250 },
-  { name: 'Carpet Cleaning', value: 200 },
-  { name: 'Window Washing', value: 225 },
-  { name: 'HVAC Tune-Up', value: 200 },
-  { name: 'Pest Control', value: 300 },
-  { name: 'Roof Inspection', value: 350 },
-]
-
-export const FREE_SERVICES_TOTAL = FREE_SERVICES.reduce((s, x) => s + x.value, 0) // 1525
 
 const STEPS = [
   { icon: '🏠', title: 'Join as a member', body: 'Pay once a year. Your membership unlocks contractor-rate discounts across 30+ trades — the same pricing contractors charge each other, not the retail markup homeowners normally pay.' },
@@ -217,18 +218,11 @@ function Hero() {
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           <div>
-            <button
-              onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: S.green + '14', border: `1px solid ${S.green}55`, color: S.green, fontSize: 12.5, fontWeight: 700, padding: '7px 16px', borderRadius: 100, cursor: 'pointer', marginBottom: 18, fontFamily: C.body }}
-            >
-              <span style={{ background: S.green, color: S.black, fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 100, letterSpacing: '0.06em' }}>NEW</span>
-              Full Pass includes $1,525 in free services →
-            </button>
             <h1 style={{ fontFamily: C.display, fontSize: 'clamp(38px, 5.5vw, 72px)', fontWeight: 400, color: S.offwhite, lineHeight: 1.05, margin: '0 0 16px' }}>
-              $1,525 in free services.<br />Wholesale pricing on the rest.
+              Member pricing on every<br />home service. Free to join.
             </h1>
             <p style={{ fontSize: 16, color: S.muted, margin: 0, lineHeight: 1.65 }}>
-              One pass covers every home service at member pricing — and the Full Pass includes six professional services, free, every year.
+              From weekly lawn care to emergency plumbing — join free and get wholesale pricing from vetted contractors on every home service.
             </p>
           </div>
 
@@ -247,9 +241,14 @@ function Hero() {
           </div>
 
           {/* CTAs */}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <button onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
-              Start saving today
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Link to="/join" style={{ textDecoration: 'none' }}>
+              <button style={{ background: S.green, border: 'none', color: S.black, fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 10, cursor: 'pointer' }}>
+                Join Free
+              </button>
+            </Link>
+            <button onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 15, fontWeight: 600, padding: '14px 24px', borderRadius: 10, cursor: 'pointer' }}>
+              See all plans
             </button>
           </div>
         </div>
@@ -394,7 +393,7 @@ function StickyJoinButton() {
   return (
     <div style={{ position: 'fixed', bottom: 18, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 90, pointerEvents: 'none', padding: '0 16px' }}>
       <button
-        onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
+        onClick={() => { window.location.href = '/join' }}
         style={{
           pointerEvents: 'auto', background: S.green, border: 'none', color: S.black,
           fontSize: 15, fontWeight: 800, padding: '15px 42px', borderRadius: 100,
@@ -402,7 +401,7 @@ function StickyJoinButton() {
           width: '100%', maxWidth: 340,
         }}
       >
-        Join now →
+        Join Free →
       </button>
     </div>
   )
@@ -440,24 +439,17 @@ function Membership() {
   return (
     <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 20px' }}>
       <style>{`
-        .tier-grid-2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; align-items: start; max-width: 860px; margin: 0 auto; }
-        .free-services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-        @media (max-width: 760px) {
-          .tier-grid-2 { grid-template-columns: 1fr; }
-          .free-services-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 440px) {
-          .free-services-grid { grid-template-columns: 1fr; }
-        }
+        .tier-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+        @media (max-width: 860px) { .tier-grid-3 { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
       `}</style>
       <div style={{ textAlign: 'center', marginBottom: 56 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 12 }}>Two passes. One obvious choice.</div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: S.green, textTransform: 'uppercase', marginBottom: 12 }}>Membership</div>
         <h2 style={{ fontFamily: C.display, fontSize: 'clamp(32px, 5vw, 52px)', color: S.offwhite, fontWeight: 400, margin: '0 0 16px', lineHeight: 1.1 }}>
-          Get <span style={{ color: S.green }}>$1,525 in free services</span><br />with the Full Pass.
+          Join SUBS for free.
         </h2>
-        <p style={{ fontSize: 14, color: S.muted }}>Annual billing only. Cancel in the first 14 days for a full refund.</p>
+        <p style={{ fontSize: 14, color: S.muted }}>Start free today. Upgrade any time for more requests and priority scheduling.</p>
       </div>
-      <div className="tier-grid-2">
+      <div className="tier-grid-3">
         {TIERS.map((tier) => (
           <div key={tier.id} style={{ background: S.card, border: `2px solid ${tier.popular ? S.green : S.border}`, borderRadius: 16, padding: 28, position: 'relative', boxShadow: tier.popular ? '0 18px 44px rgba(23,90,65,0.14)' : 'none' }}>
             {tier.popular && (
@@ -466,58 +458,37 @@ function Membership() {
               </div>
             )}
             <div style={{ fontSize: 14, fontWeight: 700, color: tier.color, marginBottom: 8 }}>{tier.name}</div>
-            {tier.compareAt && (
-              <div style={{ fontFamily: C.display, fontSize: 20, color: S.muted, textDecoration: 'line-through', textDecorationColor: S.danger + '99', lineHeight: 1 }}>
-                ${tier.compareAt}
-              </div>
-            )}
             <div style={{ fontFamily: C.display, fontSize: 44, color: S.offwhite, lineHeight: 1.1, marginBottom: 4 }}>
-              ${tier.price}<span style={{ fontSize: 16, color: S.muted, fontFamily: C.body }}>/yr</span>
+              {tier.priceLabel}{tier.per && <span style={{ fontSize: 16, color: S.muted, fontFamily: C.body }}>{tier.per}</span>}
             </div>
             <p style={{ fontSize: 13, color: S.muted, margin: '4px 0 24px' }}>{tier.tagline}</p>
             <ul style={{ listStyle: 'none', marginBottom: 28, padding: 0 }}>
               {tier.perks.map((perk, i) => (
                 <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10, fontSize: 13, color: S.offwhite, lineHeight: 1.4 }}>
-                  <span style={{ color: S.green, flexShrink: 0, marginTop: 1 }}>✓</span>
-                  {perk.includes('$1,525') ? <span><strong>6 FREE services</strong> worth <strong style={{ color: S.green }}>$1,525</strong> total value</span> : perk}
+                  <span style={{ color: S.green, flexShrink: 0, marginTop: 1 }}>✓</span>{perk}
                 </li>
               ))}
             </ul>
-            <a href={`/api/checkout?plan=${tier.id}${localStorage.getItem('subs_ref') ? `&ref=${encodeURIComponent(localStorage.getItem('subs_ref'))}` : ''}`} onClick={() => { if (window.fbq) window.fbq('track', 'InitiateCheckout'); sessionStorage.setItem('subs_checkout_plan', tier.id) }} style={{ textDecoration: 'none' }}>
-              <button style={{ width: '100%', background: tier.popular ? S.green : S.surface, border: `1px solid ${tier.popular ? 'transparent' : S.border}`, color: tier.popular ? S.black : S.offwhite, fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: 'pointer' }}>
-                Join {tier.name}
-              </button>
-            </a>
+            {tier.href ? (
+              <Link to={tier.href} style={{ textDecoration: 'none' }} onClick={() => { if (window.fbq) window.fbq('track', 'InitiateCheckout') }}>
+                <button style={{ width: '100%', background: S.forest, border: 'none', color: S.black, fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: 'pointer' }}>
+                  {tier.cta}
+                </button>
+              </Link>
+            ) : (
+              <a href={`/api/checkout?plan=${tier.id}${localStorage.getItem('subs_ref') ? `&ref=${encodeURIComponent(localStorage.getItem('subs_ref'))}` : ''}`} onClick={() => { if (window.fbq) window.fbq('track', 'InitiateCheckout'); sessionStorage.setItem('subs_checkout_plan', tier.id) }} style={{ textDecoration: 'none' }}>
+                <button style={{ width: '100%', background: tier.popular ? S.green : S.surface, border: `1px solid ${tier.popular ? 'transparent' : S.border}`, color: tier.popular ? S.black : S.offwhite, fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: 'pointer' }}>
+                  Join {tier.name}
+                </button>
+              </a>
+            )}
           </div>
         ))}
-      </div>
-
-      {/* 6 free services included with Full Pass */}
-      <div style={{ maxWidth: 860, margin: '48px auto 0' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h3 style={{ fontFamily: C.display, fontSize: 'clamp(22px, 3vw, 30px)', color: S.offwhite, fontWeight: 400, margin: '0 0 8px' }}>
-            6 Free Services Included with Full Pass
-          </h3>
-          <p style={{ fontSize: 13.5, color: S.muted, margin: 0 }}>
-            Every Full Pass includes one of each — performed by a vetted SUBS contractor. <strong style={{ color: S.green }}>${FREE_SERVICES_TOTAL.toLocaleString()} total value.</strong>
-          </p>
-        </div>
-        <div className="free-services-grid">
-          {FREE_SERVICES.map((svc) => (
-            <div key={svc.name} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 14, padding: '22px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 10 }}>{svc.name}</div>
-              <div style={{ fontFamily: C.display, fontSize: 34, color: S.green, lineHeight: 1, marginBottom: 10 }}>${svc.value}</div>
-              <div style={{ fontSize: 11, color: S.muted, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>value</div>
-              <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${S.border}`, fontSize: 12, fontWeight: 700, color: S.green }}>
-                1 Free {svc.name}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </section>
   )
 }
+
 
 function Network() {
   const [expanded, setExpanded] = useState(false)
@@ -844,8 +815,8 @@ function BottomCTA() {
         <p style={{ fontSize: 15, color: '#C6DCC8', lineHeight: 1.7, marginBottom: 36 }}>
           One roof. One HVAC system. One plumbing job. At member discount rates, any single job saves more than a decade of membership fees.
         </p>
-        <button onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ background: S.black, border: 'none', color: S.forest, fontSize: 16, fontWeight: 700, padding: '16px 32px', borderRadius: 12, cursor: 'pointer' }}>
-          Join today →
+        <button onClick={() => { window.location.href = '/join' }} style={{ background: S.black, border: 'none', color: S.forest, fontSize: 16, fontWeight: 700, padding: '16px 32px', borderRadius: 12, cursor: 'pointer' }}>
+          Join Free →
         </button>
       </div>
     </section>

@@ -110,8 +110,9 @@ export default async function handler(req, res) {
       const { full_name, email, phone, tier } = fields
       if (!full_name || !email || !tier) return res.status(400).json({ error: 'full_name, email, tier required' })
 
+      const isFree = tier === 'free'
       const priceId = MEMBER_PRICE_IDS[tier]
-      if (!priceId) return res.status(400).json({ error: `Unknown tier: ${tier}` })
+      if (!isFree && !priceId) return res.status(400).json({ error: `Unknown tier: ${tier}` })
 
       const { clerkUserId, existed: memberExisted } = await findOrCreateClerkUser({ email, firstName: full_name, role: 'member' })
 
@@ -120,11 +121,16 @@ export default async function handler(req, res) {
         full_name,
         email,
         phone: phone || null,
-        tier: tier === 'member' ? 'Member' : 'Full',
-        status: 'pending',
+        tier: isFree ? 'Free' : tier === 'member' ? 'Member' : 'Full',
+        // Free accounts have nothing to pay — active immediately
+        status: isFree ? 'Active' : 'pending',
         admin_created: true,
         joined_at: new Date().toISOString(),
       }).select().single()
+
+      if (isFree) {
+        return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: null, full_name, email, tier_label: 'Free', message: memberExisted ? 'Existing account found — linked as Free member.' : 'Free member account created — no payment needed.' })
+      }
 
       let checkoutUrl = null
       if (stripe) {

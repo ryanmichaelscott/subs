@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import RevenueChart from '../components/RevenueChart'
 import CreateAccountModal from '../components/CreateAccountModal'
 
-const TIER_COLORS = { Member: S.forest, Full: S.green, 'Member+': S.blue, Elite: S.purple }
+const TIER_COLORS = { Free: S.muted, Member: S.forest, Full: S.green, 'Member+': S.blue, Elite: S.purple }
 const STATUS_COLORS = { Active: S.green, Churned: S.danger, Trial: S.amber }
 
 function timeAgo(ts) {
@@ -558,8 +558,9 @@ export default function AdminDashboard() {
               <Card style={{ padding: 24 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, marginBottom: 16 }}>Members by Tier</div>
                 {[
-                  { tier: 'Full', color: S.green },
+                  { tier: 'Free', color: S.muted },
                   { tier: 'Member', color: S.forest },
+                  { tier: 'Full', color: S.green },
                   { tier: 'Member+', color: S.blue },
                   { tier: 'Elite', color: S.purple },
                 ].map(({ tier, color }) => {

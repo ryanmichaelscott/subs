@@ -34,7 +34,7 @@ function httpsPost(url, headers, body) {
 }
 
 function tierBadgeColor(tier) {
-  if (tier === 'Full') return '#175A41'
+  if (tier === 'Full' || tier === 'Free') return '#175A41'
   if (tier === 'Elite') return '#F5A623'
   if (tier === 'Member+') return '#5B8DEF'
   return '#5DFF8A'
@@ -148,11 +148,14 @@ export default async function handler(req, res) {
 
     const apiKey = process.env.PASSKIT_API_KEY
     const templates = {
-      'Member':  process.env.PASSKIT_MEMBER_TEMPLATE_ID,
+      // Request-model tiers reuse the existing pass designs one rung up:
+      // Free → "Member" pass, Member → "Member+" pass, Full → "Elite" pass.
+      'Free':    process.env.PASSKIT_MEMBER_TEMPLATE_ID,
+      'Member':  process.env.PASSKIT_MEMBER_PLUS_TEMPLATE_ID,
+      'Full':    process.env.PASSKIT_ELITE_TEMPLATE_ID,
+      // Legacy tiers keep their original designs
       'Member+': process.env.PASSKIT_MEMBER_PLUS_TEMPLATE_ID,
       'Elite':   process.env.PASSKIT_ELITE_TEMPLATE_ID,
-      // Full Pass reuses the premium (Elite) pass template until its own exists
-      'Full':    process.env.PASSKIT_FULL_TEMPLATE_ID || process.env.PASSKIT_ELITE_TEMPLATE_ID,
     }
     const resendKey = process.env.RESEND_API_KEY
     // Support both naming conventions for Supabase URL and service key

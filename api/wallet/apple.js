@@ -3,10 +3,13 @@ import { Template } from '@walletpass/pass-js'
 import { deflateSync } from 'node:zlib'
 import { createClient } from '@supabase/supabase-js'
 
+// Cream + antique gold on the deep-green card, matching the SUBS rebrand
 const TIER_LABEL_COLOR = {
-  'Member':  'rgb(93,255,138)',
-  'Member+': 'rgb(91,141,239)',
-  'Elite':   'rgb(192,132,252)',
+  'Free':    'rgb(194,165,92)',
+  'Member':  'rgb(194,165,92)',
+  'Full':    'rgb(194,165,92)',
+  'Member+': 'rgb(194,165,92)',
+  'Elite':   'rgb(194,165,92)',
 }
 
 function makeSolidPNG(w, h, r, g, b) {
@@ -83,7 +86,7 @@ function extractPemFromP12(p12Buffer, password) {
 }
 
 function emailHtml(name, tier, memberId, expiryStr, googleWalletUrl = null) {
-  const badgeColor = { Member: '#5DFF8A', 'Member+': '#5B8DEF', Elite: '#C084FC' }[tier] || '#5DFF8A'
+  const badgeColor = { Free: '#175A41', Member: '#175A41', Full: '#175A41', 'Member+': '#35608F', Elite: '#6E5A8E' }[tier] || '#175A41'
   const firstName = name ? name.split(' ')[0] : null
   const expiryDisplay = new Date(expiryStr + 'T00:00:00').toLocaleDateString('en-US', {
     month: 'long', day: 'numeric', year: 'numeric',
@@ -231,9 +234,9 @@ export default async function handler(req, res) {
         teamIdentifier: teamId,
         organizationName: 'SUBS',
         description: 'SUBS Membership Card',
-        backgroundColor: 'rgb(12,15,10)',
+        backgroundColor: 'rgb(16,56,42)',
         labelColor: TIER_LABEL_COLOR[tier] || 'rgb(93,255,138)',
-        foregroundColor: 'rgb(255,255,255)',
+        foregroundColor: 'rgb(247,243,233)',
         logoText: '',
       })
       console.log('[wallet/apple] Template created')

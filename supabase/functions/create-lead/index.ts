@@ -33,7 +33,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { trade, description, zip, state, preferred_date, member_email, member_name, clerk_user_id } = await req.json()
+    const { trade, description, zip, state, preferred_date, member_email, member_name, clerk_user_id, billed_session_id } = await req.json()
 
     if (!trade || !zip || !member_email) {
       return new Response(JSON.stringify({ error: 'trade, zip, and member_email are required' }), {
@@ -45,6 +45,70 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
+
+    // ── Request quota (calendar year) ────────────────────────────────────────
+    // Free: 4/yr · Member: 10/yr · Full / legacy Member+ / Elite: unlimited.
+    // Limits are enforced here only — never advertised on the public site.
+    const TIER_LIMITS: Record<string, number> = { free: 4, member: 10 }
+    const currentYear = new Date().getFullYear()
+
+    let memberRow: any = null
+    if (clerk_user_id) {
+      const { data } = await supabase.from('members')
+        .select('id, tier, request_count, request_year')
+        .eq('clerk_user_id', clerk_user_id).maybeSingle()
+      memberRow = data
+    }
+    if (!memberRow && member_email) {
+      const { data } = await supabase.from('members')
+        .select('id, tier, request_count, request_year')
+        .eq('email', member_email).maybeSingle()
+      memberRow = data
+    }
+
+    // Lazy year reset — if the Jan-1 cron missed, a stale year counts as 0
+    const usedThisYear = memberRow && memberRow.request_year === currentYear ? (memberRow.request_count || 0) : 0
+    const tierKey = (memberRow?.tier || '').toLowerCase()
+    const limit = TIER_LIMITS[tierKey] // undefined → unlimited
+
+    // Overage bypass: a paid $25 extra-request session, verified server-side
+    let billed = false
+    let stripeChargeId: string | null = null
+    if (billed_session_id) {
+      const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')!
+      const sesRes = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(billed_session_id)}`, {
+        headers: { 'Authorization': `Bearer ${stripeKey}` },
+      })
+      const ses = await sesRes.json()
+      const valid = sesRes.ok
+        && ses.payment_status === 'paid'
+        && ses.metadata?.type === 'extra_request'
+        && (!clerk_user_id || ses.metadata?.clerk_user_id === clerk_user_id)
+      if (!valid) {
+        return new Response(JSON.stringify({ error: 'Payment could not be verified.' }), {
+          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      // One request per payment — reject if this session was already consumed
+      const pi = typeof ses.payment_intent === 'string' ? ses.payment_intent : ses.payment_intent?.id
+      const { data: consumed } = await supabase.from('service_requests')
+        .select('id').eq('stripe_charge_id', pi).maybeSingle()
+      if (consumed) {
+        return new Response(JSON.stringify({ success: true, lead_id: null, contractor_count: 0, already_processed: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      billed = true
+      stripeChargeId = pi
+    }
+
+    if (!billed && limit !== undefined && usedThisYear >= limit) {
+      return new Response(JSON.stringify({
+        error: 'request_limit_reached',
+        used: usedThisYear,
+        tier: memberRow?.tier || 'Free',
+      }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
@@ -66,6 +130,23 @@ serve(async (req) => {
       .single()
 
     if (leadError) throw new Error(leadError.message)
+
+    // ── Quota ledger + counter ───────────────────────────────────────────────
+    if (memberRow) {
+      await supabase.from('service_requests').insert({
+        member_id: memberRow.id,
+        trade,
+        status: 'open',
+        billed,
+        stripe_charge_id: stripeChargeId,
+      })
+      // Billed (overage) requests don't consume quota; the counter tracks
+      // included-request usage against the calendar year.
+      const newCount = billed ? usedThisYear : usedThisYear + 1
+      await supabase.from('members')
+        .update({ request_count: newCount, request_year: currentYear })
+        .eq('id', memberRow.id)
+    }
 
     // Find active contractors with matching trade and state
     const { data: contractors } = await supabase

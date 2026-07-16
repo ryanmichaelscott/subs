@@ -7,17 +7,12 @@ const PRICE_IDS = {
   full:   'price_1TtwA5AYDs9oVarWSOV7SwP7',
 }
 
-const PROMO_CODES = {
-  DOOR100: 'promo_1TtwmjAYDs9oVarW7K7jt7Xq',
-}
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', 'content-type')
   if (req.method === 'OPTIONS') return res.status(200).end()
 
   const plan   = req.method === 'GET' ? req.query.plan   : (req.body?.plan   || req.query.plan)
-  const coupon = req.method === 'GET' ? req.query.coupon : (req.body?.coupon || req.query.coupon)
   const ref    = req.method === 'GET' ? req.query.ref    : (req.body?.ref    || req.query.ref)
 
   const priceId = PRICE_IDS[plan]
@@ -42,17 +37,12 @@ export default async function handler(req, res) {
     success_url: `${BASE}/welcome?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: BASE,
     billing_address_collection: 'auto',
-    metadata: { plan: plan || '', coupon: coupon || '' },
-    subscription_data: { metadata: { plan: plan || '', coupon: coupon || '' } },
-  }
-
-  // DOOR100 is Full Pass-only — ignore coupon for other plans
-  if (coupon && PROMO_CODES[coupon.toUpperCase()] && plan === 'full') {
-    params.discounts = [{ promotion_code: PROMO_CODES[coupon.toUpperCase()] }]
+    metadata: { plan: plan || '' },
+    subscription_data: { metadata: { plan: plan || '' } },
   }
 
   // Contractor referral code — 10% off + commission attribution.
-  // Explicit coupons take precedence; invalid codes are silently ignored.
+  // Invalid codes are silently ignored.
   if (ref && !params.discounts) {
     try {
       const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL

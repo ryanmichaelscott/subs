@@ -49,7 +49,8 @@ async function findOrCreateClerkUser(clerkKey: string, email: string, firstName:
       last_name: lastName || '',
       skip_password_requirement: true,
       skip_password_checks: true,
-      public_metadata: { role: 'member', tier },
+      // Clerk metadata convention: lowercase tier slugs (free/member/full)
+      public_metadata: { role: 'member', tier: tier.toLowerCase() },
     }),
   })
   const createData = await createRes.json()
@@ -76,11 +77,12 @@ async function findOrCreateClerkUser(clerkKey: string, email: string, firstName:
       // Never downgrade admin/staff roles — only set member role for non-privileged accounts
       const existingRole = existing.public_metadata?.role
       const safeRole = (existingRole === 'admin' || existingRole === 'staff') ? existingRole : 'member'
-      if (existing.public_metadata?.tier !== tier || existing.public_metadata?.role !== safeRole) {
+      const tierSlug = tier.toLowerCase()
+      if (existing.public_metadata?.tier !== tierSlug || existing.public_metadata?.role !== safeRole) {
         await fetch(`https://api.clerk.com/v1/users/${existing.id}/metadata`, {
           method: 'PATCH',
           headers: { 'Authorization': `Bearer ${clerkKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ public_metadata: { ...existing.public_metadata, role: safeRole, tier } }),
+          body: JSON.stringify({ public_metadata: { ...existing.public_metadata, role: safeRole, tier: tierSlug } }),
         })
       }
       return existing.id
@@ -227,6 +229,31 @@ serve(async (req) => {
 
     // Contractor subscription checkout — not a member signup. Log any referral
     // and stop; confirm-contractor-subscription handles the activation.
+    // Overage payment for one extra service request — submit it via create-lead
+    // (server-verified against the session, deduped on payment intent) and stop.
+    if (session.metadata?.type === 'extra_request') {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/create-lead`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${SERVICE_ROLE}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trade: session.metadata.trade,
+            description: session.metadata.description || '',
+            zip: session.metadata.zip,
+            state: session.metadata.state || '',
+            preferred_date: session.metadata.preferred_date || null,
+            member_email: session.metadata.member_email,
+            member_name: session.metadata.member_name || '',
+            clerk_user_id: session.metadata.clerk_user_id || '',
+            billed_session_id: session.id,
+          }),
+        })
+        if (!res.ok) console.error('[webhook] extra_request create-lead failed:', await res.text())
+      } catch (e) { console.error('[webhook] extra_request error:', e) }
+      await markProcessed()
+      return new Response(JSON.stringify({ received: true }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }
+
     const isContractorSession = session.metadata?.type === 'contractor_subscription' || !!session.metadata?.company_name
     if (isContractorSession) {
       const stripeKey = Deno.env.get('STRIPE_SECRET_KEY') || ''
