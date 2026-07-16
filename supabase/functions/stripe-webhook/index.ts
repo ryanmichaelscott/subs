@@ -322,8 +322,10 @@ serve(async (req) => {
         status: memberStatus,
         stripe_customer_id: customerId,
         stripe_subscription_id: subscriptionId,
+        // clerk_user_id is NOT NULL — use '' when Clerk failed so the payment
+        // is still tracked; the row is reconciled on next login/webhook
+        clerk_user_id: clerkUserId || '',
       }
-      if (clerkUserId) insert.clerk_user_id = clerkUserId
       const { error: insertErr } = await supabase.from('members').insert(insert)
       if (insertErr) console.error('[webhook] member insert error:', insertErr.message)
     }

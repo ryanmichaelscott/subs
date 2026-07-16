@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SUBS — Home Services at Wholesale Prices | For Utah Homeowners</title>
+<meta name="description" content="One membership gets you contractor pricing on every home service in Utah — roofing, HVAC, plumbing, solar, remodels and 34 more. Members save 20–35%. Money-back guaranteed." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B0E09;            /* page black */
+    --ink2:#11150F;           /* raised black */
+    --card:#141A12;           /* card */
+    --green:#5DFF8A;          /* wholesale green */
+    --green-dim:#3ed873;
+    --bone:#F4F6F2;           /* text */
+    --ash:#9AA39A;            /* muted */
+    --ash-dim:#6B736A;
+    --line:#283026;           /* hairline */
+    --slash:#7A8378;          /* strikethrough */
+    --disp:'Archivo Black', system-ui, sans-serif;
+    --body:'Inter', system-ui, sans-serif;
+    --mono:'Space Mono', ui-monospace, monospace;
+    --maxw:1080px;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+  body{
+    background:var(--ink); color:var(--bone); font-family:var(--body);
+    line-height:1.5; overflow-x:hidden; font-size:16px;
+    background-image:
+      radial-gradient(900px 500px at 88% -8%, rgba(93,255,138,.10), transparent 60%),
+      radial-gradient(700px 420px at -10% 18%, rgba(93,255,138,.05), transparent 60%);
+    background-attachment:fixed;
+  }
+  a{ color:inherit; text-decoration:none; }
+  .wrap{ width:100%; max-width:var(--maxw); margin:0 auto; padding:0 20px; }
+  .eyebrow{ font-family:var(--mono); font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:var(--green); }
+  .mono{ font-family:var(--mono); }
+  .strike{ text-decoration:line-through; text-decoration-color:var(--slash); color:var(--slash); }
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:.5em;
+    font-family:var(--body); font-weight:800; font-size:1rem; letter-spacing:.01em;
+    padding:16px 26px; border-radius:14px; border:2px solid transparent; cursor:pointer;
+    transition:transform .12s ease, box-shadow .2s ease, background .2s ease; text-align:center;
+  }
+  .btn-primary{ background:var(--green); color:#06210F; box-shadow:0 10px 30px rgba(93,255,138,.22); }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 16px 40px rgba(93,255,138,.34); }
+  .btn-ghost{ background:transparent; color:var(--bone); border-color:var(--line); }
+  .btn-ghost:hover{ border-color:var(--green); color:var(--green); }
+  .btn:focus-visible{ outline:3px solid var(--green); outline-offset:3px; }
+
+  /* ---------- header ---------- */
+  header.nav{
+    position:sticky; top:0; z-index:60; backdrop-filter:saturate(140%) blur(10px);
+    background:rgba(11,14,9,.78); border-bottom:1px solid var(--line);
+  }
+  .nav-in{ display:flex; align-items:center; justify-content:space-between; height:62px; }
+  .logo{ font-family:var(--disp); font-size:22px; letter-spacing:.06em; color:var(--bone); }
+  .logo b{ color:var(--green); }
+  .nav .btn{ padding:10px 18px; font-size:.9rem; border-radius:11px; }
+  .nav-cta-sub{ display:block; font-family:var(--mono); font-size:10px; font-weight:400; letter-spacing:.06em; color:#0c3a1d; }
+
+  section{ padding:64px 0; position:relative; }
+  h1,h2,h3{ font-family:var(--disp); font-weight:400; line-height:1.02; letter-spacing:-.01em; }
+
+  /* ---------- hero ---------- */
+  .hero{ padding-top:54px; padding-bottom:40px; }
+  .hero h1{ font-size:clamp(2.5rem, 9vw, 4.6rem); margin:18px 0 0; }
+  .hero h1 .g{ color:var(--green); }
+  .hero .lede{ font-size:clamp(1.05rem,2.6vw,1.3rem); color:var(--ash); max-width:34ch; margin:20px 0 0; }
+  .hero .lede b{ color:var(--bone); font-weight:600; }
+  .hero-cta{ display:flex; flex-wrap:wrap; gap:12px; margin-top:30px; }
+  .hero-cta .btn{ flex:1 1 auto; min-width:200px; }
+  .trust{ display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:28px; font-family:var(--mono); font-size:12.5px; color:var(--ash); letter-spacing:.02em; }
+  .trust span{ display:inline-flex; align-items:center; gap:8px; }
+  .trust .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; }
+
+  /* ---------- two prices / receipt proof ---------- */
+  .lab{ font-family:var(--disp); font-size:clamp(1.7rem,5.5vw,2.6rem); line-height:1.05; }
+  .section-head .eyebrow{ display:block; margin-bottom:14px; }
+  .section-sub{ color:var(--ash); font-size:1.05rem; max-width:54ch; margin-top:14px; }
+
+  .receipt-grid{ display:grid; grid-template-columns:1fr; gap:16px; margin-top:30px; }
+  .receipt{ background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  .receipt.win{ border-color:var(--green); box-shadow:0 0 0 1px rgba(93,255,138,.25), 0 24px 60px rgba(0,0,0,.4); }
+  .r-head{ padding:14px 18px; display:flex; justify-content:space-between; align-items:center; font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+  .r-head.no{ background:#1b211a; color:var(--ash); }
+  .r-head.yes{ background:var(--green); color:#06210F; font-weight:700; }
+  .r-body{ padding:18px; }
+  .r-meta{ font-size:13px; color:var(--ash); padding-bottom:14px; border-bottom:1px dashed var(--line); }
+  .r-line{ font-size:13.5px; color:#c7cec4; padding:14px 0; border-bottom:1px dashed var(--line); }
+  .r-line b{ color:var(--bone); }
+  .r-row{ display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:14px; margin-top:12px; color:var(--ash); }
+  .r-row .v{ color:var(--bone); }
+  .r-row.disc .v{ color:var(--green); }
+  .r-total{ display:flex; justify-content:space-between; align-items:baseline; margin-top:14px; padding-top:14px; border-top:2px solid var(--line); }
+  .r-total .k{ font-weight:700; font-size:15px; }
+  .r-total .v{ font-family:var(--disp); font-size:clamp(1.6rem,6vw,2rem); }
+  .receipt.win .r-total .v{ color:var(--green); }
+  .save-callout{ margin-top:22px; background:linear-gradient(180deg, rgba(93,255,138,.08), rgba(93,255,138,.02)); border:1px solid rgba(93,255,138,.35); border-radius:16px; padding:22px; }
+  .save-callout .big{ font-family:var(--disp); font-size:clamp(2.4rem,11vw,3.4rem); color:var(--green); line-height:1; }
+  .save-callout .lab2{ font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ash); }
+  .save-callout p{ margin-top:12px; color:#cdd4c9; font-size:1rem; }
+  .save-callout p b{ color:var(--bone); }
+
+  /* ---------- pricing ---------- */
+  #pricing{ background:linear-gradient(180deg, transparent, rgba(93,255,138,.03) 40%, transparent); }
+  .price-grid{ display:grid; grid-template-columns:1fr; gap:18px; margin-top:34px; }
+  .plan{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:26px 22px; position:relative; }
+  .plan.elite{ border-color:var(--green); box-shadow:0 0 0 1px rgba(93,255,138,.3), 0 30px 70px rgba(0,0,0,.5); background:linear-gradient(180deg, #16201526, var(--card)); }
+  .plan .tier{ font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ash); }
+  .plan.elite .tier{ color:var(--green); }
+  .plan .badge{ position:absolute; top:-12px; right:18px; background:var(--green); color:#06210F; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.08em; padding:6px 12px; border-radius:30px; text-transform:uppercase; }
+  .plan h3{ font-size:1.5rem; margin-top:6px; }
+  .price{ display:flex; align-items:flex-end; gap:10px; margin:16px 0 4px; flex-wrap:wrap; }
+  .price .now{ font-family:var(--disp); font-size:3.6rem; line-height:.9; color:var(--bone); }
+  .plan.elite .price .now{ color:var(--green); }
+  .price .was{ font-family:var(--mono); font-size:1.4rem; }
+  .price .per{ font-family:var(--mono); font-size:.95rem; color:var(--ash); padding-bottom:6px; }
+  .price-note{ font-size:13px; color:var(--ash); min-height:18px; }
+  .plan ul{ list-style:none; margin:20px 0 24px; display:flex; flex-direction:column; gap:11px; }
+  .plan li{ display:flex; gap:11px; font-size:14.5px; color:#d4dace; align-items:flex-start; }
+  .plan li svg{ flex:0 0 18px; margin-top:2px; }
+  .plan .btn{ width:100%; }
+
+  /* shaking price tag */
+  .shaker{ display:inline-block; transform-origin:center 70%; will-change:transform; }
+  @keyframes tagshake{
+    0%, 15.5%, 100%{ transform:translateX(0) rotate(0); }
+    2%{ transform:translateX(-5px) rotate(-3.5deg); }
+    4%{ transform:translateX(5px) rotate(3.5deg); }
+    6%{ transform:translateX(-5px) rotate(-3deg); }
+    8%{ transform:translateX(4px) rotate(2.5deg); }
+    10%{ transform:translateX(-4px) rotate(-2deg); }
+    12%{ transform:translateX(3px) rotate(1.4deg); }
+    14%{ transform:translateX(-1px) rotate(0); }
+  }
+  .shaker.go{ animation:tagshake 3s ease-in-out infinite; }
+
+  /* ---------- trades ---------- */
+  .trades{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:28px; }
+  .trade{ background:var(--ink2); border:1px solid var(--line); border-radius:12px; padding:13px 14px; font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:9px; }
+  .trade .tk{ width:7px; height:7px; border-radius:50%; background:var(--green); flex:0 0 auto; }
+  .more-trades{ margin-top:14px; font-family:var(--mono); color:var(--green); font-size:14px; }
+
+  /* ---------- steps ---------- */
+  .steps{ display:grid; grid-template-columns:1fr; gap:14px; margin-top:30px; counter-reset:s; }
+  .step{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; display:flex; gap:16px; align-items:flex-start; }
+  .step .n{ font-family:var(--disp); color:#06210F; background:var(--green); width:38px; height:38px; flex:0 0 38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .step h3{ font-size:1.15rem; }
+  .step p{ color:var(--ash); font-size:14.5px; margin-top:6px; }
+
+  /* ---------- guarantee ---------- */
+  .guarantee{ background:var(--green); color:#06210F; border-radius:22px; padding:34px 26px; text-align:center; }
+  .guarantee .eyebrow{ color:#06210F; opacity:.7; }
+  .guarantee h2{ font-size:clamp(1.6rem,6vw,2.4rem); margin:12px 0; color:#06210F; }
+  .guarantee p{ font-size:1.05rem; max-width:46ch; margin:0 auto; font-weight:600; }
+  .guarantee .shield{ width:54px; height:54px; margin:0 auto 6px; }
+
+  /* ---------- faq ---------- */
+  .faq{ margin-top:28px; border-top:1px solid var(--line); }
+  .qa{ border-bottom:1px solid var(--line); }
+  .qa button{ width:100%; background:none; border:none; color:var(--bone); font-family:var(--body); font-weight:700; font-size:1.05rem; text-align:left; padding:20px 40px 20px 0; cursor:pointer; position:relative; }
+  .qa button:focus-visible{ outline:2px solid var(--green); outline-offset:3px; border-radius:6px; }
+  .qa .plus{ position:absolute; right:2px; top:50%; transform:translateY(-50%); width:20px; height:20px; transition:transform .25s ease; color:var(--green); }
+  .qa[aria-expanded="true"] .plus{ transform:translateY(-50%) rotate(45deg); }
+  .qa .ans{ max-height:0; overflow:hidden; transition:max-height .3s ease; }
+  .qa .ans p{ color:var(--ash); padding:0 0 20px; font-size:15px; max-width:62ch; }
+
+  /* ---------- final cta ---------- */
+  .final{ text-align:center; }
+  .final h2{ font-size:clamp(2rem,8vw,3.4rem); }
+  .final h2 .g{ color:var(--green); }
+  .final .btn{ margin-top:24px; padding:18px 40px; font-size:1.1rem; }
+  .final .phone{ margin-top:18px; font-family:var(--mono); font-size:1.1rem; }
+  .final .phone a{ color:var(--green); }
+
+  footer{ border-top:1px solid var(--line); padding:34px 0 120px; color:var(--ash-dim); font-size:12.5px; }
+  footer .logo{ font-size:18px; margin-bottom:10px; }
+  footer .fine{ font-size:11.5px; line-height:1.6; max-width:70ch; margin-top:12px; }
+  footer a{ color:var(--ash); }
+
+  /* ---------- sticky mobile bar ---------- */
+  .stickybar{
+    position:fixed; left:0; right:0; bottom:0; z-index:70; background:rgba(11,14,9,.92);
+    backdrop-filter:blur(10px); border-top:1px solid var(--line); padding:11px 16px;
+    display:flex; align-items:center; gap:12px; transform:translateY(120%); transition:transform .3s ease;
+  }
+  .stickybar.show{ transform:translateY(0); }
+  .stickybar .sb-txt{ flex:1; line-height:1.1; }
+  .stickybar .sb-txt .a{ font-family:var(--mono); font-size:11px; color:var(--ash); }
+  .stickybar .sb-txt .b{ font-family:var(--disp); font-size:18px; }
+  .stickybar .sb-txt .b .s{ color:var(--slash); text-decoration:line-through; font-size:14px; }
+  .stickybar .sb-txt .b .g{ color:var(--green); }
+  .stickybar .btn{ padding:12px 20px; border-radius:11px; }
+
+  /* reveal (progressive enhancement: visible without JS) */
+  html.js .rv{ opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease; }
+  html.js .rv.in{ opacity:1; transform:none; }
+
+  @media (prefers-reduced-motion:reduce){
+    .shaker.go{ animation:none; }
+    html{ scroll-behavior:auto; }
+    html.js .rv{ opacity:1; transform:none; transition:none; }
+  }
+
+  /* ---------- desktop ---------- */
+  @media (min-width:760px){
+    .receipt-grid{ grid-template-columns:1fr 1fr; }
+    .save-callout{ display:flex; align-items:center; gap:30px; }
+    .save-callout .big{ flex:0 0 auto; }
+    .price-grid{ grid-template-columns:1fr 1fr; align-items:start; }
+    .trades{ grid-template-columns:repeat(3,1fr); }
+    .steps{ grid-template-columns:repeat(3,1fr); }
+    .stickybar{ display:none; }
+    section{ padding:82px 0; }
+    .hero .lede{ max-width:46ch; }
+  }
+  @media (min-width:1000px){
+    .trades{ grid-template-columns:repeat(4,1fr); }
+    .hero{ display:grid; grid-template-columns:1.05fr .95fr; gap:40px; align-items:center; }
+    .hero-copy{ grid-column:1; }
+    .hero-proof{ grid-column:2; }
+  }
+  @media (max-width:999px){ .hero-proof{ display:none; } }
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add('js');</script>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top">SUB<b>S.</b></a>
+    <a class="btn btn-primary" href="#pricing">Join — $249/yr<span class="nav-cta-sub">founding price</span></a>
+  </div>
+</header>
+
+<a id="top"></a>
+
+<!-- ============ HERO ============ -->
+<section class="hero wrap">
+  <div class="hero-copy">
+    <span class="eyebrow">For Utah homeowners</span>
+    <h1>The <span class="g">Costco</span> for home maintenance.</h1>
+    <p class="lede">One membership. <b>Contractor pricing on every home service</b> — roofing, HVAC, plumbing, solar, remodels, and 34 more. Members save <b>20–35%</b> on every job.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#pricing">See membership &amp; pricing</a>
+      <a class="btn btn-ghost" href="tel:+18884543019">Call or text us</a>
+    </div>
+    <div class="trust">
+      <span><i class="dot"></i>39 trades</span>
+      <span><i class="dot"></i>Money-back guarantee</span>
+      <span><i class="dot"></i>Utah-based</span>
+      <span><i class="dot"></i>Vetted local pros</span>
+    </div>
+  </div>
+
+  <div class="hero-proof">
+    <div class="receipt win">
+      <div class="r-head yes"><span>With SUBS</span><span>est. #6935</span></div>
+      <div class="r-body">
+        <div class="r-meta">Exterior repaint &middot; Utah home</div>
+        <div class="r-line"><b>Re-paint</b> — masonry &amp; siding, prep, pre-wash &amp; caulk. Sherwin-Williams SuperPaint.</div>
+        <div class="r-row"><span>Subtotal</span><span class="v">$14,219.00</span></div>
+        <div class="r-row disc"><span>Member discount (25%)</span><span class="v">− $3,554.75</span></div>
+        <div class="r-total"><span class="k">You pay</span><span class="v">$10,664.25</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOMEOWNER TAX ============ -->
+<section class="wrap section-head rv">
+  <span class="eyebrow">The homeowner tax</span>
+  <div class="lab">Every home job has two prices.</div>
+  <p class="section-sub">What the contractor pays, and what <em>you</em> pay. The gap is the homeowner tax — the markup you eat for being a one-time customer instead of a steady one. SUBS puts you on the contractor side of every quote.</p>
+
+  <div class="receipt-grid">
+    <div class="receipt rv">
+      <div class="r-head no"><span>Without SUBS</span><span>est. #6934</span></div>
+      <div class="r-body">
+        <div class="r-meta">Exterior repaint &middot; Utah home</div>
+        <div class="r-line"><b>Re-paint</b> — masonry &amp; siding, prep, pre-wash &amp; caulk. Sherwin-Williams SuperPaint.</div>
+        <div class="r-row"><span>Subtotal</span><span class="v">$14,219.00</span></div>
+        <div class="r-row"><span>Member discount</span><span class="v" style="color:var(--slash)">none</span></div>
+        <div class="r-total"><span class="k">You pay</span><span class="v">$14,219.00</span></div>
+      </div>
+    </div>
+    <div class="receipt win rv">
+      <div class="r-head yes"><span>With SUBS</span><span>est. #6935</span></div>
+      <div class="r-body">
+        <div class="r-meta">Exterior repaint &middot; Utah home</div>
+        <div class="r-line"><b>Re-paint</b> — masonry &amp; siding, prep, pre-wash &amp; caulk. Sherwin-Williams SuperPaint.</div>
+        <div class="r-row"><span>Subtotal</span><span class="v">$14,219.00</span></div>
+        <div class="r-row disc"><span>Member discount (25%)</span><span class="v">− $3,554.75</span></div>
+        <div class="r-total"><span class="k">You pay</span><span class="v">$10,664.25</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-callout rv">
+    <div>
+      <div class="lab2">You save</div>
+      <div class="big">$3,554.75</div>
+    </div>
+    <p>on a <b>single</b> exterior paint job — your membership pays for itself many times over on one project, before you touch the other 38 trades.</p>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section id="pricing" class="wrap rv">
+  <span class="eyebrow">Membership</span>
+  <div class="lab">Pick your membership.</div>
+  <p class="section-sub">One flat yearly price unlocks member pricing across the SUBS contractor network. No monthly fees. Cancel anytime.</p>
+
+  <div class="price-grid">
+    <!-- ESSENTIAL -->
+    <div class="plan">
+      <div class="tier">Member</div>
+      <h3>Get the member rate</h3>
+      <div class="price">
+        <span class="now">$99</span>
+        <span class="per">/ year</span>
+      </div>
+      <div class="price-note">Up to 5 service requests a year.</div>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> <b>5 service requests</b> per year</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Member pricing across the SUBS contractor network</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Vetted, licensed &amp; insured Utah pros</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Money-back savings guarantee</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Call-or-text booking</li>
+      </ul>
+      <a class="btn btn-ghost" href="https://subs.app">Choose Member</a>
+    </div>
+
+    <!-- ELITE -->
+    <div class="plan elite">
+      <div class="badge">Founding price</div>
+      <div class="tier">Elite</div>
+      <h3>Wholesale on everything</h3>
+      <div class="price">
+        <span class="shaker go"><span class="now">$249</span></span>
+        <span class="was strike">$349</span>
+        <span class="per">/ year</span>
+      </div>
+      <div class="price-note">Neighborhood founding rate — locked the day you join.</div>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> <b>Unlimited service requests</b></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> <b>Everything in Member</b></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Maximum wholesale discounts — <b>20–35% off</b> every trade</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> White-glove concierge — we line up the pro &amp; manage the job</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Priority scheduling</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#5DFF8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> All 39 trades, one membership</li>
+      </ul>
+      <a class="btn btn-primary" href="https://subs.app">Claim founding price — $249</a>
+    </div>
+  </div>
+  <p class="price-note" style="margin-top:16px; text-align:center;">Prices in USD. 3-day right to cancel. Savings vary by job scope &amp; contractor.</p>
+</section>
+
+<!-- ============ TRADES ============ -->
+<section class="wrap rv">
+  <span class="eyebrow">What's covered</span>
+  <div class="lab">Every trade. One membership.</div>
+  <p class="section-sub">If it's a job on your house, it's in here — at member pricing.</p>
+  <div class="trades">
+    <div class="trade"><span class="tk"></span>Roofing</div>
+    <div class="trade"><span class="tk"></span>HVAC</div>
+    <div class="trade"><span class="tk"></span>Plumbing</div>
+    <div class="trade"><span class="tk"></span>Electrical</div>
+    <div class="trade"><span class="tk"></span>Solar</div>
+    <div class="trade"><span class="tk"></span>Kitchen Remodel</div>
+    <div class="trade"><span class="tk"></span>Bath Remodel</div>
+    <div class="trade"><span class="tk"></span>Windows & Doors</div>
+    <div class="trade"><span class="tk"></span>Painting</div>
+    <div class="trade"><span class="tk"></span>Flooring</div>
+    <div class="trade"><span class="tk"></span>Landscaping</div>
+    <div class="trade"><span class="tk"></span>Pest Control</div>
+    <div class="trade"><span class="tk"></span>Handyman</div>
+    <div class="trade"><span class="tk"></span>Garage Door</div>
+    <div class="trade"><span class="tk"></span>House Cleaning</div>
+  </div>
+  <div class="more-trades">+ 24 more — all under one membership.</div>
+</section>
+
+<!-- ============ STEPS ============ -->
+<section class="wrap rv">
+  <span class="eyebrow">How it works</span>
+  <div class="lab">Three steps. Real savings.</div>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><div><h3>Join</h3><p>Pick Essential or Elite. One yearly membership — no monthly fees.</p></div></div>
+    <div class="step"><div class="n">2</div><div><h3>Call SUBS for any job</h3><p>From a $140 repair to a $50k remodel, we match you with a vetted Utah pro.</p></div></div>
+    <div class="step"><div class="n">3</div><div><h3>Pay the member price</h3><p>You pay the contractor (wholesale) rate — about 30% under retail.</p></div></div>
+  </div>
+</section>
+
+<!-- ============ GUARANTEE ============ -->
+<section class="wrap rv">
+  <div class="guarantee">
+    <svg class="shield" viewBox="0 0 24 24" fill="none" stroke="#06210F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8-8 11-4.5-3-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+    <span class="eyebrow">Money-back guarantee</span>
+    <h2>Save more than you spend — or get refunded.</h2>
+    <p>If SUBS doesn't save you more than your membership costs, we'll refund you. Guaranteed.</p>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="wrap rv">
+  <span class="eyebrow">Questions</span>
+  <div class="lab">Straight answers.</div>
+  <div class="faq" id="faq">
+    <div class="qa"><button aria-expanded="false">How can you offer contractor prices?<span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="ans"><p>SUBS brings vetted Utah contractors a steady stream of members instead of one-off jobs. In exchange, they extend their wholesale rate — the price they'd give a builder or repeat client — and we pass it straight to you.</p></div></div>
+    <div class="qa"><button aria-expanded="false">What if I don't save enough to cover the membership?<span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="ans"><p>Then you get your money back. If your membership doesn't save you more than it costs, we refund it — no fine print.</p></div></div>
+    <div class="qa"><button aria-expanded="false">Do I have to use it a certain number of times?<span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="ans"><p>No. Most members cover the cost on a single job. Use it once or use it for every project on the house — it's yours for the year either way.</p></div></div>
+    <div class="qa"><button aria-expanded="false">Are these real, licensed contractors?<span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="ans"><p>Yes — every pro in the network is vetted, licensed, and insured. You get the same quality work, at the price the pros pay.</p></div></div>
+    <div class="qa"><button aria-expanded="false">Can I cancel?<span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></span></button><div class="ans"><p>You have a 3-day right to cancel after joining, and you can cancel your renewal anytime before it bills.</p></div></div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="wrap final rv">
+  <span class="eyebrow">Founding member price</span>
+  <h2>One membership.<br><span class="g">Every trade, wholesale.</span></h2>
+  <p class="section-sub" style="margin:14px auto 0;">Join the first homes in your neighborhood at the founding rate.</p>
+  <div><a class="btn btn-primary" href="https://subs.app">Claim $249 founding price</a></div>
+  <div class="phone">or call / text <a href="tel:+18884543019">1-888-454-3019</a></div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="logo">SUB<b style="color:var(--green)">S.</b></div>
+    <div>Home services. Wholesale prices. &middot; <a href="https://subs.app">subs.app</a> &middot; <a href="tel:+18884543019">1-888-454-3019</a></div>
+    <p class="fine">Savings estimates based on Utah market rates; actual savings vary by job scope and contractor. Member pricing available through the SUBS contractor network. Sample estimate shown for illustration. &copy; 2026 SUBS.</p>
+  </div>
+</footer>
+
+<!-- ============ STICKY MOBILE CTA ============ -->
+<div class="stickybar" id="stickybar">
+  <div class="sb-txt">
+    <div class="a">Founding member price</div>
+    <div class="b"><span class="s">$349</span> <span class="g">$249</span>/yr</div>
+  </div>
+  <a class="btn btn-primary" href="#pricing">Join</a>
+</div>
+
+<script>
+  // FAQ accordion
+  document.querySelectorAll('.qa button').forEach(function(b){
+    b.addEventListener('click', function(){
+      var qa = b.parentElement;
+      var open = qa.getAttribute('aria-expanded') === 'true';
+      qa.setAttribute('aria-expanded', String(!open));
+      var ans = qa.querySelector('.ans');
+      ans.style.maxHeight = open ? null : ans.scrollHeight + 'px';
+    });
+    // mirror state onto the .qa for the +/x rotation
+    b.parentElement.setAttribute('aria-expanded','false');
+  });
+
+  // Scroll reveal
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+    }, {threshold:.12});
+    document.querySelectorAll('.rv').forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll('.rv').forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // Sticky mobile bar: show after hero scrolled past, hide near pricing/footer
+  var bar = document.getElementById('stickybar');
+  var pricing = document.getElementById('pricing');
+  window.addEventListener('scroll', function(){
+    var y = window.scrollY;
+    var pr = pricing.getBoundingClientRect();
+    var nearPricing = pr.top < window.innerHeight && pr.bottom > 0;
+    if(y > 520 && !nearPricing){ bar.classList.add('show'); }
+    else { bar.classList.remove('show'); }
+  }, {passive:true});
+</script>
+</body>
+</html>

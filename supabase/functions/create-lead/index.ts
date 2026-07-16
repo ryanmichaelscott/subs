@@ -55,13 +55,13 @@ serve(async (req) => {
     let memberRow: any = null
     if (clerk_user_id) {
       const { data } = await supabase.from('members')
-        .select('id, tier, request_count, request_year')
+        .select('id, tier, request_count, request_year, grandfathered')
         .eq('clerk_user_id', clerk_user_id).maybeSingle()
       memberRow = data
     }
     if (!memberRow && member_email) {
       const { data } = await supabase.from('members')
-        .select('id, tier, request_count, request_year')
+        .select('id, tier, request_count, request_year, grandfathered')
         .eq('email', member_email).maybeSingle()
       memberRow = data
     }
@@ -69,7 +69,9 @@ serve(async (req) => {
     // Lazy year reset — if the Jan-1 cron missed, a stale year counts as 0
     const usedThisYear = memberRow && memberRow.request_year === currentYear ? (memberRow.request_count || 0) : 0
     const tierKey = (memberRow?.tier || '').toLowerCase()
-    const limit = TIER_LIMITS[tierKey] // undefined → unlimited
+    // Members from before the request-based pricing change are grandfathered:
+    // unlimited requests until the Jan-1 reset clears the flag.
+    const limit = memberRow?.grandfathered ? undefined : TIER_LIMITS[tierKey] // undefined → unlimited
 
     // Overage bypass: a paid $25 extra-request session, verified server-side
     let billed = false
