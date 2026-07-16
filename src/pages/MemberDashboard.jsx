@@ -141,7 +141,7 @@ function MemberCard({ name, member }) {
     <Card style={{ padding: '20px 24px', background: `linear-gradient(135deg, ${S.forest} 0%, #0A241B 100%)`, border: `1px solid ${S.greenDim}` }}>
       {/* Dark card — light-on-dark colors are intentional here, like a physical membership card */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div style={{ fontFamily: C.body, fontSize: 16, fontWeight: 800, color: '#C2A55C', letterSpacing: '0.1em' }}>SUBS</div>
+        <img src="/logo-wordmark-gold.png" alt="SUBS" style={{ height: 18, width: 'auto', display: 'block' }} />
         <div style={{ fontSize: 11, color: '#A8BCA8' }}>SUBS.app</div>
       </div>
       <div style={{ fontSize: 14, color: '#A8BCA8', letterSpacing: '0.1em', marginBottom: 4 }}>•••• •••• •••• 4821</div>
@@ -517,7 +517,7 @@ export default function MemberDashboard() {
   if (memberStatus === 'processing') {
     return (
       <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: 22, fontWeight: 800, color: S.green, letterSpacing: '0.06em', marginBottom: 32 }}>SUBS</div>
+        <div style={{ marginBottom: 32 }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 26, width: 'auto', display: 'block' }} /></div>
         <div style={{ fontFamily: C.display, fontSize: 28, color: S.offwhite, marginBottom: 12 }}>Payment processing.</div>
         <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.6, maxWidth: 400, marginBottom: 24 }}>
           Your payment is still being confirmed. Check your email — you'll receive your access link and membership details once it clears.
@@ -552,7 +552,7 @@ export default function MemberDashboard() {
       `}</style>
       {/* Top nav */}
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 16px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
-        <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
+        <Link to="/" style={{ display: 'inline-flex' }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} /></Link>
         <div className="md-nav-meta">
           <a href="tel:18884543019" className="md-nav-email" style={{ fontSize: 12, fontWeight: 600, color: S.green, textDecoration: 'none' }}>1-888-454-3019</a>
           <span className="md-nav-email" style={{ fontSize: 12, color: S.muted }}>{displayEmail}</span>

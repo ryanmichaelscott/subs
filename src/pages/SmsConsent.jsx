@@ -16,7 +16,7 @@ export default function SmsConsent() {
         {/* Logo */}
         <div style={{ marginBottom: 52 }}>
           <Link to="/" style={{ textDecoration: 'none' }}>
-            <span style={{ fontFamily: C.body, fontSize: 20, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</span>
+            <img src="/logo-wordmark.png" alt="SUBS" style={{ height: 24, width: 'auto', display: 'block' }} />
           </Link>
         </div>
 

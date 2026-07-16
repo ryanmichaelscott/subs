@@ -2,9 +2,9 @@
 // Strategy: network-first for navigations (fresh HTML, cached fallback offline),
 // cache-first for hashed build assets and icons, network-only for everything
 // else (API calls, Stripe, Supabase, Clerk, analytics).
-// v2: rebranded icons — bumping purges the stale pre-rebrand cache
-const CACHE = 'subs-v2'
-const SHELL = ['/', '/manifest.json', '/icons/icon-192.png?v=2', '/icons/icon-512.png?v=2']
+// v3: real SUBS logo (gold serif on deep forest)
+const CACHE = 'subs-v3'
+const SHELL = ['/', '/manifest.json', '/icons/icon-192.png?v=3', '/icons/icon-512.png?v=3']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()))

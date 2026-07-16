@@ -337,7 +337,7 @@ export default function LegalPage() {
     <div style={{ background: S.black, minHeight: '100vh', color: S.offwhite, fontFamily: C.body }}>
       {/* Nav */}
       <nav style={{ height: 56, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F2', backdropFilter: 'blur(12px)', zIndex: 50 }}>
-        <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em', textDecoration: 'none' }}>SUBS</Link>
+        <Link to="/" style={{ display: 'inline-flex', textDecoration: 'none' }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} /></Link>
         <Link to="/" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>← Back</Link>
       </nav>
 

@@ -70,7 +70,7 @@ export default function WaitlistPage() {
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between' }}>
-        <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em', textDecoration: 'none' }}>SUBS</Link>
+        <Link to="/" style={{ display: 'inline-flex', textDecoration: 'none' }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} /></Link>
         <span style={{ fontSize: 13, color: S.muted }}>{email}</span>
       </nav>
 

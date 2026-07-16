@@ -68,7 +68,7 @@ export default function AdminLogin() {
   return (
     <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px' }}>
-        <Link to="/" style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em' }}>SUBS</Link>
+        <Link to="/" style={{ display: 'inline-flex' }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} /></Link>
       </nav>
 
       <style>{`.admin-login-card { padding: 28px; } @media (max-width: 480px) { .admin-login-card { padding: 20px 16px; } }`}</style>

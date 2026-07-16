@@ -256,7 +256,7 @@ export default function CalculatorPage() {
       {/* Minimal nav — no exits except the logo, phone as trust signal */}
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(16px, 4vw, 28px)', position: 'sticky', top: 0, zIndex: 50, background: S.black + 'E8', backdropFilter: 'blur(12px)' }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
-          <span style={{ display: 'block', fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em', lineHeight: 1 }}>SUBS</span>
+          <img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} />
           <span style={{ display: 'block', fontSize: 10, color: S.green + '80', letterSpacing: '0.1em', lineHeight: 1, marginTop: 3 }}>Home Services Membership</span>
         </Link>
         <a href="tel:18884543019" style={{ fontSize: 13, fontWeight: 700, color: S.offwhite, textDecoration: 'none' }}>

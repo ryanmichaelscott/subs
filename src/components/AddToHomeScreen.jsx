@@ -68,7 +68,7 @@ export default function AddToHomeScreen() {
         animation: 'a2hs-slide-up 0.35s ease-out',
       }}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-          <img src="/icons/icon-192.png?v=2" alt="SUBS" width={44} height={44} style={{ borderRadius: 11, flexShrink: 0 }} />
+          <img src="/icons/icon-192.png?v=3" alt="SUBS" width={44} height={44} style={{ borderRadius: 11, flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14.5, fontWeight: 700, color: S.offwhite, marginBottom: 3 }}>Add SUBS to your home screen</div>
             {ios ? (

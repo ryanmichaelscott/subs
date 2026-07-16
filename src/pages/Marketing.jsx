@@ -112,7 +112,7 @@ function Nav({ setSection }) {
     <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: S.black + 'E8', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${S.border}` }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <button onClick={() => setSection('home')} style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-          <span style={{ display: 'block', fontFamily: C.body, fontSize: 20, fontWeight: 800, color: S.green, letterSpacing: '0.06em', lineHeight: 1 }}>SUBS</span>
+          <img src="/logo-wordmark.png" alt="SUBS" style={{ height: 24, width: 'auto', display: 'block' }} />
           <span style={{ display: 'block', fontSize: 11, fontWeight: 400, color: S.green + '80', letterSpacing: '0.1em', lineHeight: 1, marginTop: 3 }}>Home Services Membership</span>
         </button>
         {/* Desktop nav links — hidden on mobile via .nav-links CSS class */}
@@ -829,7 +829,7 @@ function Footer() {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 20px 32px' }}>
         <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 40, marginBottom: 48 }}>
           <div>
-            <div style={{ fontFamily: C.body, fontSize: 18, fontWeight: 800, color: S.green, letterSpacing: '0.06em', marginBottom: 12 }}>SUBS</div>
+            <div style={{ marginBottom: 12 }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} /></div>
             <p style={{ fontSize: 13, color: S.muted, lineHeight: 1.6, maxWidth: 260, margin: 0 }}>The membership that unlocks contractor pricing on every trade that touches your home.</p>
           </div>
           <div>
