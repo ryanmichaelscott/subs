@@ -16,7 +16,7 @@ const TRUST_LOGOS = [
 
 const FAQS = [
   { q: 'Is this number a real quote?', a: "It's an estimate based on published pricing data for your state and a typical ~20% member discount. Your exact price comes from the contractor's assessment — but the member discount is contractual, so it's baked into whatever they quote you." },
-  { q: 'What does the membership cost?', a: 'Plans start at $99/year. Most members save more than that on their very first service call — the savings number above is usually bigger than the annual fee.' },
+  { q: 'What does the membership cost?', a: 'The Member Pass is $99/year for all member discounts. The Full Pass is $249/year and includes 6 free services worth $1,525 on top of every discount — most members get more back in free services alone than the pass costs.' },
   { q: 'What happens after I submit my number?', a: 'Our concierge team calls or texts you, confirms your member pricing for the service you picked, and can connect you with a vetted contractor right away. No obligation — if the numbers don\'t make sense for you, no hard feelings.' },
   { q: 'Who are the contractors?', a: "Every contractor in the SUBS network is licensed, insured, and background-checked before their first job. We monitor ratings after every job and remove anyone who falls below 4.5 stars." },
 ]

@@ -5,6 +5,7 @@ import { confirmAndPay, COMMISSION_RATE } from '../_shared/contractor-referral.t
 // ── Price → tier mapping (legacy flow: clerk_user_id in session metadata) ────
 const PRICE_TO_TIER: Record<string, string> = {
   'price_1TiRPcAYDs9oVarWLWpp0wLZ': 'Member',
+  'price_1TtwA5AYDs9oVarWSOV7SwP7': 'Full',
   'price_1TjQ8TAYDs9oVarWqCQyxLM5': 'Member+',
   'price_1TjQ7DAYDs9oVarWbJONkQ1P': 'Elite',
 }
@@ -12,6 +13,8 @@ const PRICE_TO_TIER: Record<string, string> = {
 // ── Plan name → tier (new Stripe-first flow: plan in session metadata) ───────
 const PLAN_TO_TIER: Record<string, string> = {
   'member':       'Member',
+  'full':         'Full',
+  // Legacy plan slugs — no longer purchasable, kept so old webhook events resolve
   'member-plus':  'Member+',
   'plus':         'Member+',
   'elite':        'Elite',

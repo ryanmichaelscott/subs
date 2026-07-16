@@ -30,6 +30,7 @@ async function sendSms(to: string, body: string) {
 }
 
 function tierBadgeColor(tier: string): string {
+  if (tier === 'Full') return '#175A41'
   if (tier === 'Elite') return '#F5A623'
   if (tier === 'Member+') return '#5B8DEF'
   return '#5DFF8A'

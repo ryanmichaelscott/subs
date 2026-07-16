@@ -67,7 +67,10 @@ function Card({ children, style, className = '', ...props }) {
   return <div className={`md-card ${className}`} style={{ background: S.card, border: `1px solid ${S.border}`, borderRadius: 12, boxSizing: 'border-box', ...style }} {...props}>{children}</div>
 }
 
-const TIER_COLORS = { Member: S.green, 'Member+': S.blue, Elite: S.purple }
+const TIER_COLORS = { Member: S.forest, Full: S.green, 'Member+': S.blue, Elite: S.purple }
+
+// Full Pass price — used by every upgrade CTA
+const FULL_PASS_PRICE_ID = 'price_1TtwA5AYDs9oVarWSOV7SwP7'
 
 function parseServiceArea(raw) {
   if (!raw) return null
@@ -84,7 +87,24 @@ function parseServiceArea(raw) {
     return raw
   }
 }
-const TIER_PRICES = { Member: '$99/yr', 'Member+': '$179/yr', Elite: '$349/yr' }
+const TIER_PRICES = { Member: '$99/yr', Full: '$249/yr', 'Member+': '$179/yr', Elite: '$349/yr' }
+
+// The 6 free services included with Full Pass — $1,525 total value.
+// Contractor assignments are placeholders until partners are confirmed.
+const FREE_SERVICES = [
+  { name: 'Home Cleaning', value: 250 },
+  { name: 'Carpet Cleaning', value: 200 },
+  { name: 'Window Washing', value: 225 },
+  { name: 'HVAC Tune-Up', value: 200 },
+  { name: 'Pest Control', value: 300 },
+  { name: 'Roof Inspection', value: 350 },
+]
+
+const REDEMPTION_BADGES = {
+  available: { label: 'Available', color: S.green, bg: S.green + '1A' },
+  pending: { label: 'Pending', color: S.amber, bg: S.amber + '22' },
+  redeemed: { label: 'Redeemed', color: S.muted, bg: S.muted + '22' },
+}
 
 const TIER_PERKS = {
   Member: [
@@ -109,6 +129,13 @@ const TIER_PERKS = {
     'Same-week scheduling guaranteed',
     'Dedicated SUBS home advisor',
     'First access to top-rated contractors in your area',
+  ],
+  Full: [
+    'All member discounts — 15–35% off every service',
+    '6 FREE services worth $1,525 total value',
+    'Concierge line — we find and book the right contractor',
+    'Digital membership card',
+    'Valid 12 months · transferable as a gift',
   ],
 }
 
@@ -192,6 +219,15 @@ export default function MemberDashboard() {
   const [phoneModalToast, setPhoneModalToast] = useState(null)
   const [filtered, setFiltered] = useState([])
   const [contractorPage, setContractorPage] = useState(0)
+  const [freeServiceRows, setFreeServiceRows] = useState([])
+
+  // Full Pass free-service redemptions — rows only exist once a service has
+  // been started or completed; anything without a row is still available.
+  useEffect(() => {
+    if (!member?.id || (member?.tier || '').toLowerCase() !== 'full') return
+    supabase.from('free_service_redemptions').select('service_type, status, redeemed_at').eq('member_id', member.id)
+      .then(({ data }) => setFreeServiceRows(data || []))
+  }, [member?.id, member?.tier])
 
   useEffect(() => {
     if (!user) return
@@ -612,14 +648,14 @@ export default function MemberDashboard() {
                     onClick={async () => {
                       setUpgradeLoading(true)
                       const { data } = await supabase.functions.invoke('create-checkout-session', {
-                        body: { price_id: PLAN_PRICE_IDS.plus, clerk_user_id: user?.id, email: user?.primaryEmailAddress?.emailAddress, success_url: `${window.location.origin}/dashboard`, cancel_url: `${window.location.origin}/dashboard` },
+                        body: { price_id: FULL_PASS_PRICE_ID, clerk_user_id: user?.id, email: user?.primaryEmailAddress?.emailAddress, success_url: `${window.location.origin}/dashboard`, cancel_url: `${window.location.origin}/dashboard` },
                       })
                       setUpgradeLoading(false)
                       if (data?.url) window.location.href = data.url
                     }}
                     style={{ width: '100%', background: S.green, border: 'none', color: S.black, fontSize: 13, fontWeight: 700, padding: '9px 0', borderRadius: 8, cursor: upgradeLoading ? 'not-allowed' : 'pointer', opacity: upgradeLoading ? 0.7 : 1 }}
                   >
-                    {upgradeLoading ? 'Loading…' : 'Upgrade to Member+ →'}
+                    {upgradeLoading ? 'Loading…' : 'Upgrade to Full Pass →'}
                   </button>
                 )}
               </Card>
@@ -728,6 +764,86 @@ export default function MemberDashboard() {
 
           {/* Main */}
           <div>
+            {/* My Free Services — Full Pass benefit */}
+            <Card style={{ padding: 24, marginBottom: 24, border: `1px solid ${(member?.tier || '').toLowerCase() === 'full' ? S.green + '66' : S.border}` }}>
+              <style>{`
+                .free-svc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+                @media (max-width: 900px) { .free-svc-grid { grid-template-columns: repeat(2, 1fr); } }
+                @media (max-width: 520px) { .free-svc-grid { grid-template-columns: 1fr; } }
+              `}</style>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: S.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  My Free Services
+                  <span style={{ marginLeft: 8, color: S.green, textTransform: 'none', fontSize: 10, fontWeight: 700 }}>· $1,525 total value</span>
+                </div>
+                {(member?.tier || '').toLowerCase() === 'full' && (
+                  <span style={{ fontSize: 11, fontWeight: 700, color: S.green, background: S.green + '1A', padding: '3px 10px', borderRadius: 100 }}>Full Pass</span>
+                )}
+              </div>
+
+              {(member?.tier || '').toLowerCase() === 'full' ? (
+                <>
+                  <div className="free-svc-grid">
+                    {FREE_SERVICES.map((svc) => {
+                      const row = freeServiceRows.find(r => r.service_type === svc.name)
+                      const badge = REDEMPTION_BADGES[row?.status] || REDEMPTION_BADGES.available
+                      return (
+                        <div key={svc.name} style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 12, padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite }}>{svc.name}</div>
+                              <div style={{ fontSize: 12, color: S.green, fontWeight: 700, marginTop: 2 }}>${svc.value} value</div>
+                            </div>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: badge.color, background: badge.bg, padding: '3px 9px', borderRadius: 100, whiteSpace: 'nowrap' }}>{badge.label}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: S.muted, marginTop: 8 }}>
+                            {row?.status === 'redeemed' && row?.redeemed_at
+                              ? `Redeemed ${new Date(row.redeemed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                              : row?.status === 'pending'
+                                ? 'Being scheduled — we\'ll text you'
+                                : 'Call 1-888-454-3019 to schedule'}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p style={{ fontSize: 11.5, color: S.muted, margin: '14px 0 0', lineHeight: 1.5 }}>
+                    One of each service per membership year, performed by a vetted SUBS contractor. Call or text the concierge line to schedule.
+                  </p>
+                </>
+              ) : (
+                <div style={{ position: 'relative' }}>
+                  <div className="free-svc-grid" style={{ filter: 'blur(2.5px)', opacity: 0.55, pointerEvents: 'none', userSelect: 'none' }} aria-hidden="true">
+                    {FREE_SERVICES.map((svc) => (
+                      <div key={svc.name} style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 12, padding: '14px 16px' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: S.offwhite }}>{svc.name}</div>
+                        <div style={{ fontSize: 12, color: S.green, fontWeight: 700, marginTop: 2 }}>${svc.value} value</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center', padding: 12 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: S.offwhite }}>
+                      🔒 Unlock 6 free services worth $1,525
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setUpgradeLoading(true)
+                        const { data } = await supabase.functions.invoke('create-checkout-session', {
+                          body: { price_id: FULL_PASS_PRICE_ID, clerk_user_id: user?.id, email: user?.primaryEmailAddress?.emailAddress, success_url: `${window.location.origin}/dashboard`, cancel_url: `${window.location.origin}/dashboard` },
+                        })
+                        setUpgradeLoading(false)
+                        if (data?.url) window.location.href = data.url
+                      }}
+                      disabled={upgradeLoading}
+                      style={{ background: S.green, border: 'none', color: '#fff', fontSize: 13, fontWeight: 800, padding: '11px 24px', borderRadius: 10, cursor: upgradeLoading ? 'not-allowed' : 'pointer', opacity: upgradeLoading ? 0.7 : 1, boxShadow: '0 8px 24px rgba(23,90,65,0.3)' }}
+                    >
+                      {upgradeLoading ? 'Loading…' : 'Upgrade to Full Pass — $249/yr →'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </Card>
+
             {/* Tabs */}
             <div className="tabs-bar" style={{ display: 'flex', gap: 2, background: S.surface, borderRadius: 10, padding: 4, border: `1px solid ${S.border}`, marginBottom: 24 }}>
               {tabs.map(([id, label]) => (
@@ -1183,7 +1299,7 @@ export default function MemberDashboard() {
                     <div>
                       <p style={{ fontSize: 13, color: S.muted, marginBottom: 14 }}>No active subscription found. Choose a plan to get started.</p>
                       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                        {[['member', 'Member', '$99/yr', 'price_1TiRPcAYDs9oVarWLWpp0wLZ'], ['plus', 'Member+', '$179/yr', 'price_1TjQ8TAYDs9oVarWqCQyxLM5'], ['elite', 'Elite', '$349/yr', 'price_1TjQ7DAYDs9oVarWbJONkQ1P']].map(([id, name, price, priceId]) => (
+                        {[['full', 'Full Pass', '$249/yr', FULL_PASS_PRICE_ID], ['member', 'Member Pass', '$99/yr', 'price_1TiRPcAYDs9oVarWLWpp0wLZ']].map(([id, name, price, priceId]) => (
                           <button
                             key={id}
                             onClick={async () => {
@@ -1306,14 +1422,14 @@ export default function MemberDashboard() {
               Annual limit reached
             </div>
             <p style={{ fontSize: 14, color: S.muted, lineHeight: 1.7, textAlign: 'center', marginBottom: 28 }}>
-              You've used all 5 of your annual service requests. Upgrade to Member+ for unlimited requests.
+              You've used all 5 of your annual service requests. Upgrade to the Full Pass for 6 free services worth $1,525 — plus unlimited requests.
             </p>
             <button
               onClick={async () => {
                 setUpgradeLoading(true)
                 const { data } = await supabase.functions.invoke('create-checkout-session', {
                   body: {
-                    priceId: PLAN_PRICE_IDS.plus,
+                    price_id: FULL_PASS_PRICE_ID,
                     email: user?.primaryEmailAddress?.emailAddress || '',
                     name: user?.fullName || user?.firstName || '',
                     clerk_user_id: user?.id || '',
@@ -1323,9 +1439,9 @@ export default function MemberDashboard() {
                 if (data?.url) window.location.href = data.url
               }}
               disabled={upgradeLoading}
-              style={{ width: '100%', background: S.blue, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, padding: '13px 0', cursor: upgradeLoading ? 'not-allowed' : 'pointer', opacity: upgradeLoading ? 0.7 : 1, marginBottom: 12 }}
+              style={{ width: '100%', background: S.green, border: 'none', borderRadius: 10, color: '#fff', fontSize: 15, fontWeight: 700, padding: '13px 0', cursor: upgradeLoading ? 'not-allowed' : 'pointer', opacity: upgradeLoading ? 0.7 : 1, marginBottom: 12 }}
             >
-              {upgradeLoading ? 'Redirecting…' : 'Upgrade to Member+ — $179/yr →'}
+              {upgradeLoading ? 'Redirecting…' : 'Upgrade to Full Pass — $249/yr →'}
             </button>
             <button
               onClick={() => setShowServiceLimitModal(false)}

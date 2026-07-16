@@ -22,9 +22,8 @@ const ACCOUNT_TYPES = [
 ]
 
 const MEMBER_TIERS = [
-  { id: 'member', label: 'Member',  price: '$99/yr' },
-  { id: 'plus',   label: 'Member+', price: '$179/yr' },
-  { id: 'elite',  label: 'Elite',   price: '$349/yr' },
+  { id: 'full',   label: 'Full Pass',   price: '$249/yr' },
+  { id: 'member', label: 'Member Pass', price: '$99/yr' },
 ]
 
 const PM_PLANS = [

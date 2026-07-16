@@ -19,53 +19,36 @@ const US_STATES = [
 
 const TIERS = [
   {
-    id: 'member',
-    name: 'Member',
-    price: 99,
-    priceId: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
+    id: 'full',
+    name: 'Full Pass',
+    price: 249,
+    compareAt: 349,
+    priceId: 'price_1TtwA5AYDs9oVarWSOV7SwP7',
     color: S.green,
-    tagline: 'Access the SUBS contractor network.',
+    tagline: '$1,525 in free services, included.',
     perks: [
-      'Access to the vetted SUBS contractor network',
-      'Member discounts on every service',
-      'Up to 5 service requests per year',
+      'All member discounts — 15–35% off every service',
+      '6 FREE services worth $1,525 total value',
+      'Concierge line — we find and book the right contractor',
       'Digital membership card',
-      'Concierge line — call us to find and book the right contractor',
-      '30-day money back guarantee',
-    ],
-  },
-  {
-    id: 'plus',
-    name: 'Member+',
-    price: 179,
-    priceId: 'price_1TjQ8TAYDs9oVarWqCQyxLM5',
-    color: S.blue,
-    tagline: 'Unlimited requests + priority access.',
-    perks: [
-      'Everything in Member',
-      'Unlimited service requests',
-      'Better rates + priority access',
-      'Priority concierge — skip the queue, faster response',
-      'Full job history and account management',
-      'Annual home maintenance checklist email on signup',
-      'Early access to new contractors and trades',
+      'Valid 12 months',
+      'Transferable as a gift',
     ],
     popular: true,
   },
   {
-    id: 'elite',
-    name: 'Elite',
-    price: 349,
-    priceId: 'price_1TjQ7DAYDs9oVarWbJONkQ1P',
-    color: S.purple,
-    tagline: 'Concierge booking. VIP priority.',
+    id: 'member',
+    name: 'Member Pass',
+    price: 99,
+    priceId: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
+    color: S.forest,
+    tagline: 'Every member discount, all year.',
     perks: [
-      'Everything in Member+',
-      'Best available rates + VIP priority scheduling',
-      'White glove concierge — we call, schedule, and coordinate everything. You do nothing.',
-      'Same-week scheduling guaranteed',
-      'Dedicated SUBS home advisor',
-      'First access to top rated contractors in your area',
+      'All member discounts — 15–35% off every service',
+      'Save on every booking',
+      'Access to the vetted SUBS contractor network',
+      'Digital membership card',
+      'Valid 12 months',
     ],
   },
 ]
@@ -137,7 +120,7 @@ export default function CheckoutPage() {
       success_url: `${window.location.origin}/dashboard?conversion=1&checkout_session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${window.location.origin}/checkout`,
     }
-    if (couponCode === 'DOOR100' && tier.id === 'elite') {
+    if (couponCode === 'DOOR100' && tier.id === 'full') {
       checkoutBody.promotion_code_id = DOOR100_PROMO_ID
     }
     const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
@@ -187,7 +170,7 @@ export default function CheckoutPage() {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px' }}>
         {showUnpaidBanner && (
-          <div style={{ background: '#1A2410', border: `1px solid ${S.green}`, borderRadius: 10, padding: '12px 20px', marginBottom: 28, maxWidth: 480, width: '100%', textAlign: 'center' }}>
+          <div style={{ background: '#E7EFE0', border: `1px solid ${S.green}`, borderRadius: 10, padding: '12px 20px', marginBottom: 28, maxWidth: 480, width: '100%', textAlign: 'center' }}>
             <span style={{ fontSize: 14, color: S.green, fontWeight: 600 }}>Complete your membership to access your dashboard.</span>
           </div>
         )}
@@ -260,24 +243,27 @@ export default function CheckoutPage() {
                 }}
               >
                 {tier.popular && (
-                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: S.blue, color: S.black, fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 100, letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: S.green, color: S.black, fontSize: 11, fontWeight: 700, padding: '3px 12px', borderRadius: 100, letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
                     MOST POPULAR
                   </div>
                 )}
                 <div style={{ fontSize: 13, fontWeight: 700, color: tier.color, letterSpacing: '0.06em', marginBottom: 8 }}>
                   {tier.name.toUpperCase()}
                 </div>
-                {tier.id === 'elite' && couponCode === 'DOOR100' ? (
+                {tier.id === 'full' && couponCode === 'DOOR100' ? (
                   <div style={{ marginBottom: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      <span style={{ fontFamily: C.display, fontSize: 40, color: S.green }}>$249</span>
-                      <span style={{ fontFamily: C.display, fontSize: 22, color: S.muted, textDecoration: 'line-through' }}>$349</span>
+                      <span style={{ fontFamily: C.display, fontSize: 40, color: S.green }}>$149</span>
+                      <span style={{ fontFamily: C.display, fontSize: 22, color: S.muted, textDecoration: 'line-through' }}>$249</span>
                       <span style={{ fontSize: 14, color: S.muted }}>/yr</span>
                     </div>
                     <div style={{ fontSize: 12, color: S.green, fontWeight: 700, marginTop: 4 }}>DOOR100 ✓ — $100 off</div>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
+                    {tier.compareAt && (
+                      <span style={{ fontFamily: C.display, fontSize: 22, color: S.muted, textDecoration: 'line-through' }}>${tier.compareAt}</span>
+                    )}
                     <span style={{ fontFamily: C.display, fontSize: 40, color: S.offwhite }}>${tier.price}</span>
                     <span style={{ fontSize: 14, color: S.muted }}>/yr</span>
                   </div>

@@ -239,16 +239,20 @@ export default function UtahLanding() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const pricingRef = useRef(null)
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (plan) => {
+    // Called both as onClick={handleCheckout} (arg = click event) and with an
+    // explicit plan string — anything that isn't a string means Full Pass.
+    if (typeof plan !== 'string') plan = 'full'
     if (checkoutLoading) return
     setCheckoutLoading(true)
     if (window.fbq) window.fbq('track', 'InitiateCheckout')
-    sessionStorage.setItem('subs_checkout_plan', 'elite')
+    sessionStorage.setItem('subs_checkout_plan', plan)
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'elite', coupon: 'DOOR100' }),
+        // DOOR100 applies to the Full Pass only — $100 off, $249 → $149
+        body: JSON.stringify(plan === 'full' ? { plan: 'full', coupon: 'DOOR100' } : { plan }),
       })
       const text = await res.text()
       let data
@@ -313,7 +317,7 @@ export default function UtahLanding() {
 
         {/* Countdown Banner */}
         <div className="u-banner">
-          🔒 Limited offer — $100 off Elite membership. Offer expires July 31, 2026
+          🔒 Limited offer — $100 off the Full Pass with code DOOR100. Offer expires July 31, 2026
         </div>
 
         {/* Nav — logo only */}
@@ -329,8 +333,8 @@ export default function UtahLanding() {
         <section className="hero wrap">
           <div className="hero-copy">
             <span className="eyebrow">For Utah homeowners</span>
-            <h1>The <span className="g">Costco</span> for home maintenance.</h1>
-            <p className="lede">One membership. <b>Contractor pricing on every home service</b> — roofing, HVAC, plumbing, solar, remodels, and 34 more. Members save <b>20–35%</b> on every job.</p>
+            <h1><span className="g">$1,525 in free services.</span> Wholesale pricing on the rest.</h1>
+            <p className="lede">The Full Pass includes <b>6 free professional services worth $1,525</b> — plus contractor pricing on every home service: roofing, HVAC, plumbing, solar, remodels, and 34 more. Members save <b>15–35%</b> on every job.</p>
             <div className="hero-cta">
               <a className="btn btn-primary" href="#pricing">See membership &amp; pricing</a>
               <a className="btn btn-ghost" href="tel:+18884543019">Call or text us</a>
@@ -404,7 +408,7 @@ export default function UtahLanding() {
           </div>
           <SavingsCalculator
             onJoin={handleCheckout}
-            joinLabel={checkoutLoading ? 'Loading…' : 'Claim founding price →'}
+            joinLabel={checkoutLoading ? 'Loading…' : 'Claim Full Pass — $149 →'}
             defaultState="UT"
             showStatePicker={false}
           />
@@ -413,37 +417,71 @@ export default function UtahLanding() {
         {/* Pricing */}
         <section id="pricing" className="wrap rv" ref={pricingRef}>
           <span className="eyebrow">Membership</span>
-          <div className="lab">Pick your membership.</div>
-          <p className="section-sub">One flat yearly price unlocks member pricing across the SUBS contractor network. No monthly fees. Cancel anytime.</p>
+          <div className="lab">Two passes. One obvious choice.</div>
+          <p className="section-sub">One flat yearly price unlocks member pricing across the SUBS contractor network. The Full Pass adds <b style={{ color: 'var(--green)' }}>$1,525 in free services</b>. No monthly fees.</p>
 
-          <div style={{ maxWidth: 480, margin: '0 auto' }}>
+          <div className="price-grid" style={{ maxWidth: 960, margin: '40px auto 0', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', alignItems: 'start' }}>
             <div className="plan elite">
-              <div className="badge">Founding price</div>
-              <div className="tier">Elite</div>
-              <h3>Wholesale on everything</h3>
+              <div className="badge">Most popular</div>
+              <div className="tier">Full Pass</div>
+              <h3>$1,525 in free services, included</h3>
               <div className="price">
-                <span className="shaker go"><span className="now">$249</span></span>
-                <span className="was strike">$349</span>
+                <span className="shaker go"><span className="now">$149</span></span>
+                <span className="was strike">$249</span>
                 <span className="per">/ year</span>
               </div>
-              <div className="price-note">Neighborhood founding rate — locked the day you join.</div>
+              <div className="price-note">With door code DOOR100 — $100 off, locked the day you join.</div>
               <ul>
-                <li>{CHECK} <span><b>Unlimited service requests</b></span></li>
-                <li>{CHECK} <span>Maximum wholesale discounts — <b>20–35% off</b> every trade</span></li>
-                <li>{CHECK} <span>White-glove concierge — we line up the pro &amp; manage the job</span></li>
-                <li>{CHECK} <span>Priority scheduling</span></li>
+                <li>{CHECK} <span><b>6 FREE services</b> worth <b>$1,525</b> total value</span></li>
+                <li>{CHECK} <span>All member discounts — <b>15–35% off</b> every service</span></li>
+                <li>{CHECK} <span>Concierge — we line up the pro &amp; manage the job</span></li>
                 <li>{CHECK} <span>Vetted, licensed &amp; insured Utah pros</span></li>
-                <li>{CHECK} <span>Money-back savings guarantee</span></li>
-                <li>{CHECK} <span>All 39 trades, one membership</span></li>
+                <li>{CHECK} <span>Valid 12 months</span></li>
+                <li>{CHECK} <span>Transferable as a gift</span></li>
               </ul>
-              <button className="btn btn-primary" onClick={handleCheckout} disabled={checkoutLoading}>{checkoutLoading ? 'Loading…' : 'Claim founding price — $249'}</button>
+              <button className="btn btn-primary" onClick={() => handleCheckout('full')} disabled={checkoutLoading}>{checkoutLoading ? 'Loading…' : 'Claim Full Pass — $149'}</button>
+            </div>
+            <div className="plan">
+              <div className="tier">Member Pass</div>
+              <h3>Every member discount, all year</h3>
+              <div className="price">
+                <span className="now">$99</span>
+                <span className="per">/ year</span>
+              </div>
+              <div className="price-note">Save on every booking, all 39 trades.</div>
+              <ul>
+                <li>{CHECK} <span>All member discounts — <b>15–35% off</b> every service</span></li>
+                <li>{CHECK} <span>Save on every booking</span></li>
+                <li>{CHECK} <span>Vetted, licensed &amp; insured Utah pros</span></li>
+                <li>{CHECK} <span>Valid 12 months</span></li>
+              </ul>
+              <button className="btn btn-ghost" onClick={() => handleCheckout('member')} disabled={checkoutLoading} style={{ width: '100%' }}>{checkoutLoading ? 'Loading…' : 'Join Member Pass — $99'}</button>
             </div>
           </div>
+
+          {/* 6 free services included with Full Pass */}
+          <div style={{ maxWidth: 960, margin: '36px auto 0' }}>
+            <div style={{ textAlign: 'center', marginBottom: 18 }}>
+              <div className="lab" style={{ fontSize: '1.4rem' }}>6 free services included with Full Pass</div>
+              <p className="price-note" style={{ marginTop: 6 }}>One of each, performed by a vetted SUBS contractor. <b style={{ color: 'var(--green)' }}>$1,525 total value.</b></p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
+              {[
+                ['Home Cleaning', 250], ['Carpet Cleaning', 200], ['Window Washing', 225],
+                ['HVAC Tune-Up', 200], ['Pest Control', 300], ['Roof Inspection', 350],
+              ].map(([name, value]) => (
+                <div key={name} style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 14, padding: '18px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>{name}</div>
+                  <div style={{ fontFamily: 'var(--disp)', fontSize: '1.9rem', color: 'var(--green)', lineHeight: 1 }}>${value}</div>
+                  <div style={{ fontSize: 11, color: 'var(--ash)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '.08em' }}>value</div>
+                  <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--line)', fontSize: 12, fontWeight: 700, color: 'var(--green)' }}>1 Free {name}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <p className="price-note" style={{ marginTop: 20, textAlign: 'center' }}>
             Prices in USD. 3-day right to cancel. Savings vary by job scope &amp; contractor.
-          </p>
-          <p className="price-note" style={{ marginTop: 8, textAlign: 'center', color: 'var(--ash-dim)' }}>
-            Member and Member+ plans also available — visit <a href="https://subs.app" style={{ color: 'var(--ash)' }}>subs.app</a>
           </p>
         </section>
 
@@ -465,7 +503,7 @@ export default function UtahLanding() {
           <span className="eyebrow">How it works</span>
           <div className="lab">Three steps. Real savings.</div>
           <div className="steps">
-            <div className="step"><div className="n">1</div><div><h3>Join</h3><p>Pick Member or Elite. One yearly membership — no monthly fees.</p></div></div>
+            <div className="step"><div className="n">1</div><div><h3>Join</h3><p>Pick the Member Pass or Full Pass. One yearly membership — no monthly fees.</p></div></div>
             <div className="step"><div className="n">2</div><div><h3>Call SUBS for any job</h3><p>From a $140 repair to a $50k remodel, we match you with a vetted Utah pro.</p></div></div>
             <div className="step"><div className="n">3</div><div><h3>Pay the member price</h3><p>You pay the contractor (wholesale) rate — about 30% under retail.</p></div></div>
           </div>
@@ -507,10 +545,10 @@ export default function UtahLanding() {
 
         {/* Final CTA */}
         <section className="wrap final rv">
-          <span className="eyebrow">Founding member price</span>
+          <span className="eyebrow">Limited door offer</span>
           <h2>One membership.<br /><span className="g">Every trade, wholesale.</span></h2>
-          <p className="section-sub" style={{ margin: '14px auto 0' }}>Join the first homes in your neighborhood at the founding rate.</p>
-          <div><button className="btn btn-primary" onClick={handleCheckout} disabled={checkoutLoading}>{checkoutLoading ? 'Loading…' : 'Claim $249 founding price'}</button></div>
+          <p className="section-sub" style={{ margin: '14px auto 0' }}>Full Pass — $1,525 in free services included. $100 off with code DOOR100.</p>
+          <div><button className="btn btn-primary" onClick={handleCheckout} disabled={checkoutLoading}>{checkoutLoading ? 'Loading…' : 'Claim Full Pass — $149'}</button></div>
           <div className="phone">or call / text <a href="tel:+18884543019">1-888-454-3019</a></div>
         </section>
 
@@ -525,8 +563,8 @@ export default function UtahLanding() {
         {/* Sticky Mobile Bar */}
         <div className={`stickybar${stickyVisible ? ' show' : ''}`}>
           <div className="sb-txt">
-            <div className="a">Founding member price</div>
-            <div className="b"><span className="s">$349</span> <span className="g">$249</span>/yr</div>
+            <div className="a">Full Pass · $1,525 in free services</div>
+            <div className="b"><span className="s">$249</span> <span className="g">$149</span>/yr</div>
           </div>
           <button className="btn btn-primary" onClick={handleCheckout} disabled={checkoutLoading}>{checkoutLoading ? 'Loading…' : 'Join'}</button>
         </div>

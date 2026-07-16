@@ -10,6 +10,7 @@ const cors = {
 // Known price IDs → tier label
 const MEMBER_PRICE_TIERS: Record<string, string> = {
   'price_1TiRPcAYDs9oVarWLWpp0wLZ': 'Member',
+  'price_1TtwA5AYDs9oVarWSOV7SwP7': 'Full',
   'price_1TjQ8TAYDs9oVarWqCQyxLM5': 'Member+',
   'price_1TjQ7DAYDs9oVarWbJONkQ1P': 'Elite',
   'price_1TicGZAYDs9oVarWmVWT27wz': 'Contractor', // contractor annual plan

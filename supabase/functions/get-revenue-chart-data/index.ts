@@ -8,6 +8,7 @@ const cors = {
 
 const MEMBER_PRICE_IDS = new Set([
   'price_1TiRPcAYDs9oVarWLWpp0wLZ',
+  'price_1TtwA5AYDs9oVarWSOV7SwP7',
   'price_1TjQ8TAYDs9oVarWqCQyxLM5',
   'price_1TjQ7DAYDs9oVarWbJONkQ1P',
 ])

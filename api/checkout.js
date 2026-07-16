@@ -1,10 +1,10 @@
 import Stripe from 'stripe'
 
+// Two public plans only. Legacy Member+/Elite price IDs stay live in Stripe
+// for existing subscribers but are not purchasable from the frontend.
 const PRICE_IDS = {
-  member:        'price_1TiRPcAYDs9oVarWLWpp0wLZ',
-  'member-plus': 'price_1TjQ8TAYDs9oVarWqCQyxLM5',
-  plus:          'price_1TjQ8TAYDs9oVarWqCQyxLM5',
-  elite:         'price_1TjQ7DAYDs9oVarWbJONkQ1P',
+  member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
+  full:   'price_1TtwA5AYDs9oVarWSOV7SwP7',
 }
 
 const PROMO_CODES = {
@@ -46,8 +46,8 @@ export default async function handler(req, res) {
     subscription_data: { metadata: { plan: plan || '', coupon: coupon || '' } },
   }
 
-  // DOOR100 is Elite-only — ignore coupon for other plans
-  if (coupon && PROMO_CODES[coupon.toUpperCase()] && plan === 'elite') {
+  // DOOR100 is Full Pass-only — ignore coupon for other plans
+  if (coupon && PROMO_CODES[coupon.toUpperCase()] && plan === 'full') {
     params.discounts = [{ promotion_code: PROMO_CODES[coupon.toUpperCase()] }]
   }
 

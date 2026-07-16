@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 
 const PRICE_TO_TIER = {
   'price_1TiRPcAYDs9oVarWLWpp0wLZ': 'Member',
+  'price_1TtwA5AYDs9oVarWSOV7SwP7': 'Full',
   'price_1TjQ8TAYDs9oVarWqCQyxLM5': 'Member+',
   'price_1TjQ7DAYDs9oVarWbJONkQ1P': 'Elite',
 }

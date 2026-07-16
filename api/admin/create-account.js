@@ -3,8 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const MEMBER_PRICE_IDS = {
   member: 'price_1TiRPcAYDs9oVarWLWpp0wLZ',
-  plus:   'price_1TjQ8TAYDs9oVarWqCQyxLM5',
-  elite:  'price_1TjQ7DAYDs9oVarWbJONkQ1P',
+  full:   'price_1TtwA5AYDs9oVarWSOV7SwP7',
 }
 
 const CONTRACTOR_PRICE_ID = process.env.STRIPE_CONTRACTOR_PRICE_ID || 'price_1TicGZAYDs9oVarWmVWT27wz'
@@ -121,7 +120,7 @@ export default async function handler(req, res) {
         full_name,
         email,
         phone: phone || null,
-        tier: tier === 'member' ? 'Member' : tier === 'plus' ? 'Member+' : 'Elite',
+        tier: tier === 'member' ? 'Member' : 'Full',
         status: 'pending',
         admin_created: true,
         joined_at: new Date().toISOString(),
@@ -143,7 +142,7 @@ export default async function handler(req, res) {
         })
         checkoutUrl = session.url
 
-        const tierLabel = tier === 'member' ? 'Member ($99/yr)' : tier === 'plus' ? 'Member+ ($179/yr)' : 'Elite ($349/yr)'
+        const tierLabel = tier === 'member' ? 'Member Pass ($99/yr)' : 'Full Pass ($249/yr)'
         if (send_email) {
           await sendEmail({
             to: email,
@@ -159,7 +158,7 @@ export default async function handler(req, res) {
         }
       }
 
-      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, full_name, email, tier_label: tier === 'member' ? 'Member' : tier === 'plus' ? 'Member+' : 'Elite', message: memberExisted ? `Existing account found — linked successfully.` : `Member account created.` })
+      return res.status(200).json({ success: true, clerk_user_id: clerkUserId, checkout_url: checkoutUrl, full_name, email, tier_label: tier === 'member' ? 'Member' : 'Full', message: memberExisted ? `Existing account found — linked successfully.` : `Member account created.` })
     }
 
     // ── CONTRACTOR ──────────────────────────────────────────────────────────
