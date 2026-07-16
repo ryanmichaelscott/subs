@@ -84,7 +84,7 @@ export default function ContractorApply() {
     return (
       <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', width: '100%' }}>
-          <Link to="/" style={{ display: 'inline-flex' }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} /></Link>
+          <Link to="/" style={{ display: 'inline-flex' }}><span style={{ fontFamily: C.display, fontSize: 24, fontWeight: 400, color: S.green, lineHeight: 1, letterSpacing: '0.02em' }}>SUBS</span></Link>
         </nav>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div style={{ textAlign: 'center', maxWidth: 480 }}>
@@ -115,7 +115,7 @@ export default function ContractorApply() {
     <div style={{ background: S.black, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', width: '100%' }}>
-        <Link to="/" style={{ display: 'inline-flex' }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} /></Link>
+        <Link to="/" style={{ display: 'inline-flex' }}><span style={{ fontFamily: C.display, fontSize: 24, fontWeight: 400, color: S.green, lineHeight: 1, letterSpacing: '0.02em' }}>SUBS</span></Link>
         <Link to="/contractor/login" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>Already a partner? Sign in</Link>
       </nav>
 

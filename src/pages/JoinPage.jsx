@@ -54,7 +54,7 @@ export default function JoinPage() {
       `}</style>
       <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(16px, 4vw, 28px)' }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
-          <img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} />
+          <span style={{ fontFamily: C.display, fontSize: 24, fontWeight: 400, color: S.green, lineHeight: 1, letterSpacing: '0.02em' }}>SUBS</span>
         </Link>
         <Link to="/login" style={{ fontSize: 13, color: S.muted, textDecoration: 'none' }}>
           Already a member? <span style={{ color: S.green, fontWeight: 600 }}>Sign in →</span>

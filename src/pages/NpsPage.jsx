@@ -50,7 +50,7 @@ export default function NpsPage() {
   return (
     <Page>
       <div style={{ width: '100%', maxWidth: 520 }}>
-        <div style={{ marginBottom: 32 }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 24, width: 'auto', display: 'block' }} /></div>
+        <div style={{ marginBottom: 32 }}><span style={{ fontFamily: C.display, fontSize: 26, fontWeight: 400, color: S.green, lineHeight: 1, letterSpacing: '0.02em' }}>SUBS</span></div>
 
         <div style={{ fontFamily: C.display, fontSize: 26, color: S.offwhite, marginBottom: 12, lineHeight: 1.2 }}>
           How likely are you to recommend SUBS?

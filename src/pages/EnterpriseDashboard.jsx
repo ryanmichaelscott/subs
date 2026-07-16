@@ -916,7 +916,7 @@ function Nav({ displayEmail, signOut, navigate }) {
   return (
     <nav style={{ height: 58, borderBottom: `1px solid ${S.border}`, display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between', position: 'sticky', top: 0, background: S.black + 'F0', backdropFilter: 'blur(12px)', zIndex: 50 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Link to="/" style={{ display: 'inline-flex', textDecoration: 'none' }}><img src="/logo-wordmark.png" alt="SUBS" style={{ height: 22, width: 'auto', display: 'block' }} /></Link>
+        <Link to="/" style={{ display: 'inline-flex', textDecoration: 'none' }}><span style={{ fontFamily: C.display, fontSize: 24, fontWeight: 400, color: S.green, lineHeight: 1, letterSpacing: '0.02em' }}>SUBS</span></Link>
         <span style={{ fontSize: 11, fontWeight: 700, color: S.purple, background: S.purple + '22', padding: '3px 10px', borderRadius: 100, letterSpacing: '0.04em' }}>Enterprise</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
