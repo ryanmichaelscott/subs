@@ -218,10 +218,16 @@ function Hero() {
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           <div>
-            <h1 style={{ fontFamily: C.display, fontSize: 'clamp(38px, 5.5vw, 72px)', fontWeight: 400, color: S.offwhite, lineHeight: 1.05, margin: '0 0 16px' }}>
-              Member pricing on every<br />home service. Free to join.
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+              <span style={{ display: 'inline-block', width: 28, height: 1, background: '#C2A55C' }} />
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.18em', color: S.green, textTransform: 'uppercase' }}>
+                Free to join
+              </span>
+            </div>
+            <h1 style={{ fontFamily: C.display, fontSize: 'clamp(38px, 5vw, 64px)', fontWeight: 400, color: S.offwhite, lineHeight: 1.08, margin: '0 0 18px', textWrap: 'balance' }}>
+              Member pricing on every home service.
             </h1>
-            <p style={{ fontSize: 16, color: S.muted, margin: 0, lineHeight: 1.65 }}>
+            <p style={{ fontSize: 16, color: S.muted, margin: 0, lineHeight: 1.65, maxWidth: '46ch' }}>
               From weekly lawn care to emergency plumbing — join free and get wholesale pricing from vetted contractors on every home service.
             </p>
           </div>
@@ -250,6 +256,14 @@ function Hero() {
             <button onClick={() => { const el = document.getElementById('section-membership'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ background: 'transparent', border: `1px solid ${S.border}`, color: S.offwhite, fontSize: 15, fontWeight: 600, padding: '14px 24px', borderRadius: 10, cursor: 'pointer' }}>
               See all plans
             </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px 22px', flexWrap: 'wrap', marginTop: -12 }}>
+            {['No credit card required', 'Vetted, licensed & insured pros', 'Utah-based concierge'].map(t => (
+              <span key={t} style={{ fontSize: 13, color: S.muted, fontWeight: 500 }}>
+                <span style={{ color: S.green, marginRight: 6 }}>✓</span>{t}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -834,7 +848,7 @@ function Footer() {
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: S.muted, textTransform: 'uppercase', marginBottom: 14 }}>Membership</div>
-            {['Member', 'Member+', 'Elite', 'How It Works'].map(link => (
+            {['Free', 'Member', 'Full Pass', 'How It Works'].map(link => (
               <div key={link} style={{ fontSize: 13, color: S.muted, marginBottom: 10 }}>{link}</div>
             ))}
           </div>
@@ -861,7 +875,7 @@ function Footer() {
         </div>
         <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 12, color: S.muted }}>© 2026 SUBS Membership. All rights reserved.</span>
-          <span style={{ fontSize: 12, color: S.muted }}>SUBS.co</span>
+          <span style={{ fontSize: 12, color: S.muted }}>subs.app</span>
         </div>
       </div>
     </footer>
