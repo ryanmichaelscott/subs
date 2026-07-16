@@ -60,7 +60,7 @@ export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
   const showUnpaidBanner = searchParams.get('unpaid') === '1'
   const couponCode = searchParams.get('coupon')
-  const DOOR100_PROMO_ID = 'promo_1TnP7jAYDs9oVarWbKGY7Rr4'
+  const DOOR100_PROMO_ID = 'promo_1TtwmjAYDs9oVarW7K7jt7Xq'
   const [checking, setChecking] = useState(true)
   const [loadingId, setLoadingId] = useState(null)
   const [error, setError] = useState(null)

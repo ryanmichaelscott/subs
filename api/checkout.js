@@ -8,7 +8,7 @@ const PRICE_IDS = {
 }
 
 const PROMO_CODES = {
-  DOOR100: 'promo_1TnP7jAYDs9oVarWbKGY7Rr4',
+  DOOR100: 'promo_1TtwmjAYDs9oVarW7K7jt7Xq',
 }
 
 export default async function handler(req, res) {
