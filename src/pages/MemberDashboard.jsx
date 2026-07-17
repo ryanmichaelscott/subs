@@ -475,15 +475,25 @@ export default function MemberDashboard() {
   const handleSubmitReview = async (job) => {
     if (!reviewForm.rating) return
     setReviewSubmitting(true)
-    await supabase.functions.invoke('submit-review', {
+    const { data, error: fnError } = await supabase.functions.invoke('submit-review', {
       body: {
         job_request_id: job.id,
         contractor_id: job.accepted_contractor_id || job.contractor_id,
-        clerk_user_id: user.id,
+        clerk_user_id: isImpersonating ? (member?.clerk_user_id || '') : user.id,
         rating: reviewForm.rating,
         comment: reviewForm.comment || null,
       },
     })
+    // Only mark reviewed when the server actually saved it
+    if (fnError || data?.error) {
+      let msg = 'Your review could not be saved. Please try again or call 1-888-454-3019.'
+      if (fnError?.context) {
+        try { const b = await fnError.context.json(); if (b?.error) msg = `Review not saved: ${b.error}` } catch { /* keep default */ }
+      }
+      alert(msg)
+      setReviewSubmitting(false)
+      return
+    }
     setJobRequests(prev => prev.map(j => j.id === job.id ? { ...j, my_review: { rating: reviewForm.rating, comment: reviewForm.comment } } : j))
     // Refresh contractor list so updated rating/review count is visible in the directory
     const { data: refreshed } = await supabase
@@ -1061,13 +1071,14 @@ export default function MemberDashboard() {
                           ) : reviewingJobId === job.id ? (
                             <div style={{ padding: '14px', background: S.surface, border: `1px solid ${S.border}`, borderRadius: 10 }}>
                               <div style={{ fontSize: 12, fontWeight: 700, color: S.offwhite, marginBottom: 10 }}>Rate your experience</div>
-                              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                                 {[1,2,3,4,5].map(n => (
                                   <button key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))}
                                     style={{ fontSize: 22, background: 'none', border: 'none', cursor: 'pointer', opacity: reviewForm.rating >= n ? 1 : 0.3, padding: 0 }}>
                                     ⭐
                                   </button>
                                 ))}
+                                {!reviewForm.rating && <span style={{ fontSize: 11.5, color: S.muted, marginLeft: 6 }}>tap a star to rate</span>}
                               </div>
                               <textarea
                                 value={reviewForm.comment}

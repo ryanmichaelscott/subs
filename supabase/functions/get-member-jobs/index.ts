@@ -48,10 +48,9 @@ serve(async (req) => {
       }
     }
 
-    // Fetch reviews for completed jobs
-    const completedJobIds = (jobs || [])
-      .filter((j: any) => j.status === 'completed')
-      .map((j: any) => j.id)
+    // Fetch this member's reviews for all their jobs (status casing varies:
+    // 'Complete' from complete-job, legacy 'completed' — don't filter on it)
+    const completedJobIds = (jobs || []).map((j: any) => j.id)
 
     let reviewMap: Record<string, any> = {}
     if (completedJobIds.length > 0) {
