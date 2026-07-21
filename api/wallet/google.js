@@ -12,7 +12,7 @@ function makeGoogleWalletUrl({ serviceAccount, issuerId, classId, memberId, name
     genericType: 'GENERIC_TYPE_UNSPECIFIED',
     hexBackgroundColor: '#10382A',
     logo: {
-      sourceUri: { uri: 'https://subs.app/subs_logo.png' },
+      sourceUri: { uri: 'https://www.subs.app/icons/icon-512.png?v=4' },
       contentDescription: { defaultValue: { language: 'en-US', value: 'SUBS' } },
     },
     cardTitle: { defaultValue: { language: 'en-US', value: 'SUBS' } },
