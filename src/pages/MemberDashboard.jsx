@@ -240,6 +240,22 @@ export default function MemberDashboard() {
       })
       let memberRow = memberData?.member
 
+      // Signed in but no membership record — a free signup where the browser
+      // left /join before activation finished (OAuth signups especially).
+      // create-free-account is idempotent and never downgrades, so healing
+      // here is always safe.
+      if (!memberRow) {
+        const { data: healed } = await supabase.functions.invoke('create-free-account', {
+          body: { clerk_user_id: user.id },
+        })
+        if (healed?.success) {
+          const { data: refetched } = await supabase.functions.invoke('admin-get-member', {
+            body: { clerk_user_id: user.id },
+          })
+          memberRow = refetched?.member
+        }
+      }
+
       if (memberRow) {
         setMember(memberRow)
         setProfileForm({

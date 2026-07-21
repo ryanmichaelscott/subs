@@ -98,6 +98,8 @@ export default function JoinPage() {
             ) : (
               <SignUp
                 routing="hash"
+                forceRedirectUrl="/join"
+                fallbackRedirectUrl="/join"
                 signInUrl="/login"
                 appearance={{
                   elements: {
